@@ -50,8 +50,8 @@
   button:focus-visible { outline: 2px solid var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
   [hidden] { display: none !important; }
   /* vinheta de abertura */
-  /* a vinheta ocupa a tela toda: no celular em pé, o vídeo cobre a tela; em tela larga, o mesmo vídeo
-     desfocado preenche as laterais. A barra do sistema fica da cor do vídeo enquanto ele toca. */
+  /* a vinheta ocupa a tela toda: tela em pé (celular) toca a vinheta vertical; tela deitada (computador,
+     tablet deitado) toca a vinheta horizontal. A barra do sistema fica da cor do vídeo enquanto ele toca. */
   html.na-vinheta, html.na-vinheta body { background: #08141f; }
   #abertura { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 10; overflow: hidden;
     background: #08141f; transition: opacity .45s ease; }
@@ -63,11 +63,6 @@
     body.abrindo #app { height: calc(100vh + env(safe-area-inset-top)); }
   }
   #abertura video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
-  #ab-fundo { display: none; filter: blur(32px) brightness(.55); transform: scale(1.15); }
-  @media (min-aspect-ratio: 3/4) {
-    #ab-fundo { display: block; }
-    #abertura #ab-video { object-fit: contain; }
-  }
   .ab-btn { position: absolute; top: calc(14px + env(safe-area-inset-top)); height: 36px; padding: 0 14px; border-radius: 999px;
     border: 1px solid rgba(255,255,255,.35); background: rgba(8,20,31,.55); color: #fff; font: 600 14px 'IBM Plex Sans', sans-serif;
     width: auto; cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
@@ -115,12 +110,8 @@
 </div>
 <div id="app"></div>
 <div id="abertura" hidden>
-  <video id="ab-fundo" playsinline muted preload="auto" aria-hidden="true" tabindex="-1">
-    <source src="vinheta.mp4" type="video/mp4">
-  </video>
-  <video id="ab-video" playsinline muted preload="auto" poster="vinheta-capa.jpg" aria-label="Vinheta de abertura do MIRA">
-    <source src="vinheta.mp4" type="video/mp4">
-  </video>
+  <!-- o vídeo (vertical ou horizontal) é escolhido na hora, pelo formato da tela -->
+  <video id="ab-video" playsinline muted preload="auto" aria-label="Vinheta de abertura do MIRA"></video>
   <button class="ab-btn" id="ab-som" type="button">Ativar som</button>
   <button class="ab-btn" id="ab-pular" type="button">Pular</button>
 </div>
@@ -144,9 +135,10 @@
     var tema = document.getElementById('cor-tema');
     var reduzir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var ab = document.getElementById('abertura'), v = document.getElementById('ab-video'), som = document.getElementById('ab-som');
-    var fundo = document.getElementById('ab-fundo');
     if (reduzir) { ab.remove(); return; }
-    var larga = window.matchMedia && matchMedia('(min-aspect-ratio: 3/4)').matches;
+    var larga = window.innerWidth >= window.innerHeight;
+    v.poster = larga ? 'vinheta-pc-capa.jpg' : 'vinheta-capa.jpg';
+    v.src = larga ? 'vinheta-pc.mp4' : 'vinheta.mp4';
     var fim = false;
     document.documentElement.classList.add('na-vinheta');
     tema.setAttribute('content', '#08141f');
@@ -155,14 +147,10 @@
       ab.classList.add('saindo');
       tema.setAttribute('content', '#0B2350');
       setTimeout(function () {
-        try { v.pause(); fundo.pause(); } catch (e) {}
+        try { v.pause(); } catch (e) {}
         ab.remove(); document.documentElement.classList.remove('na-vinheta');
       }, 500);
     };
-    if (larga) {
-      fundo.play().catch(function () {});
-      v.addEventListener('timeupdate', function () { if (Math.abs(fundo.currentTime - v.currentTime) > 0.3) fundo.currentTime = v.currentTime; });
-    } else { fundo.remove(); }
     var mostrarSom = function () { som.textContent = v.muted ? 'Ativar som' : 'Sem som'; };
     ab.hidden = false;
     v.muted = !comSom;
