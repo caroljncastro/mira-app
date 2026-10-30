@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MIRA</title>
+<meta name="description" content="Monitoramento Inteligente de Resultados e Aprendizagem">
+<meta name="theme-color" content="#0B2350">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MIRA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icone-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --marca-900: #0B2350; --marca-700: #143A78; --marca-600: #1D4E9E; --marca-100: #E6EDF8;
+    --acento-600: #C1272D; --n-900: #0F172A; --n-500: #64748B; --n-300: #CBD5E1; --n-200: #E2E8F0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--marca-900); color: #fff;
+    font: 400 15px/1.5 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #app { position: fixed; inset: 0; padding-top: env(safe-area-inset-top); background: var(--marca-900); display: none; }
+  #app iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  body.abrindo #app { display: block; }
+  body.abrindo #instalar { display: none; }
+  #instalar { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: calc(40px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom)); text-align: center;
+    background: radial-gradient(circle at 50% 30%, #143A78 0, var(--marca-900) 70%); }
+  .faixa { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--marca-600) 50%, var(--acento-600) 50%); }
+  .icone { width: 112px; height: 112px; border-radius: 24px; box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+  h1 { font: 700 40px/1.2 'Archivo', sans-serif; font-stretch: 75%; letter-spacing: .12em; margin: 20px 0 4px; }
+  .sub { color: #C9D4E8; font-size: 14px; margin: 0 0 32px; max-width: 280px; }
+  .cartao { background: #fff; color: var(--n-900); border-radius: 16px; padding: 24px 20px; width: 100%; max-width: 380px; text-align: left; }
+  .cartao h2 { font: 700 20px/1.2 'Archivo', sans-serif; font-stretch: 80%; margin: 0 0 8px; }
+  .cartao p { margin: 0 0 16px; color: var(--n-500); font-size: 14px; }
+  ol { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: p; }
+  ol li { counter-increment: p; position: relative; padding: 0 0 12px 36px; font-size: 15px; }
+  ol li::before { content: counter(p); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 999px;
+    background: var(--marca-100); color: var(--marca-700); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .sym { display: inline-block; vertical-align: -3px; width: 18px; height: 18px; color: var(--marca-600); }
+  button { font: 600 15px 'IBM Plex Sans', sans-serif; height: 44px; border-radius: 8px; width: 100%; cursor: pointer; }
+  .principal { background: var(--marca-700); color: #fff; border: 0; margin-bottom: 8px; }
+  .secundario { background: #fff; color: var(--n-900); border: 1px solid var(--n-300); }
+  button:focus-visible { outline: 2px solid var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
+  [hidden] { display: none !important; }
+  .credito { margin-top: 24px; font-size: 12px; color: #8FA3C4; }
+</style>
+</head>
+<body>
+<div id="instalar">
+  <div class="faixa"></div>
+  <img class="icone" src="icone-180.png" alt="">
+  <h1>MIRA</h1>
+  <p class="sub">Monitoramento Inteligente de Resultados e Aprendizagem</p>
+
+  <div class="cartao">
+    <div id="passos-iphone" hidden>
+      <h2>Coloque o MIRA na tela inicial</h2>
+      <p>Assim ele abre como um aplicativo, com o próprio ícone.</p>
+      <ol>
+        <li>Toque em <b>Compartilhar</b>
+          <svg class="sym" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+          na barra do Safari.</li>
+        <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+        <li>Toque em <b>Adicionar</b>. O ícone do MIRA aparece na tela.</li>
+      </ol>
+    </div>
+    <div id="passos-android" hidden>
+      <h2>Instale o MIRA no celular</h2>
+      <p>Assim ele abre como um aplicativo, com o próprio ícone.</p>
+      <button class="principal" id="btn-instalar" hidden>Instalar o MIRA</button>
+      <ol id="passos-menu">
+        <li>Toque no menu <b>⋮</b> do Chrome.</li>
+        <li>Escolha <b>Adicionar à tela inicial</b> ou <b>Instalar app</b>.</li>
+        <li>Confirme. O ícone do MIRA aparece na tela.</li>
+      </ol>
+    </div>
+    <div id="passos-pc" hidden>
+      <h2>Bem-vindo ao MIRA</h2>
+      <p>No celular, abra este endereço para colocar o MIRA na tela inicial com o próprio ícone.</p>
+    </div>
+    <button class="secundario" id="btn-abrir">Abrir o MIRA</button>
+  </div>
+  <p class="credito">Desenvolvido por 1º Ten J Castro</p>
+</div>
+<div id="app"></div>
+
+<script>
+  var APP_URL = 'https://script.google.com/macros/s/AKfycbwA4mnb0wwrSJpdnNve2kUFTLqqK3jGHA2p5idfUY39rVMrSo1owRXv5iZ8AauNJGjT/exec';
+  function abrir() {
+    if (document.body.classList.contains('abrindo')) return;
+    var f = document.createElement('iframe');
+    f.src = APP_URL;
+    f.title = 'MIRA';
+    f.setAttribute('allow', 'camera; clipboard-read; clipboard-write; fullscreen');
+    document.getElementById('app').appendChild(f);
+    document.body.classList.add('abrindo');
+  }
+  var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  if (instalado || /[?&]app=1/.test(location.search)) {
+    abrir();
+  } else {
+    var ua = navigator.userAgent;
+    var iphone = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var android = /Android/.test(ua);
+    document.getElementById(iphone ? 'passos-iphone' : android ? 'passos-android' : 'passos-pc').hidden = false;
+    if (!iphone && !android) {
+      var b = document.getElementById('btn-abrir');
+      b.className = 'principal';
+    }
+  }
+  document.getElementById('btn-abrir').onclick = abrir;
+
+  var pedido = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    pedido = e;
+    document.getElementById('btn-instalar').hidden = false;
+    document.getElementById('passos-menu').hidden = true;
+    document.getElementById('btn-abrir').className = 'secundario';
+  });
+  document.getElementById('btn-instalar').onclick = function () {
+    if (!pedido) return;
+    pedido.prompt();
+    pedido = null;
+  };
+  if ('serviceWorker' in navigator) {
+    try { navigator.serviceWorker.register('sw.js'); } catch (e) { }
+  }
+</script>
+</body>
+</html>
