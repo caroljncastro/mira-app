@@ -25,7 +25,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--marca-900); color: #fff;
     font: 400 15px/1.5 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-  #app { position: fixed; inset: 0; padding-top: env(safe-area-inset-top); background: var(--marca-900); display: none; }
+  #app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding-top: env(safe-area-inset-top); background: var(--marca-900); display: none; }
   #app iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
   body.abrindo #app { display: block; }
   body.abrindo #instalar { display: none; }
@@ -173,6 +173,19 @@
     som.onclick = function () { v.muted = !v.muted; mostrarSom(); if (v.paused) v.play().catch(function () {}); };
     setTimeout(terminar, 12000); // garantia: nunca prende a entrada
   }
+  /* iPhone com o app na tela inicial: a altura "100%" para antes do fim da tela (sobra uma faixa embaixo).
+     Ajusta a vinheta e o app para a altura real da tela. */
+  function alturaReal() {
+    if (navigator.standalone !== true) return;
+    var emPe = window.innerHeight >= window.innerWidth;
+    var h = emPe ? Math.max(window.innerHeight, screen.height, screen.width) : window.innerHeight;
+    ['abertura', 'app'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.height = h + 'px'; });
+    document.documentElement.style.overflow = 'hidden';
+  }
+  alturaReal();
+  window.addEventListener('resize', alturaReal);
+  window.addEventListener('orientationchange', function () { setTimeout(alturaReal, 300); });
+
   var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if (instalado || /[?&]app=1/.test(location.search)) {
     abrir();
