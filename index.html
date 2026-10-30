@@ -56,6 +56,12 @@
   #abertura { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 10; overflow: hidden;
     background: #08141f; transition: opacity .45s ease; }
   #abertura.saindo { opacity: 0; pointer-events: none; }
+  /* iPhone, app na tela inicial: a altura da página não conta a área da hora/bateria (fica uma faixa embaixo).
+     Soma essa área; se sobrar, o excesso só fica fora da tela. */
+  @media (display-mode: standalone) {
+    #abertura { height: calc(100vh + env(safe-area-inset-top)); }
+    body.abrindo #app { height: calc(100vh + env(safe-area-inset-top)); }
+  }
   #abertura video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
   #ab-fundo { display: none; filter: blur(32px) brightness(.55); transform: scale(1.15); }
   @media (min-aspect-ratio: 3/4) {
@@ -178,7 +184,9 @@
   function alturaReal() {
     if (navigator.standalone !== true) return;
     var emPe = window.innerHeight >= window.innerWidth;
-    var h = emPe ? Math.max(window.innerHeight, screen.height, screen.width) : window.innerHeight;
+    var topo = 0;
+    try { var t = document.createElement('div'); t.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top)'; document.body.appendChild(t); topo = t.offsetHeight; t.remove(); } catch (e) { }
+    var h = emPe ? Math.max(window.innerHeight + topo, screen.height, screen.width) : window.innerHeight;
     ['abertura', 'app'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.height = h + 'px'; });
     document.documentElement.style.overflow = 'hidden';
   }
