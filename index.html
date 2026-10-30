@@ -49,6 +49,17 @@
   .secundario { background: #fff; color: var(--n-900); border: 1px solid var(--n-300); }
   button:focus-visible { outline: 2px solid var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
   [hidden] { display: none !important; }
+  /* vinheta de abertura */
+  #abertura { position: fixed; inset: 0; z-index: 10; background: #08141f; display: flex; align-items: center; justify-content: center;
+    transition: opacity .45s ease; }
+  #abertura.saindo { opacity: 0; pointer-events: none; }
+  #abertura video { width: 100%; height: 100%; object-fit: contain; background: #08141f; }
+  @media (max-aspect-ratio: 3/4) { #abertura video { object-fit: cover; } }
+  .ab-btn { position: absolute; top: calc(14px + env(safe-area-inset-top)); height: 36px; padding: 0 14px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(8,20,31,.55); color: #fff; font: 600 14px 'IBM Plex Sans', sans-serif;
+    width: auto; cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  #ab-pular { right: 16px; }
+  #ab-som { left: 16px; }
   .credito { margin-top: 24px; font-size: 12px; color: #8FA3C4; }
 </style>
 </head>
@@ -90,17 +101,54 @@
   <p class="credito">Desenvolvido por 1º Ten J Castro</p>
 </div>
 <div id="app"></div>
+<div id="abertura" hidden>
+  <video id="ab-video" playsinline muted preload="auto" poster="vinheta-capa.jpg" aria-label="Vinheta de abertura do MIRA">
+    <source src="vinheta.mp4" type="video/mp4">
+  </video>
+  <button class="ab-btn" id="ab-som" type="button">Ativar som</button>
+  <button class="ab-btn" id="ab-pular" type="button">Pular</button>
+</div>
 
 <script>
   var APP_URL = 'https://script.google.com/macros/s/AKfycbwA4mnb0wwrSJpdnNve2kUFTLqqK3jGHA2p5idfUY39rVMrSo1owRXv5iZ8AauNJGjT/exec';
-  function abrir() {
+  /** comToque: aberto por um toque no botão (aí o navegador deixa tocar com som) */
+  function abrir(comToque) {
     if (document.body.classList.contains('abrindo')) return;
+    // o app carrega por trás enquanto a vinheta toca
     var f = document.createElement('iframe');
     f.src = APP_URL;
     f.title = 'MIRA';
     f.setAttribute('allow', 'camera; clipboard-read; clipboard-write; fullscreen');
     document.getElementById('app').appendChild(f);
     document.body.classList.add('abrindo');
+    vinheta(comToque === true);
+  }
+
+  function vinheta(comSom) {
+    var reduzir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduzir) return;
+    var ab = document.getElementById('abertura'), v = document.getElementById('ab-video'), som = document.getElementById('ab-som');
+    var fim = false;
+    var terminar = function () {
+      if (fim) return; fim = true;
+      ab.classList.add('saindo');
+      setTimeout(function () { try { v.pause(); } catch (e) {} ab.remove(); }, 500);
+    };
+    var mostrarSom = function () { som.textContent = v.muted ? 'Ativar som' : 'Sem som'; };
+    ab.hidden = false;
+    v.muted = !comSom;
+    mostrarSom();
+    var p = v.play();
+    if (p && p.catch) p.catch(function () {
+      // sem permissão para tocar com som: tenta sem som; se nem assim, segue direto para o app
+      v.muted = true; mostrarSom();
+      v.play().catch(terminar);
+    });
+    v.addEventListener('ended', terminar);
+    v.addEventListener('error', terminar);
+    document.getElementById('ab-pular').onclick = terminar;
+    som.onclick = function () { v.muted = !v.muted; mostrarSom(); if (v.paused) v.play().catch(function () {}); };
+    setTimeout(terminar, 12000); // garantia: nunca prende a entrada
   }
   var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if (instalado || /[?&]app=1/.test(location.search)) {
@@ -115,7 +163,7 @@
       b.className = 'principal';
     }
   }
-  document.getElementById('btn-abrir').onclick = abrir;
+  document.getElementById('btn-abrir').onclick = function () { abrir(true); };
 
   var pedido = null;
   window.addEventListener('beforeinstallprompt', function (e) {
