@@ -1782,13 +1782,16 @@ VIEWS.painel = function (m) {
     if (d.pedidosAcesso) pend.push(['ambar', d.pedidosAcesso, 'Pedidos de acesso', 'Alunos aguardando a sua aprovação', 'ped']);
     if (d.questoesPorStatus.VALIDADA) pend.push(['verde', d.questoesPorStatus.VALIDADA, 'Questões para aprovar', 'Já validadas pelos professores', 'val']);
     if (d.estrategiasPendentes) pend.push(['azul', d.estrategiasPendentes, 'Estratégias de estudo aguardando o OK', 'Sugestões feitas a partir dos relatórios, para os professores conferirem', 'est']);
+    var dc = adm ? diasDesdeCopia(d.ultimaCopia) : 0;
+    if (dc >= DIAS_COPIA) pend.push(['ambar', d.ultimaCopia ? dc + 'd' : '!', 'Cópia de segurança da semana',
+      d.ultimaCopia ? 'A última foi há ' + dc + ' dias. Baixe uma nova e guarde no seu computador.' : 'Você ainda não baixou nenhuma. Baixe e guarde no seu computador.', 'copia']);
     if (paraCurar) pend.push(['azul', paraCurar, 'Questões para a curadoria', d.questoesPorStatus.AJUSTE ?
       d.questoesPorStatus.AJUSTE + ' com ajuste pedido pelo professor' : 'Peça a curadoria e importe o resultado', 'q']);
     // a pendência principal vai no cartão de destaque; as outras, logo abaixo dele
     h += '<section class="destaque">' + (pend.length
       ? '<div class="destaque-pend"><span class="grande">' + pend[0][1] + '</span><div class="t"><span class="rot">' + icone('notificacoes') + 'Precisa de você</span>' +
         '<h2>' + esc(pend[0][2]) + '</h2><p>' + esc(pend[0][3]) + '</p></div>' +
-        '<button class="btn verde" data-pend="' + pend[0][4] + '">Revisar agora</button></div>' +
+        '<button class="btn verde" data-pend="' + pend[0][4] + '">' + (pend[0][4] === 'copia' ? 'Baixar agora' : 'Revisar agora') + '</button></div>' +
         (pend.length > 1 ? '<div class="outras">' + pend.slice(1).map(function (p) {
           return '<button data-pend="' + p[4] + '"><b>' + p[1] + '</b>' + esc(p[2]) + '</button>';
         }).join('') + '</div>' : '')
@@ -1823,7 +1826,8 @@ VIEWS.painel = function (m) {
     $$('[data-pend]').forEach(function (b) {
       b.onclick = function () {
         var k = b.getAttribute('data-pend');
-        if (k === 'ped') ir('usuarios');
+        if (k === 'copia') baixarCopia(b, function () { ir('painel'); });
+        else if (k === 'ped') ir('usuarios');
         else if (k === 'est') ir('estrategias');
         else if (k === 'val') ir('questoes', { status: 'VALIDADA' });
         else ir('questoes', { status: d.questoesPorStatus.PENDENTE ? 'PENDENTE' : 'AJUSTE' });
@@ -4319,6 +4323,7 @@ VIEWS.config = function (m) {
           '<p class="peq" style="margin-bottom:8px">Para o app ficar rápido, ele guarda uma cópia dos dados por até 15 minutos. ' +
           'Se você editar a planilha à mão, use o botão abaixo para o app ver a mudança na hora.</p>' +
           '<button class="btn" id="c-cache">Atualizar dados da planilha</button></div>') +
+      cartaoCopia(c) +
       (!window.MIRA_SUPABASE && c.supabase ? cartaoMudanca(c) : '') +
       '<div class="card"><h2>Padrão dos concursos</h2><p class="peq">Estrutura em uso para a EsPCEx:</p>' +
       conc('ESPCEX').provas.map(function (p) {
@@ -4329,6 +4334,7 @@ VIEWS.config = function (m) {
       var d = { chave: $('#c-chave').value, modelo: $('#c-mod').value, planoIa: $('#c-plano').checked, emailResponsavel: $('#c-email').checked };
       ocupado(this, 'Salvando…', function () { return call('salvarConfiguracao', d); }).then(function () { toast('Configurações salvas.'); ir('config'); }).catch(function () {});
     };
+    $('#c-copia').onclick = function () { baixarCopia(this, function () { ir('config'); }); };
     if (!window.MIRA_SUPABASE && c.supabase) ligarMudanca();
     if ($('#c-cache')) $('#c-cache').onclick = function () {
       ocupado(this, 'Atualizando…', function () { return call('limparCache'); }).then(function () { toast('Pronto: o app já está usando os dados atuais da planilha.'); }).catch(function () {});
@@ -4338,6 +4344,41 @@ VIEWS.config = function (m) {
     };
   });
 };
+
+/** Cópia de segurança: baixa todos os dados (sem senhas) num arquivo para guardar */
+var DIAS_COPIA = 7;
+function diasDesdeCopia(quando) {
+  if (!quando) return 999;
+  var p = String(quando).split(/[- :]/);
+  var t = new Date(+p[0], +p[1] - 1, +p[2]).getTime(), h = new Date(); h.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((h.getTime() - t) / 86400000));
+}
+function textoUltimaCopia(quando) {
+  if (!quando) return 'Você ainda não baixou nenhuma cópia.';
+  var dc = diasDesdeCopia(quando), p = String(quando).split(/[- ]/);
+  return 'Última cópia: ' + p[2] + '/' + p[1] + '/' + p[0] + (dc === 0 ? ' (hoje)' : dc === 1 ? ' (ontem)' : ' (há ' + dc + ' dias)') + '.';
+}
+function baixarCopia(btn, depois) {
+  ocupado(btn, 'Preparando…', function () { return call('copiaSeguranca'); }).then(function (c) {
+    var blob = new Blob([JSON.stringify(c, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a'), url = URL.createObjectURL(blob);
+    a.href = url; a.download = 'MIRA - copia de seguranca - ' + c.geradoEm.slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    var n = c.contagem || {};
+    toast('Cópia baixada: ' + (n.Usuarios || 0) + ' usuários, ' + (n.Questoes || 0) + ' questões, ' + (n.Resultados || 0) + ' cartões. Guarde o arquivo num lugar seguro.');
+    if (depois) depois(c);
+  }).catch(function () {});
+}
+function cartaoCopia(c) {
+  var dc = diasDesdeCopia(c.ultimaCopia);
+  return '<div class="card" id="copia"><h2>Cópia de segurança</h2>' +
+    '<p class="peq">Baixe uma vez por semana e guarde no seu computador ou num pen drive. O arquivo leva usuários, questões, simulados, resultados, estratégias e o histórico. ' +
+    '<b>As senhas não vão na cópia.</b></p>' +
+    '<p class="peq" id="copia-quando">' + tag({ OK: ['Em dia', 'verde'], ATR: ['Atrasada', 'ambar'] }, dc < DIAS_COPIA ? 'OK' : 'ATR') + ' ' + esc(textoUltimaCopia(c.ultimaCopia)) + '</p>' +
+    '<p class="mut peq">O arquivo tem dados pessoais dos alunos: não envie por e-mail nem deixe em computador compartilhado.</p>' +
+    '<button class="btn pri" id="c-copia">Baixar cópia de segurança</button></div>';
+}
 
 /** Configurações (no Google): copiar os dados para o Supabase e concluir a mudança */
 var MIRA_NOVO = 'https://caroljncastro.github.io/mira-app/';
