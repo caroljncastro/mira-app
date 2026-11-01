@@ -2786,7 +2786,7 @@ function excluirSimulado(s, depois) {
 
 VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
-  m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: gabarito comentado, resultados e mapa da turma',
+  m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: caderno de prova, gabarito comentado, resultados e mapa da turma',
     adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
   if (adm) $('#novo').onclick = function () { formSimulado(carregar); };
   var verArquivados = false;
@@ -2817,8 +2817,8 @@ VIEWS.simulados = function (m, p) {
           (adm && s.status === 'RASCUNHO' ? '<p class="mut peq" style="margin:0 0 12px">Em rascunho, os alunos ainda não veem este simulado. ' +
             'Mude para <b>Aberto</b> quando aplicar a prova: aí cada aluno envia a foto do cartão em <b>Meus simulados</b>.</p>' : '') +
           '<div class="sim-acoes">' +
-          (adm ? '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
-            '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
+          '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
+          (adm ? '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
           '<button class="btn peq" data-a="gabarito" data-i="' + i + '">Gabarito comentado</button>' +
           '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
           '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' +
@@ -2935,7 +2935,7 @@ function escolherVersao(s) {
     '<p class="peq" style="margin-top:0">Este simulado tem <b>' + s.versoes + ' versões</b>. Imprima a quantidade de cada uma conforme a distribuição dos cartões.</p>' +
     '<div class="versoes">' + Array.apply(null, Array(s.versoes)).map(function (x, i) {
       var n = i + 1, qtd = s.versoesPorAluno ? Object.keys(s.versoesPorAluno).filter(function (k) { return s.versoesPorAluno[k] === n; }).length : 0;
-      return '<button class="btn versao" data-v="' + n + '"><b>Versão ' + n + '</b><small>' + (qtd ? qtd + ' aluno(s) nos cartões gerados' : 'nenhum cartão gerado ainda') + '</small></button>';
+      return '<button class="btn versao" data-v="' + n + '"><b>Versão ' + n + '</b>' + (s.versoesPorAluno ? '<small>' + (qtd ? qtd + ' aluno(s) nos cartões gerados' : 'nenhum cartão gerado ainda') + '</small>' : '') + '</button>';
     }).join('') + '</div>');
   $$('[data-v]', md.el).forEach(function (b) { b.onclick = function () { md.fechar(); verImpresso(s, 'caderno', null, +b.getAttribute('data-v')); }; });
 }
