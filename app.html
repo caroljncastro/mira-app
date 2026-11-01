@@ -189,7 +189,7 @@
     nav.menu button.ativo { background: rgba(255, 255, 255, .16); color: #fff; box-shadow: none; }
     nav.menu button.ativo::before { left: 30%; right: 30%; top: auto; bottom: 2px; width: auto; height: 3px; border-radius: 3px; }
     main { padding: 18px 16px 120px; }
-    #toast { bottom: 104px; width: calc(100% - 32px); max-width: 420px; }
+    body #toast { bottom: calc(100px + env(safe-area-inset-bottom) / 2); width: calc(100% - 32px); max-width: 420px; } /* acima da barra de baixo */
     /* 16px nos campos: o iPhone não dá zoom ao tocar num campo */
     input, select, textarea, .diag .d-exp textarea, .diag .d-exp input { font-size: 16px; }
     #aviso-senha { padding: 0 16px; }
@@ -485,6 +485,62 @@
   .mis.feita .mis-pts { color: var(--n-400); background: var(--n-50); }
   .mis-fecho { margin: 8px 0 0; font-size: 13.5px; color: var(--n-700); font-weight: 600; }
   .mis-pe { margin-top: 8px; font-size: 12.5px; color: var(--n-400); }
+  /* tela Missões: disciplinas recolhidas e faixas coloridas (toque = cumprida) */
+  .mis-num b small { font-size: 15px; color: var(--n-500); font-weight: 600; }
+  .mis-semana { display: flex; gap: 5px; margin: 6px 0 4px; }
+  .mis-semana i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--n-300); }
+  .mis-semana i.on { background: var(--verde-marca); border-color: var(--verde-marca); }
+  .conq-estrela { font-size: 15px; line-height: 16px; width: 16px; text-align: center; }
+  .mis-dica { margin: 0 0 12px; }
+  .mis-discs { display: grid; gap: 10px; }
+  .mis-disc { border: 1px solid var(--n-200); border-radius: var(--r-card); background: #fff; overflow: hidden; }
+  .mis-disc.completa { background: var(--marca-50); border-color: var(--marca-100); }
+  .mis-disc-cab { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: 64px; background: transparent; border: 0;
+    font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .mis-disc-cab:disabled { cursor: default; color: inherit; opacity: 1; }
+  .mis-disc-cab:focus-visible { outline: 2px solid var(--marca-600); outline-offset: -2px; border-radius: var(--r-card); }
+  .mis-disc-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .mis-disc-lin { display: flex; align-items: baseline; gap: 8px; }
+  .mis-disc-lin b { font-size: 17px; font-weight: 600; }
+  .mis-disc-lin .mis-cont { margin-left: auto; }
+  .mis-disc.completa .mis-cont { color: var(--marca-700); }
+  .mis-disc .mis-mini { margin: 0; display: block; }
+  .mis-seta { flex: none; width: 10px; height: 10px; border: solid var(--n-500); border-width: 0 2.5px 2.5px 0; transform: rotate(-45deg); transition: transform .2s; margin-right: 4px; }
+  .mis-disc-cab[aria-expanded="true"] .mis-seta { transform: rotate(45deg); }
+  .mis-faixas { display: grid; gap: 10px; padding: 0 12px 12px; }
+  .mis-faixa { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 14px 12px 16px; border: 0;
+    border-radius: 16px; font: inherit; text-align: left; cursor: pointer; transition: transform .35s ease, opacity .35s ease; }
+  .mis-faixa.c0 { background: var(--marca-700); color: #fff; }
+  .mis-faixa.c1 { background: var(--acento-600); color: var(--n-900); }
+  .mis-faixa.c2 { background: var(--verde-marca); color: var(--n-900); }
+  .mis-faixa:hover { filter: brightness(1.05); }
+  .mis-faixa:active { transform: scale(.98); }
+  .mis-faixa:focus-visible { outline: 3px solid var(--marca-600); outline-offset: 2px; }
+  .mis-f-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .mis-f-txt small { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; opacity: .85; }
+  .mis-f-ok { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid currentColor; opacity: .55; display: grid; place-items: center; }
+  .mis-f-ok::after { content: ""; width: 6px; height: 12px; border: solid currentColor; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) translate(-1px, -1px); opacity: 0; }
+  .mis-faixa:hover .mis-f-ok { opacity: .9; }
+  .mis-f-pts { position: absolute; top: -8px; right: 10px; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: #fff; color: var(--marca-700);
+    box-shadow: 0 1px 3px rgba(40, 33, 47, .15); }
+  .mis-faixa.saindo { transform: translateX(24px); opacity: 0; }
+  .mis-faixa.saindo .mis-f-ok { opacity: 1; background: #fff; border-color: #fff; color: var(--marca-700); }
+  .mis-faixa.saindo .mis-f-ok::after { opacity: 1; }
+  .mis-faixas .mis-pe { margin: 2px 4px 0; }
+  .mis-hist { margin-top: 16px; }
+  .mis-hist > summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; list-style: none; }
+  .mis-hist > summary::-webkit-details-marker { display: none; }
+  .mis-hist > summary h2 { margin: 0; }
+  .mis-hist > summary h2::before { content: "▸"; display: inline-block; width: 18px; color: var(--n-400); transition: transform .15s; }
+  .mis-hist[open] > summary h2::before { transform: rotate(90deg); }
+  .mis-h-dia { margin: 16px 0 4px; font-size: 13px; font-weight: 700; color: var(--n-500); text-transform: uppercase; letter-spacing: .03em; }
+  .mis-h-lista { list-style: none; margin: 0; padding: 0; }
+  .mis-h-lista li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--n-100); }
+  .mis-h-ok { flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--marca-700); display: grid; place-items: center; }
+  .mis-h-ok::after { content: ""; width: 5px; height: 10px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) translate(-1px, -1px); }
+  .mis-h-txt { flex: 1; min-width: 0; font-size: 14px; line-height: 1.4; color: var(--n-700); }
+  .mis-h-txt small { display: block; font-size: 12px; font-weight: 600; color: var(--marca-600); }
+  .mis-h-desf { flex: none; border: 0; background: transparent; color: var(--marca-700); font: inherit; font-size: 13px; font-weight: 700; padding: 12px 6px; cursor: pointer; }
   .mis-quando { flex: none; font-size: 12px; color: var(--n-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); margin-bottom: 14px; }
   .mis-vazio .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
@@ -627,6 +683,9 @@
   #toast div { background: var(--n-900); color: #fff; padding: 11px 16px; border-radius: var(--r-ctl); box-shadow: var(--sombra-flut);
     max-width: min(90vw, 520px); font-size: 14px; }
   #toast div.erro { background: var(--erro); }
+  #toast div.com-acao { display: flex; align-items: center; gap: 14px; }
+  #toast div.com-acao span { flex: 1; }
+  #toast div.com-acao button { flex: none; border: 0; background: transparent; color: var(--verde-marca); font: inherit; font-weight: 700; padding: 6px 4px; cursor: pointer; }
   .carregando { display: flex; align-items: center; gap: 10px; color: var(--n-500); padding: 20px 4px; }
   .giro { width: 18px; height: 18px; border: 2.5px solid var(--n-200); border-top-color: var(--marca-600); border-radius: 50%;
     animation: giro .8s linear infinite; flex: none; }
@@ -1155,12 +1214,19 @@ function formulasNoImpresso(f) {
   } catch (e) { }
 }
 
-function toast(msg, erro) {
+/** Aviso rápido. acao (opcional): { rotulo, fn } vira um botão no aviso (ex.: Desfazer), que fica 6 segundos. */
+function toast(msg, erro, acao) {
   var d = document.createElement('div');
   if (erro) d.className = 'erro';
-  d.textContent = msg;
+  var t = document.createElement('span'); t.textContent = msg; d.appendChild(t);
+  if (acao) {
+    d.className += ' com-acao';
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = acao.rotulo;
+    b.onclick = function () { d.remove(); acao.fn(); };
+    d.appendChild(b);
+  }
   $('#toast').appendChild(d);
-  setTimeout(function () { d.remove(); }, erro ? 7000 : 4000);
+  setTimeout(function () { d.remove(); }, erro ? 7000 : acao ? 6000 : 4000);
 }
 function msgErro(e) { return String((e && e.message) || e).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, ''); }
 
@@ -1516,6 +1582,16 @@ function ligarBusca() {
   box.addEventListener('focusin', function () { if (!Object.keys(GUARDADO).length) fontes = null; });
 }
 
+/** O aluno abriu Missões: as estratégias que estão lá deixam de contar como novas no sino (neste aparelho) */
+function marcarEstrategiasVistas(es) {
+  var chave = 'mira_vistas_' + S.user.id;
+  try {
+    var v = JSON.parse(localStorage.getItem(chave) || '[]');
+    es.forEach(function (e) { if (v.indexOf(e.id) < 0) v.push(e.id); });
+    localStorage.setItem(chave, JSON.stringify(v));
+  } catch (e) { }
+  atualizarSino();
+}
 /** Sino: pendências do perfil. Aluno: estratégias já vistas não contam (guardadas neste aparelho). */
 function atualizarSino() {
   var box = $('#sino'); if (!box) return;
@@ -1523,7 +1599,7 @@ function atualizarSino() {
   try { (JSON.parse(localStorage.getItem(chaveVistas) || '[]')).forEach(function (id) { vistas[id] = 1; }); } catch (e) { }
   call('notificacoes').then(function (itens) {
     itens = itens.map(function (it) {
-      if (it.ids) { var novas = it.ids.filter(function (id) { return !vistas[id]; }); it.n = novas.length; it.titulo = it.n === 1 ? 'Estratégia nova dos seus professores' : 'Estratégias novas dos seus professores'; }
+      if (it.ids) { var novas = it.ids.filter(function (id) { return !vistas[id]; }); it.n = novas.length; it.titulo = it.n === 1 ? 'Missões novas de 1 disciplina' : 'Missões novas de ' + it.n + ' disciplinas'; }
       return it;
     }).filter(function (it) { return it.n > 0; });
     var total = itens.reduce(function (a, it) { return a + it.n; }, 0);
@@ -2983,7 +3059,8 @@ function blocoEstrategia(e, interno, selecionavel) {
 }
 
 // ---------------------------------------------------------------- missões (estratégias aprovadas, para o aluno)
-var PONTOS_MISSAO = 10, BONUS_ESTRATEGIA = 25, PONTOS_NIVEL = 100;
+// pontos: o toque vale pouco; o que vale mais é o que o simulado comprova (estrelas no edital)
+var PONTOS_MISSAO = 5, BONUS_ESTRATEGIA = 10, PONTOS_ESTRELA = 20, PONTOS_NIVEL = 100, META_SEMANA = 3;
 var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
 
 function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
@@ -2991,8 +3068,18 @@ function hojeIso(desloc) {
   var d = new Date(Date.now() - (desloc || 0) * 864e5 - 3 * 36e5); // horário de Brasília
   return d.toISOString().slice(0, 10);
 }
-/** Pontos, nível, sequência de dias e conquistas, a partir de todas as estratégias aprovadas do aluno */
-function placarMissoes(todas, atuais) {
+/** Segunda-feira (AAAA-MM-DD) da semana de um dia */
+function semanaDe(dia) {
+  var d = new Date(dia + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);
+  return d.toISOString().slice(0, 10);
+}
+/**
+ * Pontos, nível, meta da semana e conquistas.
+ * todas = estratégias aprovadas do aluno; rs = resultados (para as estrelas do edital).
+ * Meta da semana: cumprir missões em META_SEMANA dias da semana (segunda a domingo), sem castigo por um dia perdido.
+ */
+function placarMissoes(todas, rs) {
   var feitas = 0, total = 0, completas = 0, dias = {};
   todas.forEach(function (e) {
     var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; });
@@ -3000,27 +3087,27 @@ function placarMissoes(todas, atuais) {
     if (ms.length && f.length === ms.length) completas++;
     f.forEach(function (x) { dias[diaDe(x.feitaEm)] = 1; });
   });
-  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA;
+  var ed = estadoEdital(rs || []);
+  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA;
   var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
-  // sequência: dias seguidos com missão, terminando hoje (ou ontem, se hoje ainda não teve)
-  var seq = 0, i = dias[hojeIso(0)] ? 0 : 1;
-  while (dias[hojeIso(i)]) { seq++; i++; }
-  var lista = Object.keys(dias).sort(), maior = 0, corr = 0, ant = null;
-  lista.forEach(function (d) {
-    corr = ant && (new Date(d) - new Date(ant)) === 864e5 ? corr + 1 : 1; ant = d; if (corr > maior) maior = corr;
-  });
-  var atuaisMs = [].concat.apply([], (atuais || []).map(function (e) { return e.missoes || []; }));
-  var emDia = atuaisMs.length && atuaisMs.every(function (x) { return x.feitaEm; });
+  var porSemana = {};
+  Object.keys(dias).forEach(function (d) { var k = semanaDe(d); porSemana[k] = (porSemana[k] || 0) + 1; });
+  var estaSemana = porSemana[semanaDe(hojeIso(0))] || 0;
+  var semanasNaMeta = Object.keys(porSemana).filter(function (k) { return porSemana[k] >= META_SEMANA; }).length;
   return {
     pontos: pontos, nivel: nivel, nomeNivel: NIVEIS[Math.min(nivel, NIVEIS.length) - 1],
-    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas, sequencia: seq,
+    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas,
+    semana: Math.min(estaSemana, META_SEMANA), metaOk: estaSemana >= META_SEMANA, semanasNaMeta: semanasNaMeta,
+    estrelas: ed.estrelas, dominando: ed.dominando,
     conquistas: [
       ['foco', 'Primeira missão', 'Cumpra sua primeira missão', feitas >= 1],
       ['tarefas', '10 missões', 'Cumpra 10 missões', feitas >= 10],
       ['conquista', 'Disciplina completa', 'Cumpra todas as missões de uma disciplina', completas >= 1],
-      ['tempo', '3 dias seguidos', 'Cumpra missões em 3 dias seguidos', maior >= 3],
-      ['calendario', 'Semana no foco', 'Cumpra missões em 7 dias seguidos', maior >= 7],
-      ['evolucao', 'Tudo em dia', 'Cumpra todas as missões atuais', !!emDia]
+      ['calendario', 'Meta da semana', 'Cumpra missões em ' + META_SEMANA + ' dias de uma semana', semanasNaMeta >= 1],
+      ['tempo', '4 semanas na meta', 'Bata a meta da semana 4 vezes', semanasNaMeta >= 4],
+      ['estrela', 'Primeira estrela', 'Acerte todas as questões de um tema num simulado', ed.estrelas >= 1],
+      ['estrela', '10 estrelas', 'Junte 10 estrelas no edital', ed.estrelas >= 10],
+      ['aprendizagem', 'Dominando 5 temas', 'Fique como Dominando em 5 temas do edital', ed.dominando >= 5]
     ]
   };
 }
@@ -3041,26 +3128,76 @@ function grupoMissoes(e) {
     (e.fecho && !completa ? '<p class="mis-fecho">' + esc(e.fecho) + '</p>' : '') +
     '<div class="mis-pe">' + (e.professorNome ? 'Preparada por ' + esc(e.professorNome) : '') + (e.simulado ? (e.professorNome ? ' · ' : '') + esc(e.simulado) : '') + '</div></div>';
 }
-function painelMissoes(todas, atuais) {
-  if (!atuais.length) return '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui. ' +
-    'Cada missão cumprida vale pontos e conquistas.</p>';
-  var p = placarMissoes(todas, atuais);
+/** Placar da tela Missões: nível, meta da semana, estrelas e conquistas */
+function placarHtml(p) {
+  var bolinhas = '';
+  for (var i = 0; i < META_SEMANA; i++) bolinhas += '<i class="' + (i < p.semana ? 'on' : '') + '"></i>';
   return '<div class="mis-placar">' +
     '<div class="mis-nivel"><span class="mis-selo"><b>' + p.nivel + '</b><small>nível</small></span><div><b>' + esc(p.nomeNivel) + '</b>' +
     '<div class="mis-xp" role="progressbar" aria-valuenow="' + p.noNivel + '" aria-valuemin="0" aria-valuemax="' + PONTOS_NIVEL + '" aria-label="Pontos no nível"><i style="width:' + p.noNivel + '%"></i></div>' +
     '<span class="mis-falta">' + p.pontos + ' pontos · faltam ' + (PONTOS_NIVEL - p.noNivel) + ' para o nível ' + (p.nivel + 1) + '</span></div></div>' +
-    '<div class="mis-num">' + icone('tempo') + '<b>' + p.sequencia + '</b><span>' + (p.sequencia === 1 ? 'dia seguido' : 'dias seguidos') + '</span></div>' +
-    '<div class="mis-num">' + icone('tarefas') + '<b>' + p.feitas + '</b><span>' + (p.feitas === 1 ? 'missão cumprida' : 'missões cumpridas') + '</span></div></div>' +
+    '<div class="mis-num">' + icone('calendario') + '<b>' + p.semana + '<small> de ' + META_SEMANA + '</small></b>' +
+    '<span class="mis-semana" role="img" aria-label="Meta da semana: ' + p.semana + ' de ' + META_SEMANA + ' dias">' + bolinhas + '</span>' +
+    '<span>' + (p.metaOk ? 'Meta da semana batida!' : 'dias com missão nesta semana') + '</span></div>' +
+    '<div class="mis-num"><span class="ed-ic-estrela" aria-hidden="true">★</span><b>' + p.estrelas + '</b><span>' + (p.estrelas === 1 ? 'estrela no edital' : 'estrelas no edital') + '</span></div></div>' +
     '<div class="mis-conq" aria-label="Conquistas">' + p.conquistas.map(function (c) {
-      return '<span class="conq' + (c[3] ? ' ok' : '') + '" title="' + esc(c[2]) + '">' + icone(c[0]) + '<span>' + esc(c[1]) + '</span></span>';
+      return '<span class="conq' + (c[3] ? ' ok' : '') + '" title="' + esc(c[2]) + '">' +
+        (c[0] === 'estrela' ? '<span class="conq-estrela" aria-hidden="true">★</span>' : icone(c[0])) + '<span>' + esc(c[1]) + '</span></span>';
     }).join('') + '</div>' +
-    '<p class="mis-regras mut peq">Cada missão vale ' + PONTOS_MISSAO + ' pontos. Cumpriu todas de uma disciplina? Ganha mais ' + BONUS_ESTRATEGIA + '. A cada ' + PONTOS_NIVEL + ' pontos, você sobe de nível.</p>' +
-    (function () {
-      var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
-      var feitas = atuais.filter(function (e) { return pend.indexOf(e) < 0; });
-      return (pend.length ? '' : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>As próximas chegam com o próximo simulado.</span></div></div>') +
-        '<div class="mis-grupos">' + pend.concat(feitas).map(grupoMissoes).join('') + '</div>';
-    })();
+    '<p class="mis-regras mut peq">Missão: +' + PONTOS_MISSAO + ' · Disciplina completa: +' + BONUS_ESTRATEGIA + ' · Cada ★ do edital: +' + PONTOS_ESTRELA +
+    ' (vem do simulado). Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
+}
+
+var MIS_ABERTA = null; // disciplina aberta na tela Missões (uma por vez)
+/** Disciplinas recolhidas, cada uma com as missões que faltam em faixas coloridas (toque = cumprida) */
+function listaMissoes(atuais) {
+  var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
+  if (!atuais.length) return '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui.</p>';
+  if (MIS_ABERTA === null || !pend.some(function (e) { return e.disciplina === MIS_ABERTA; })) MIS_ABERTA = pend.length ? pend[0].disciplina : '';
+  var cor = 0;
+  return (pend.length ? '<p class="mut peq mis-dica">Toque numa disciplina para ver as missões. Cumpriu? Toque na missão.</p>'
+      : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>As próximas chegam com o próximo simulado. O sino avisa.</span></div></div>') +
+    '<div class="mis-discs">' + atuais.map(function (e) {
+      var ms = e.missoes || [], faltam = ms.filter(function (x) { return !x.feitaEm; }), f = ms.length - faltam.length;
+      var pct = ms.length ? Math.round(100 * f / ms.length) : 0, completa = !faltam.length, aberta = !completa && MIS_ABERTA === e.disciplina;
+      return '<section class="mis-disc' + (completa ? ' completa' : '') + '" data-id="' + esc(e.id) + '">' +
+        '<button type="button" class="mis-disc-cab" data-disc="' + esc(e.disciplina) + '" aria-expanded="' + (aberta ? 'true' : 'false') + '"' + (completa ? ' disabled' : '') + '>' +
+        '<span class="mis-disc-txt"><span class="mis-disc-lin"><b>' + esc(e.disciplina) + '</b><span class="mis-cont">' +
+        (completa ? icone('conquista') + 'Completa' : f + ' de ' + ms.length) + '</span></span>' +
+        '<span class="mis-mini"><i style="width:' + pct + '%"></i></span></span>' +
+        (completa ? '' : '<span class="mis-seta" aria-hidden="true"></span>') + '</button>' +
+        (aberta ? '<div class="mis-faixas">' + faltam.map(function (x) {
+          var c = cor++ % 3;
+          return '<button type="button" class="mis-faixa c' + c + '" data-chave="' + esc(x.chave) + '" aria-label="Cumprir missão: ' + esc(x.texto) + '">' +
+            '<span class="mis-f-txt">' + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + '<span>' + esc(x.texto) + '</span></span>' +
+            '<span class="mis-f-ok" aria-hidden="true"></span><span class="mis-f-pts">+' + PONTOS_MISSAO + '</span></button>';
+        }).join('') + (e.professorNome ? '<p class="mis-pe">Preparadas por ' + esc(e.professorNome) + (e.simulado ? ' · ' + esc(e.simulado) : '') + '</p>' : '') + '</div>' : '') +
+        '</section>';
+    }).join('') + '</div>';
+}
+
+/** Histórico: todas as missões cumpridas, da mais recente para a mais antiga, por dia */
+function historicoMissoes(todas) {
+  var itens = [];
+  todas.forEach(function (e) {
+    (e.missoes || []).forEach(function (x) { if (x.feitaEm) itens.push({ e: e, x: x }); });
+  });
+  if (!itens.length) return '';
+  itens.sort(function (a, b) { return a.x.feitaEm < b.x.feitaEm ? 1 : -1; });
+  var hoje = hojeIso(0), ontem = hojeIso(1), dia = '', h = '';
+  itens.forEach(function (it) {
+    var d = diaDe(it.x.feitaEm);
+    if (d !== dia) {
+      if (dia) h += '</ul>';
+      dia = d;
+      h += '<h3 class="mis-h-dia">' + (d === hoje ? 'Hoje' : d === ontem ? 'Ontem' : dataBr(d)) + '</h3><ul class="mis-h-lista">';
+    }
+    h += '<li data-id="' + esc(it.e.id) + '"><span class="mis-h-ok" aria-hidden="true"></span><span class="mis-h-txt"><small>' + esc(it.e.disciplina) +
+      (it.x.rotulo ? ' · ' + esc(it.x.rotulo) : '') + '</small>' + esc(it.x.texto) + '</span>' +
+      '<button type="button" class="mis-h-desf" data-chave="' + esc(it.x.chave) + '" aria-label="Desfazer: ' + esc(it.x.texto) + '">Desfazer</button></li>';
+  });
+  return '<details class="card mis-hist"><summary><h2>Histórico de missões</h2><span class="mut peq">' + itens.length +
+    (itens.length === 1 ? ' cumprida' : ' cumpridas') + '</span></summary>' + h + '</ul></details>';
 }
 
 // ---------------------------------------------------------------- edital (o que o aluno já estudou e o que já domina)
@@ -3154,40 +3291,87 @@ function ligarEdital(raiz, rs) {
     };
   });
 }
-/** Liga as caixinhas. todas = todas as estratégias aprovadas (para o placar); atuais = as que aparecem (painel). */
-function ligarMissoes(raiz, todas, atuais) {
+/** Marca (ou desmarca) uma missão: atualiza na hora e confere com o servidor. Devolve a promessa. */
+function marcarMissaoAluno(e, mi, feita, aoErrar) {
+  var antes = mi.feitaEm, vez = mi._vez = (mi._vez || 0) + 1; // só a última resposta vale (cumprir e desfazer rápido)
+  mi.feitaEm = feita ? (mi.feitaEm || hojeIso(0) + ' ' + new Date(Date.now() - 3 * 36e5).toISOString().slice(11, 16)) : '';
+  return call('marcarMissao', { id: e.id, chave: mi.chave, feita: feita }).then(function (r) {
+    if (mi._vez === vez) mi.feitaEm = r.feitas[mi.chave] || '';
+  }).catch(function (err) { if (mi._vez !== vez) return; mi.feitaEm = antes; if (aoErrar) aoErrar(); toast(msgErro(err), true); });
+}
+function acharMissao(todas, id, chave) {
+  var e = todas.filter(function (x) { return x.id === id; })[0];
+  return { e: e, mi: e && (e.missoes || []).filter(function (x) { return x.chave === chave; })[0] };
+}
+/** Caixinhas das missões no relatório */
+function ligarMissoes(raiz, todas) {
   if (!raiz) return;
-  var noPainel = !!atuais;
   $$('.mis input[type=checkbox]', raiz).forEach(function (cx) {
     cx.onchange = function () {
-      var grupo = cx.closest('.mis-grupo'), id = grupo.getAttribute('data-id'), chave = cx.getAttribute('data-chave');
-      var e = todas.filter(function (x) { return x.id === id; })[0];
-      var mi = e && (e.missoes || []).filter(function (x) { return x.chave === chave; })[0];
-      if (!mi) return;
-      var antes = placarMissoes(todas, atuais), feitaAntes = mi.feitaEm;
-      mi.feitaEm = cx.checked ? (mi.feitaEm || hojeIso(0) + ' 00:00') : '';
-      var depois = placarMissoes(todas, atuais);
-      var desenhar = function () {
-        if (noPainel) {
-          var y = window.scrollY;
-          raiz.innerHTML = painelMissoes(todas, atuais); ligarMissoes(raiz, todas, atuais);
-          window.scrollTo(0, y);
-        } else { grupo.outerHTML = grupoMissoes(e); ligarMissoes(raiz, todas); }
-      };
+      var grupo = cx.closest('.mis-grupo'), a = acharMissao(todas, grupo.getAttribute('data-id'), cx.getAttribute('data-chave'));
+      if (!a.mi) return;
+      var desenhar = function () { grupo.outerHTML = grupoMissoes(a.e); ligarMissoes(raiz, todas); };
+      marcarMissaoAluno(a.e, a.mi, cx.checked, desenhar);
       desenhar();
-      if (cx.checked) {
-        var ms = e.missoes, completa = ms.every(function (x) { return x.feitaEm; });
-        toast(depois.nivel > antes.nivel ? 'Você subiu para o nível ' + depois.nivel + ': ' + depois.nomeNivel + '!'
-          : completa ? 'Todas as missões de ' + e.disciplina + ' cumpridas! +' + (PONTOS_MISSAO + BONUS_ESTRATEGIA) + ' pontos'
-            : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos');
-      }
-      call('marcarMissao', { id: id, chave: chave, feita: cx.checked }).then(function (r) {
-        mi.feitaEm = r.feitas[chave] || '';
-      }).catch(function (err) {
-        mi.feitaEm = feitaAntes; desenhar(); toast(msgErro(err), true);
-      });
+      if (cx.checked) toast('Missão cumprida! +' + PONTOS_MISSAO + ' pontos');
     };
   });
+}
+
+/** Tela Missões: abre/fecha disciplinas, toque na faixa cumpre (com Desfazer), histórico desfaz */
+function ligarTelaMissoes(m, es, rs) {
+  var atuais = estrategiasAtuais(es);
+  var desenhar = function () {
+    var y = window.scrollY, histAberto = !!$('.mis-hist[open]', m);
+    $('#mis-placar', m).innerHTML = placarHtml(placarMissoes(es, rs));
+    $('#mis-lista', m).innerHTML = listaMissoes(atuais);
+    $('#mis-hist', m).innerHTML = historicoMissoes(es);
+    if (histAberto && $('.mis-hist', m)) $('.mis-hist', m).open = true;
+    window.scrollTo(0, y);
+    ligar();
+  };
+  var cumprir = function (a, botao) {
+    var antes = placarMissoes(es, rs);
+    var completaAntes = (a.e.missoes || []).every(function (x) { return x.feitaEm; });
+    var feito = function () {
+      marcarMissaoAluno(a.e, a.mi, true, desenhar);
+      var depois = placarMissoes(es, rs), completa = !completaAntes && a.e.missoes.every(function (x) { return x.feitaEm; });
+      desenhar();
+      toast(depois.nivel > antes.nivel ? 'Você subiu para o nível ' + depois.nivel + ': ' + depois.nomeNivel + '!'
+        : completa ? 'Todas as missões de ' + a.e.disciplina + ' cumpridas! +' + (PONTOS_MISSAO + BONUS_ESTRATEGIA) + ' pontos'
+          : depois.metaOk && !antes.metaOk ? 'Meta da semana batida! Missão cumprida, +' + PONTOS_MISSAO + ' pontos'
+            : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos', false,
+        { rotulo: 'Desfazer', fn: function () { marcarMissaoAluno(a.e, a.mi, false, desenhar); desenhar(); } });
+    };
+    if (botao && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { botao.classList.add('saindo'); setTimeout(feito, 380); }
+    else feito();
+  };
+  var ligar = function () {
+    $$('.mis-disc-cab', m).forEach(function (b) {
+      b.onclick = function () {
+        var d = b.getAttribute('data-disc');
+        MIS_ABERTA = MIS_ABERTA === d ? '' : d;
+        desenhar();
+      };
+    });
+    $$('.mis-faixa', m).forEach(function (b) {
+      b.onclick = function () {
+        if (b.classList.contains('saindo')) return;
+        var a = acharMissao(es, b.closest('.mis-disc').getAttribute('data-id'), b.getAttribute('data-chave'));
+        if (a.mi && !a.mi.feitaEm) cumprir(a, b);
+      };
+    });
+    $$('.mis-h-desf', m).forEach(function (b) {
+      b.onclick = function () {
+        var a = acharMissao(es, b.closest('li').getAttribute('data-id'), b.getAttribute('data-chave'));
+        if (!a.mi) return;
+        marcarMissaoAluno(a.e, a.mi, false, desenhar);
+        desenhar();
+        toast('Missão de volta para a lista.');
+      };
+    });
+  };
+  desenhar();
 }
 
 /** Liga os botões de OK/edição dentro de raiz. aoMudar() recarrega a tela. */
@@ -3494,7 +3678,7 @@ VIEWS.painelAluno = function (m) {
       .replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir="missoes"');
 
     // missões: placar curto e as próximas três
-    var p = placarMissoes(es, atuais), pend = [];
+    var p = placarMissoes(es, rs), pend = [];
     atuais.forEach(function (e) { (e.missoes || []).forEach(function (x) { if (!x.feitaEm) pend.push({ d: e.disciplina, t: x.texto }); }); });
     var cardMis = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('tarefas') + 'Missões</h2>' +
       (atuais.length ? '<span class="mut peq">Nível ' + p.nivel + ' · ' + p.pontos + ' pontos</span>' : '') + '</div>' +
@@ -3522,14 +3706,15 @@ VIEWS.painelAluno = function (m) {
   });
 };
 
-/** Missões: placar, conquistas e a lista para marcar */
+/** Missões: placar (nível, meta da semana, estrelas, conquistas), disciplinas recolhidas e histórico */
 VIEWS.missoes = function (m) {
   carregando(m);
-  return call('listarEstrategias', { status: 'APROVADA' }).then(function (es) {
-    var atuais = estrategiasAtuais(es);
-    m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, marque e ganhe pontos.') +
-      '<div class="card missoes" id="pa-est">' + painelMissoes(es, atuais) + '</div>';
-    ligarMissoes($('#pa-est'), es, atuais);
+  return Promise.all([call('listarEstrategias', { status: 'APROVADA' }), call('resultados')]).then(function (r) {
+    var es = r[0], rs = r[1];
+    marcarEstrategiasVistas(es);
+    m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, toque e ganhe pontos.') +
+      '<div class="card missoes"><div id="mis-placar"></div></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div>';
+    ligarTelaMissoes(m, es, rs);
   });
 };
 
