@@ -48,16 +48,17 @@
     --sombra-jan: 0 24px 60px rgba(40, 33, 47, .22), 0 2px 6px rgba(40, 33, 47, .08);
     --sombra-flut: 0 10px 28px rgba(40, 33, 47, .16);
 
-    /* nomes antigos, usados em estilos embutidos nas telas */
-    --azul: var(--marca-700); --azul-2: var(--marca-600); --azul-claro: var(--marca-100);
-    --ferrete: var(--marca-700); --tinta: var(--marca-600); --garanca: var(--acento-600);
-    --verm: var(--erro); --verm-claro: var(--erro-bg);
-    --verde: var(--ok); --verde-claro: var(--ok-bg);
-    --ambar: var(--alerta); --ambar-claro: var(--alerta-bg);
-    --bg: var(--n-50); --papel: var(--n-50); --card: #fff;
-    --txt: var(--n-900); --grafite: var(--n-900); --mut: var(--n-500); --nevoa: var(--n-500);
-    --borda: var(--n-200); --linha: var(--n-200);
-    --raio: var(--r-card); --raio-ctl: var(--r-ctl); --sombra: none;
+    /* contornos e variações das cores (mesmos valores que já estavam espalhados no CSS) */
+    --marca-950: #3D1960;          /* miolo do anel da nota, no cartão de destaque */
+    --marca-borda: #DDD0EB;        /* contorno do aviso roxo */
+    --marca-tracejado: #CDBDE0;    /* contorno tracejado do "Seu próximo passo" */
+    --verde-marca-escuro: #8BBE48; /* botão verde da marca ao passar o mouse */
+    --ok-escuro: #116632;          /* botão de sucesso ao passar o mouse */
+    --ok-borda: #9BD3B0;           /* contorno da alternativa certa */
+    --ok-borda-clara: #BFE3CC;     /* contorno do aviso verde */
+    --alerta-borda: #F4D9A6;       /* contorno do aviso âmbar */
+    --erro-borda: #F3C2C2;         /* contorno do aviso vermelho */
+    --erro-contorno: #E7B4B6;      /* contorno do botão de perigo */
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--n-50); color: var(--n-900); font-family: var(--fonte);
@@ -210,7 +211,7 @@
   .grade { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
   .grade-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
   .kpi { padding: 18px 20px; background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); box-shadow: var(--sombra-card); }
-  .kpi .chip { width: 36px; height: 36px; border-radius: 12px; background: var(--marca-100); display: grid; place-items: center; margin-bottom: 12px; }
+  .kpi .chip { width: 36px; height: 36px; border-radius: var(--r-ctl); background: var(--marca-100); display: grid; place-items: center; margin-bottom: 12px; }
   .kpi .chip .ic { width: 20px; height: 20px; }
   .kpi small { color: var(--n-500); font-size: 13px; }
   .kpi b { display: block; font-family: var(--estreita); font-size: 36px; font-weight: 700; line-height: 1.1; color: var(--n-900); margin-top: 4px; font-variant-numeric: tabular-nums; }
@@ -221,7 +222,7 @@
   .btn:hover { background: var(--n-100); }
   .btn.pri { background: var(--marca-700); border-color: var(--marca-700); color: #fff; box-shadow: var(--sombra-botao); }
   .btn.verde { background: var(--verde-marca); border-color: var(--verde-marca); color: var(--n-900); }
-  .btn.verde:hover { background: #8BBE48; }
+  .btn.verde:hover { background: var(--verde-marca-escuro); }
   .btn.pri:hover { background: var(--marca-900); border-color: var(--marca-900); }
   .foto-cartao { display: block; width: 100%; height: auto; border-radius: var(--r-ctl); border: 1px solid var(--n-200); background: #fff; }
   .previa { border: 1px dashed var(--n-300); border-radius: var(--r-ctl); padding: 12px 14px; background: var(--n-50); font-size: 14.5px; line-height: 1.55; }
@@ -233,10 +234,10 @@
     background: #fff; font-size: 14px; cursor: pointer; }
   .origem-op:has(input:checked) { border-color: var(--marca-600); background: var(--marca-50); color: var(--marca-700); font-weight: 600; }
   .origem-op input { margin: 0; accent-color: var(--marca-700); }
-  .btn.perigo { color: var(--erro); border-color: #E7B4B6; }
+  .btn.perigo { color: var(--erro); border-color: var(--erro-contorno); }
   .btn.perigo:hover { background: var(--erro-bg); }
   .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
-  .btn.ok:hover { background: #116632; }
+  .btn.ok:hover { background: var(--ok-escuro); }
   .btn.peq { min-height: 32px; padding: 4px 11px; font-size: 13px; }
   .btn.disc { border-color: transparent; background: transparent; color: var(--marca-600); }
   .btn.disc:hover { background: var(--marca-50); }
@@ -286,20 +287,6 @@
   .barra .enche { height: 100%; border-radius: 999px; }
   .barra .v { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--n-700); }
 
-  /* pendências (painel) */
-  .pendencias { padding: 6px 0; }
-  .pendencias > h2 { padding: 14px 20px 4px; margin: 0; }
-  .pend { display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-top: 1px solid var(--n-200); }
-  .pendencias > h2 + .pend { border-top: 0; }
-  .pend .n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none;
-    font-family: var(--estreita); font-weight: 700; font-size: 16px; }
-  .pend .n.ambar { background: var(--alerta-bg); color: var(--alerta); }
-  .pend .n.azul { background: var(--marca-100); color: var(--marca-700); }
-  .pend .n.verde { background: var(--ok-bg); color: var(--ok); }
-  .pend .t { flex: 1; min-width: 0; }
-  .pend .t b { display: block; font-weight: 600; }
-  .pend .t span { color: var(--n-500); font-size: 13.5px; }
-  .pend-ok { padding: 16px 20px; color: var(--n-500); }
   .sit-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
   .sit { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0;
     border-bottom: 1px solid var(--n-200); text-decoration: none; color: inherit; }
@@ -318,11 +305,11 @@
   .q-trecho { color: var(--n-700); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .enun { white-space: pre-wrap; }
   .alts div { padding: 8px 12px; border-radius: var(--r-ctl); margin: 6px 0; border: 1px solid var(--n-200); }
-  .alts .certa { background: var(--ok-bg); border-color: #9BD3B0; font-weight: 600; }
+  .alts .certa { background: var(--ok-bg); border-color: var(--ok-borda); font-weight: 600; }
   .alts .prof { box-shadow: inset 3px 0 0 var(--alerta); }
   .alt-marca { float: right; margin-left: 10px; font-size: 12px; font-weight: 600; color: var(--ok); }
   .gab-badge { display: inline-flex; align-items: baseline; gap: 8px; margin: 2px 0 14px; padding: 6px 12px; border-radius: var(--r-ctl);
-    background: var(--ok-bg); color: var(--ok); font-size: 14px; border: 1px solid #9BD3B0; }
+    background: var(--ok-bg); color: var(--ok); font-size: 14px; border: 1px solid var(--ok-borda); }
   .gab-badge b { font-family: var(--estreita); font-size: 20px; line-height: 1; }
   .gab-badge span { font-size: 12.5px; color: var(--n-500); }
   .tag.gab { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
@@ -336,7 +323,7 @@
   .alt-lin { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; border-radius: var(--r-ctl); padding: 3px; }
   .alt-gab { display: flex; align-items: center; gap: 4px; padding: 9px 4px 0; font-weight: 600; cursor: pointer; }
   .alt-ok { display: none; flex: none; align-self: center; font-size: 12px; font-weight: 600; color: var(--ok); }
-  .alt-lin.gab-on { background: var(--ok-bg); box-shadow: 0 0 0 1px #9BD3B0; }
+  .alt-lin.gab-on { background: var(--ok-bg); box-shadow: 0 0 0 1px var(--ok-borda); }
   .alt-lin.gab-on .alt-ok { display: inline-block; }
   .alt-lin.gab-on .alt-gab { color: var(--ok); }
 
@@ -384,7 +371,7 @@
   .diag .d-exp p { margin: 0 0 4px; }
   .diag .d-exp ul { margin: 0 0 4px; padding-left: 18px; }
   .diag .d-exp textarea, .diag .d-exp input { font-size: 13px; margin-bottom: 6px; }
-  .diag.certa { border-color: #9BD3B0; }
+  .diag.certa { border-color: var(--ok-borda); }
   .diag.certa .d-alt, .diag.certa .d-exp { background: var(--ok-bg); }
   .diag.certa .d-exp { color: var(--ok); font-weight: 600; }
   .diag.mudou .d-alt { box-shadow: inset 3px 0 0 var(--marca-600); }
@@ -421,11 +408,6 @@
   .foto-prev { max-width: 100%; max-height: 360px; border-radius: var(--r-ctl); border: 1px solid var(--n-200); display: block; margin: 12px 0; }
 
   /* relatório */
-  .nota-grande { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
-  .anel { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-  .anel > div { width: 94px; height: 94px; border-radius: 50%; background: #fff; display: grid; place-items: center; text-align: center; }
-  .anel b { font-family: var(--estreita); font-size: 28px; color: var(--n-900); display: block; line-height: 1; }
-  .anel small { font-size: 12px; color: var(--n-500); }
   .def { border: 1px solid var(--n-200); border-left: 3px solid var(--erro); padding: 12px 16px; background: #fff;
     border-radius: 0 var(--r-ctl) var(--r-ctl) 0; margin-bottom: 10px; }
   .def h3 { font-size: 15px; margin-bottom: 4px; }
@@ -433,10 +415,7 @@
   .plano h4 { margin: 14px 0 4px; color: var(--n-900); font-size: 15px; font-weight: 600; }
   .plano ul { margin: 4px 0; padding-left: 20px; }
 
-  /* estratégias de estudo */
   /* ---------- missões (estratégias do aluno) ---------- */
-  .mis-titulo { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .mis-titulo h2 { margin: 0; }
   .mis-placar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
   .mis-nivel { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--grad-destaque); color: #fff; }
   .mis-nivel > div { flex: 1; min-width: 0; }
@@ -648,10 +627,6 @@
   .ini-cab h2 { margin: 0; display: inline-flex; align-items: center; gap: 8px; }
   .ini-cab h2 .ic { width: 20px; height: 20px; color: var(--marca-600); }
   .ini-cab .mut { margin-left: auto; }
-  .ini-lista { list-style: none; margin: 0 0 8px; padding: 0; }
-  .ini-lista li { padding: 8px 0; font-size: 14.5px; line-height: 1.45; }
-  .ini-lista li + li { border-top: 1px solid var(--n-100); }
-  .ini-lista small { display: block; font-size: 12px; font-weight: 600; color: var(--marca-600); }
   .ini-mais, .ini-txt { margin: 0 0 12px; }
   .ini-barra { height: 8px; margin: 4px 0 12px; }
   .ini-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
@@ -689,15 +664,12 @@
   .est-acoes > span { flex: 1; min-width: min(200px, 100%); }
   .est-pe { margin-top: 8px; }
   .est-pe a { margin-left: 8px; }
-  .rel-item { cursor: pointer; padding: 8px 0; border-bottom: 1px solid var(--n-200); }
-  .rel-item:last-child { border-bottom: 0; }
   .tab th.num { text-align: right; }
 
   /* gráficos do Painel do aluno */
   .graf-card { position: relative; }
   .graf { display: block; overflow: visible; touch-action: pan-y; }
   .graf .grade-l { stroke: var(--n-200); stroke-width: 1; }
-  .graf .ref-l { stroke: var(--n-300); stroke-width: 1; stroke-dasharray: 4 4; }
   .graf .eixo { font: 400 12px var(--fonte); fill: var(--n-500); }
   .graf .rotulo { font: 600 13px var(--fonte); fill: var(--n-900); }
   .graf .linha { fill: none; stroke: var(--marca-600); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -730,8 +702,6 @@
   .gd-escala i { font-style: normal; }
   details.tabela-graf summary { cursor: pointer; color: var(--marca-600); font-weight: 600; font-size: 14px; }
   details.tabela-graf[open] summary { margin-bottom: 12px; }
-  .rel-item .barra { grid-template-columns: minmax(140px, 300px) 1fr 56px; }
-  @media (max-width: 600px) { .rel-item .barra { grid-template-columns: 1fr 56px; } .rel-item .barra .trilho { grid-column: 1 / -1; grid-row: 2; } }
   .sit-certa { color: var(--ok); font-weight: 600; }
   .sit-errada { color: var(--erro); font-weight: 600; }
   .sit-branco, .sit-dupla { color: var(--alerta); font-weight: 600; }
@@ -764,10 +734,10 @@
   @keyframes giro { to { transform: rotate(360deg); } }
   .aviso { padding: 11px 14px 11px 14px; border-radius: var(--r-ctl); margin-bottom: 12px; font-size: 14px; color: var(--n-900);
     border: 1px solid transparent; border-left-width: 3px; }
-  .aviso.ambar { background: var(--alerta-bg); border-color: #F4D9A6; border-left-color: var(--alerta); }
-  .aviso.verm { background: var(--erro-bg); border-color: #F3C2C2; border-left-color: var(--erro); }
-  .aviso.azul { background: var(--marca-50); border-color: #DDD0EB; border-left-color: var(--marca-600); }
-  .aviso.verde { background: var(--ok-bg); border-color: #BFE3CC; border-left-color: var(--ok); }
+  .aviso.ambar { background: var(--alerta-bg); border-color: var(--alerta-borda); border-left-color: var(--alerta); }
+  .aviso.verm { background: var(--erro-bg); border-color: var(--erro-borda); border-left-color: var(--erro); }
+  .aviso.azul { background: var(--marca-50); border-color: var(--marca-borda); border-left-color: var(--marca-600); }
+  .aviso.verde { background: var(--ok-bg); border-color: var(--ok-borda-clara); border-left-color: var(--ok); }
 
   /* entrada */
   .login { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 44%) 1fr; background: #fff; }
@@ -832,7 +802,7 @@
 
 
   /* ---------- destaque (cartão roxo em degradê) e próximo passo ---------- */
-  .destaque { position: relative; overflow: hidden; color: #fff; background: var(--grad-destaque); border-radius: 24px;
+  .destaque { position: relative; overflow: hidden; color: #fff; background: var(--grad-destaque); border-radius: var(--r-jan);
     padding: 26px 28px; margin-bottom: 16px; box-shadow: 0 18px 40px -18px rgba(46, 18, 72, .6); }
   .destaque::after { content: ""; position: absolute; right: -90px; top: -90px; width: 320px; height: 320px; border-radius: 50%;
     border: 1.5px solid rgba(255, 255, 255, .1); box-shadow: 0 0 0 60px rgba(255, 255, 255, .03), 0 0 0 61.5px rgba(255, 255, 255, .08); pointer-events: none; }
@@ -854,10 +824,10 @@
     border-radius: 999px; padding: 7px 14px 7px 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
   .destaque .outras button:hover { background: rgba(255, 255, 255, .18); }
   .destaque .outras b { min-width: 24px; height: 24px; border-radius: 999px; background: #fff; color: var(--marca-700); display: grid; place-items: center; font-size: 12.5px; padding: 0 6px; }
-  /* nota em anel + números (relatório e painel do aluno) */
+  /* nota no anel + números (cartão de destaque do relatório e do painel do aluno) */
   .nota-destaque { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
   .anel-d { width: 150px; height: 150px; border-radius: 50%; flex: none; display: grid; place-items: center; }
-  .anel-d > div { width: 122px; height: 122px; border-radius: 50%; background: #3D1960; display: grid; place-items: center; text-align: center; }
+  .anel-d > div { width: 122px; height: 122px; border-radius: 50%; background: var(--marca-950); display: grid; place-items: center; text-align: center; }
   .anel-d b { display: block; font-size: 44px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
   .anel-d small { color: rgba(255, 255, 255, .75); font-size: 12.5px; }
   .nota-destaque .lado { flex: 1; min-width: min(240px, 100%); }
@@ -870,7 +840,7 @@
   .numeros span { font-size: 12.5px; color: rgba(255, 255, 255, .75); }
   .destaque .q-meta { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
   .destaque .tag { background: rgba(255, 255, 255, .92); }
-  .proximo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--marca-50); border: 1px dashed #CDBDE0;
+  .proximo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--marca-50); border: 1px dashed var(--marca-tracejado);
     border-radius: var(--r-card); padding: 18px 20px; margin-bottom: 16px; }
   .proximo .chip { width: 44px; height: 44px; border-radius: 14px; background: var(--marca-100); display: grid; place-items: center; flex: none; }
   .proximo .chip .ic { width: 22px; height: 22px; }
@@ -878,7 +848,7 @@
   .proximo b { display: block; font-size: 16px; color: var(--marca-700); }
   .proximo span { color: var(--n-500); font-size: 14px; }
   @media (max-width: 600px) {
-    .destaque { padding: 22px 20px; border-radius: 20px; }
+    .destaque { padding: 22px 20px; border-radius: var(--r-card); }
     .nota-destaque { justify-content: center; }
     .destaque-pend .grande { font-size: 52px; }
   }
@@ -1183,16 +1153,11 @@ var OMR = (function () {
   <script>
 /* =====================================================================
    MIRA — interface (perfis: ADM, PROFESSOR, ALUNO)
+   Base: utilidades, fórmulas, entrada, menu, busca, avisos e Minha conta.
+   As telas ficam em App_Admin, App_Questoes, App_Simulados, App_Relatorios,
+   App_Aluno e App_Config; App_Iniciar liga o app (ordem em Index.html).
    ===================================================================== */
 var S = { token: null, user: null, conc: null, rota: '', params: {} };
-
-var LOGO = function (cor) {
-  return '<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">' +
-    '<circle cx="17" cy="17" r="12" fill="none" stroke="' + cor + '" stroke-width="2.5"/>' +
-    '<circle cx="17" cy="17" r="5" fill="none" stroke="' + cor + '" stroke-width="2"/>' +
-    '<path d="M17 1v8M17 25v8M1 17h8M25 17h8" stroke="' + cor + '" stroke-width="2.5"/>' +
-    '<circle cx="17" cy="17" r="2" fill="#63C4AF"/></svg>';
-};
 
 // ---------------------------------------------------------------- utilidades
 function $(sel, raiz) { return (raiz || document).querySelector(sel); }
@@ -1323,6 +1288,14 @@ function toast(msg, erro, acao, pergunta) {
   setTimeout(function () { d.remove(); }, erro ? 7000 : pergunta ? 9000 : acao ? 6000 : 4000);
 }
 function msgErro(e) { return String((e && e.message) || e).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, ''); }
+/** Tabela Nome · Login · Senha (senhas que aparecem uma única vez para a coordenação) */
+function tabelaSenhas(lista) {
+  return '<div class="rolagem"><table class="tab"><tr><th>Nome</th><th>Login</th><th>Senha</th></tr>' + lista.map(function (c) {
+    return '<tr><td>' + esc(c.nome) + '</td><td>' + esc(c.login) + '</td><td style="font-family:monospace">' + esc(c.senha) + '</td></tr>';
+  }).join('') + '</table></div>';
+}
+/** Caixa vermelha com a mensagem de erro, para pôr no lugar do conteúdo que não carregou */
+function caixaErro(e) { return '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; }
 
 // Leituras recentes ficam guardadas por alguns segundos: voltar a uma tela é instantâneo.
 // Qualquer gravação limpa tudo, para nunca mostrar dado velho depois de uma ação.
@@ -1398,7 +1371,7 @@ function confirmar(texto, botao) {
   });
 }
 
-function corPct(p) { return p >= 70 ? 'var(--verde)' : p >= 50 ? 'var(--ambar)' : 'var(--verm)'; }
+function corPct(p) { return p >= 70 ? 'var(--ok)' : p >= 50 ? 'var(--alerta)' : 'var(--erro)'; }
 function barra(rotulo, pct, valorTxt, cor) {
   var w = Math.max(0, Math.min(100, pct));
   return '<div class="barra"><div title="' + esc(rotulo) + '">' + esc(rotulo) + '</div>' +
@@ -1409,8 +1382,7 @@ function barra(rotulo, pct, valorTxt, cor) {
 var STATUS_Q = {
   PENDENTE: ['Aguardando curadoria', 'ambar'], ANALISE_PROF: ['Análise do professor', 'ambar'],
   AJUSTE: ['Ajuste pedido', 'verm'], VALIDADA: ['Validada pelo professor', 'azul'],
-  APROVADA: ['Aprovada', 'verde'], DEVOLVIDA: ['Devolvida', 'verm'],
-  CURADA: ['Curada', 'azul'], REVISAR: ['Revisar', 'verm']
+  APROVADA: ['Aprovada', 'verde'], DEVOLVIDA: ['Devolvida', 'verm']
 };
 var STATUS_S = { RASCUNHO: ['Rascunho', ''], ABERTO: ['Aberto', 'verde'], ENCERRADO: ['Encerrado', 'azul'], ARQUIVADO: ['Arquivado', ''] };
 function tag(mapa, s) { var x = mapa[s] || [s, '']; return '<span class="tag st ' + x[1] + '">' + esc(x[0]) + '</span>'; }
@@ -1428,7 +1400,11 @@ function csv(s) { return String(s || '').split(',').map(function (x) { return x.
 function dataBr(s) { if (!s) return ''; var p = String(s).split(' ')[0].split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
 
 /** Lê imagem do aparelho, reduz e devolve {base64, mime, nome} */
-function lerImagem(file, maxLado, qualidade) {
+/**
+ * Abre a imagem escolhida e redesenha num canvas (fundo branco, JPEG).
+ * recorte(img) devolve [sx, sy, sw, sh, largura, altura]: o pedaço da imagem e o tamanho final.
+ */
+function imagemNoCanvas(file, recorte, qualidade) {
   return new Promise(function (ok, falha) {
     var r = new FileReader();
     r.onerror = function () { falha(new Error('Não foi possível ler a imagem.')); };
@@ -1436,12 +1412,11 @@ function lerImagem(file, maxLado, qualidade) {
       var img = new Image();
       img.onerror = function () { falha(new Error('Arquivo de imagem inválido.')); };
       img.onload = function () {
-        var fator = Math.min(1, maxLado / Math.max(img.width, img.height));
-        var c = document.createElement('canvas');
-        c.width = Math.round(img.width * fator); c.height = Math.round(img.height * fator);
+        var k = recorte(img), c = document.createElement('canvas');
+        c.width = k[4]; c.height = k[5];
         var ctx = c.getContext('2d');
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, 0, 0, c.width, c.height);
+        ctx.drawImage(img, k[0], k[1], k[2], k[3], 0, 0, c.width, c.height);
         var url = c.toDataURL('image/jpeg', qualidade || 0.85);
         ok({ base64: url.split(',')[1], mime: 'image/jpeg', nome: file.name, url: url });
       };
@@ -1449,6 +1424,13 @@ function lerImagem(file, maxLado, qualidade) {
     };
     r.readAsDataURL(file);
   });
+}
+/** Imagem inteira, com o lado maior limitado a maxLado */
+function lerImagem(file, maxLado, qualidade) {
+  return imagemNoCanvas(file, function (img) {
+    var fator = Math.min(1, maxLado / Math.max(img.width, img.height));
+    return [0, 0, img.width, img.height, Math.round(img.width * fator), Math.round(img.height * fator)];
+  }, qualidade);
 }
 
 // ---------------------------------------------------------------- login
@@ -1754,7 +1736,7 @@ function ir(rota, params) {
   var main = $('#main');
   window.scrollTo(0, 0);
   return Promise.resolve().then(function () { return VIEWS[rota](main, S.params); })
-    .catch(function (e) { main.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+    .catch(function (e) { main.innerHTML = caixaErro(e); });
 }
 
 function cabPag(titulo, sub, acoes) {
@@ -1767,6 +1749,67 @@ function cabPag(titulo, sub, acoes) {
 // =====================================================================
 var VIEWS = {};
 
+// ---------------------------------------------------------------- minha conta
+VIEWS.conta = function (m) {
+  var u = S.user;
+  var dados = function (rot, v) { return v ? '<div class="dado"><span>' + rot + '</span>' + esc(v) + '</div>' : ''; };
+  m.innerHTML = cabPag('Minha conta') + '<div class="grade-2"><div class="card"><h2>Dados</h2>' +
+    '<div class="perfil-foto">' + avatar(u, 'grande') + '<div><b>' + esc(u.nome) + '</b><div class="mut peq">' + PERFIL_TXT[u.perfil] + '</div>' +
+    '<div class="foto-acoes"><label class="btn peq"><input type="file" id="ft-in" accept="image/*">' + (u.fotoUrl ? 'Trocar foto' : 'Colocar foto') + '</label>' +
+    (u.fotoUrl ? '<button class="btn peq disc" id="ft-rem">Remover</button>' : '') + '</div></div></div>' +
+    dados('E-mail', u.email) + dados('Matrícula', u.matricula) + dados('Turma', u.turma) + dados('Turmas', u.turmas) + dados('Disciplinas', u.disciplinas) + '</div>' +
+    '<form class="card" id="fs"><h2>' + (u.trocarSenha ? 'Criar minha senha' : 'Trocar senha') + '</h2>' +
+    (u.trocarSenha ? '<p class="mut peq" style="margin-top:0">Você está usando a senha provisória que recebeu. Crie uma senha só sua.</p>' : '') +
+    '<label class="campo"><span>' + (u.trocarSenha ? 'Senha provisória (a que você recebeu)' : 'Senha atual') + '</span><input type="password" id="s-a" required autocomplete="current-password"></label>' +
+    '<label class="campo"><span>Nova senha (mínimo 8 caracteres)</span><input type="password" id="s-n" required minlength="8" autocomplete="new-password"></label>' +
+    '<label class="campo"><span>Repita a nova senha</span><input type="password" id="s-n2" required minlength="8" autocomplete="new-password"></label>' +
+    '<button class="btn pri" id="s-ok">Salvar nova senha</button></form></div>' +
+    '<div class="card sobre"><img src="' + LOGO_EMBLEMA + '" alt=""><div><h3 style="margin-bottom:2px">Sobre o MIRA</h3>' +
+    '<p class="mut peq" style="margin:0">Monitoramento Inteligente de Resultados e Aprendizagem.<br>Desenvolvido por Carol J Castro.</p></div></div>';
+  var trocarAvatar = function () {
+    var b = $('#usuario .avatar'); if (b) b.outerHTML = avatar(S.user);
+    VIEWS.conta(m);
+  };
+  $('#ft-in').onchange = function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var rot = this.parentNode;
+    rot.classList.add('ocupado');
+    fotoQuadrada(f, 320).then(function (img) { return call('salvarFoto', { base64: img.base64, mime: img.mime }); })
+      .then(function (r) { S.user.fotoUrl = r.fotoUrl; toast('Foto atualizada.'); trocarAvatar(); })
+      .catch(function (er) { rot.classList.remove('ocupado'); toast(msgErro(er), true); });
+  };
+  if ($('#ft-rem')) $('#ft-rem').onclick = function () {
+    ocupado(this, 'Removendo…', function () { return call('salvarFoto', { remover: true }); })
+      .then(function () { S.user.fotoUrl = null; toast('Foto removida.'); trocarAvatar(); }).catch(function () {});
+  };
+  $('#fs').onsubmit = function (e) {
+    e.preventDefault();
+    var nova = $('#s-n').value;
+    if (nova !== $('#s-n2').value) { toast('As duas senhas novas não são iguais. Digite de novo.', true); $('#s-n2').focus(); return; }
+    ocupado($('#s-ok'), 'Salvando…', function () { return call('trocarSenha', { atual: $('#s-a').value, nova: nova }); })
+      .then(function () {
+        var era = S.user.trocarSenha;
+        S.user.trocarSenha = false;
+        toast(era ? 'Senha criada. A partir de agora, use a sua senha nova.' : 'Senha alterada.');
+        VIEWS.conta(m);
+      }).catch(function () {});
+  };
+};
+
+/** Quadrado do meio da imagem (foto de perfil), com no máximo lado × lado */
+function fotoQuadrada(file, lado) {
+  return imagemNoCanvas(file, function (img) {
+    var q = Math.min(img.width, img.height), t = Math.min(lado, q);
+    return [(img.width - q) / 2, (img.height - q) / 2, q, q, t, t];
+  });
+}
+</script>
+
+  <script>
+/* =====================================================================
+   MIRA — interface: painel da coordenação e usuários
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- painel (ADM)
 /** Cabeçalho acolhedor dos painéis: data por extenso e "Olá, primeiro nome" */
 function cabSaudacao(acoes, sub) {
@@ -1821,9 +1864,7 @@ VIEWS.painel = function (m) {
       });
     });
     h += '</div><div><div class="card"><h2>Questões por situação</h2><div class="sit-lista">' +
-      Object.keys(STATUS_Q).filter(function (k) {
-        return ['CURADA', 'REVISAR'].indexOf(k) < 0 || d.questoesPorStatus[k]; // estados antigos só se houver
-      }).map(function (k) {
+      Object.keys(STATUS_Q).map(function (k) {
         return '<a href="#" class="sit" data-st="' + k + '">' + tag(STATUS_Q, k) + '<b>' + (d.questoesPorStatus[k] || 0) + '</b></a>';
       }).join('') +
       '</div></div>' +
@@ -1848,6 +1889,174 @@ VIEWS.painel = function (m) {
   });
 };
 
+// ---------------------------------------------------------------- usuários (ADM)
+VIEWS.usuarios = function (m) {
+  m.innerHTML = cabPag('Usuários', 'Alunos, professores e administração',
+    '<button class="btn" id="imp">Importar alunos</button><button class="btn pri" id="novo">+ Novo usuário</button>') +
+    '<div class="card nao-imprimir"><div class="linha"><label class="campo" style="margin:0"><span>Perfil</span><select id="u-perf">' +
+    '<option value="ALUNO">Alunos</option><option value="PROFESSOR">Professores</option><option value="ADM">Administração</option></select></label>' +
+    '<label class="campo" style="margin:0"><span>Buscar</span><input type="text" id="u-busca" placeholder="Nome, turma ou matrícula"></label></div></div>' +
+    '<div id="pedidos"></div><div id="lista"></div>';
+  var todos = [];
+  var carregarPedidos = function () {
+    call('listarSolicitacoes').then(function (ps) {
+      var box = $('#pedidos'); if (!box) return;
+      if (!ps.length) { box.innerHTML = ''; return; }
+      var sel = {};
+      var desenharP = function () {
+        var n = Object.keys(sel).length;
+        box.innerHTML = '<div class="card pedidos"><div class="pedidos-cab"><h2>Pedidos de acesso <span class="tag ambar">' + ps.length + '</span></h2>' +
+          '<label class="peq"><input type="checkbox" id="pd-todos"' + (n === ps.length ? ' checked' : '') + '> Selecionar todos</label></div>' +
+          '<p class="mut peq" style="margin-top:0">Ao aprovar, o MIRA cria o login do aluno e envia a <b>senha provisória</b> para o e-mail dele. No primeiro acesso ele cria a própria senha.</p>' +
+          '<div class="rolagem"><table class="tab"><tr><th></th><th>Nome</th><th>E-mail</th><th>Matrícula</th><th>Turma</th><th>Responsável</th><th>Pedido em</th></tr>' +
+          ps.map(function (p) {
+            return '<tr><td><input type="checkbox" class="pd" data-id="' + esc(p.id) + '"' + (sel[p.id] ? ' checked' : '') + '></td>' +
+              '<td><b>' + esc(p.nome) + '</b></td><td class="peq">' + esc(p.email) + '</td><td>' + esc(p.matricula || '—') + '</td><td>' + esc(p.turma || '—') + '</td>' +
+              '<td class="peq">' + esc(p.responsavelNome || '') + '<div class="mut">' + esc(p.responsavelEmail || '') + '</div></td><td class="peq">' + dataBr(p.criadoEm) + '</td></tr>';
+          }).join('') + '</table></div>' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px">' +
+          '<button class="btn perigo" id="pd-rec"' + (n ? '' : ' disabled') + '>Recusar</button>' +
+          '<button class="btn ok" id="pd-apr"' + (n ? '' : ' disabled') + '>Aprovar e enviar senha' + (n ? ' (' + n + ')' : '') + '</button></div></div>';
+        $('#pd-todos').onchange = function () { sel = {}; if (this.checked) ps.forEach(function (p) { sel[p.id] = true; }); desenharP(); };
+        $$('.pd', box).forEach(function (c) { c.onchange = function () { if (c.checked) sel[c.getAttribute('data-id')] = true; else delete sel[c.getAttribute('data-id')]; desenharP(); }; });
+        var decidir = function (btn, decisao) {
+          var ids = Object.keys(sel);
+          ocupado(btn, decisao === 'APROVAR' ? 'Aprovando…' : 'Recusando…', function () {
+            return call('decidirSolicitacoes', { ids: ids, decisao: decisao, enviarEmail: true });
+          }).then(function (r) {
+            if (r.erros.length) toast('Não processados: ' + r.erros.join(' · '), true);
+            if (decisao === 'APROVAR' && r.feitos.length) {
+              var semEmail = r.feitos.filter(function (f) { return !f.emailEnviado; });
+              modal(topoModal(r.feitos.length + ' acesso(s) liberado(s)') +
+                '<p class="peq">' + (semEmail.length ? 'Não foi possível enviar o e-mail para ' + semEmail.length + ' aluno(s): entregue a senha provisória a eles.'
+                  : 'A senha provisória foi enviada para o e-mail de cada aluno.') + ' Ela aparece aqui só agora.</p>' +
+                '<div class="rolagem"><table class="tab"><tr><th>Aluno</th><th>Login</th><th>Senha provisória</th><th>E-mail</th></tr>' +
+                r.feitos.map(function (f) {
+                  return '<tr><td>' + esc(f.nome) + '</td><td class="peq">' + esc(f.login) + '</td><td><code>' + esc(f.senha) + '</code></td><td>' +
+                    (f.emailEnviado ? '<span class="tag verde">enviado</span>' : '<span class="tag verm">não enviado</span>') + '</td></tr>';
+                }).join('') + '</table></div>', true);
+            } else if (r.feitos.length) toast(r.feitos.length + ' pedido(s) recusado(s).');
+            carregarPedidos(); carregar();
+          }).catch(function () {});
+        };
+        $('#pd-apr').onclick = function () { decidir(this, 'APROVAR'); };
+        $('#pd-rec').onclick = function () { var b = this; confirmar('Recusar ' + Object.keys(sel).length + ' pedido(s)? O aluno não é avisado.', 'Recusar').then(function () { decidir(b, 'RECUSAR'); }); };
+      };
+      desenharP();
+    }).catch(function () {});
+  };
+  var desenhar = function () {
+    var perf = $('#u-perf').value, b = $('#u-busca').value.toLowerCase();
+    var us = todos.filter(function (u) {
+      return u.perfil === perf && (!b || (u.nome + ' ' + u.turma + ' ' + u.turmas + ' ' + u.matricula + ' ' + u.email).toLowerCase().indexOf(b) >= 0);
+    }).sort(function (a, c) { return a.nome.localeCompare(c.nome); });
+    var l = $('#lista');
+    if (!us.length) { l.innerHTML = '<div class="card vazio">Nenhum usuário.</div>'; return; }
+    var cols = perf === 'ALUNO' ? '<th>Nome</th><th>Matrícula</th><th>Turma</th><th>Responsável</th><th>LGPD</th>'
+      : perf === 'PROFESSOR' ? '<th>Nome</th><th>E-mail</th><th>Disciplinas</th><th>Turmas</th>' : '<th>Nome</th><th>E-mail</th>';
+    l.innerHTML = '<div class="card rolagem"><p class="mut peq" style="margin-top:0">' + us.length + ' usuário(s)</p><table class="tab"><tr>' + cols + '<th></th></tr>' +
+      us.map(function (u) {
+        var inativo = u.ativo !== 'SIM' ? ' <span class="tag">inativo</span>' : '';
+        var c = perf === 'ALUNO' ? '<td>' + esc(u.nome) + inativo + '</td><td>' + esc(u.matricula) + '</td><td>' + esc(u.turma) + '</td><td class="peq">' + esc(u.responsavelNome) + '<div class="mut">' + esc(u.responsavelEmail) + '</div></td>' +
+          '<td>' + (u.consentimento === 'SIM' ? '<span class="tag verde">ok</span>' : '<span class="tag ambar">pendente</span>') + '</td>'
+          : perf === 'PROFESSOR' ? '<td>' + esc(u.nome) + inativo + '</td><td class="peq">' + esc(u.email) + '</td><td class="peq">' + esc(u.disciplinas || 'Todas') + '</td><td class="peq">' + esc(u.turmas || '—') + '</td>'
+            : '<td>' + esc(u.nome) + inativo + '</td><td class="peq">' + esc(u.email) + '</td>';
+        return '<tr class="clic" data-id="' + u.id + '">' + c + '<td class="mut peq">editar</td></tr>';
+      }).join('') + '</table></div>';
+    $$('tr.clic', l).forEach(function (tr) {
+      tr.onclick = function () { formUsuario(todos.filter(function (u) { return u.id === tr.getAttribute('data-id'); })[0], carregar); };
+    });
+  };
+  var carregar = function () {
+    carregando($('#lista'));
+    call('listarUsuarios').then(function (us) { todos = us; desenhar(); });
+  };
+  $('#u-perf').onchange = desenhar; $('#u-busca').oninput = desenhar;
+  $('#novo').onclick = function () { formUsuario({ perfil: $('#u-perf').value }, carregar); };
+  $('#imp').onclick = function () { importarAlunos(carregar); };
+  carregar();
+  carregarPedidos();
+};
+
+function mostrarSenha(titulo, login, senha) {
+  modal(topoModal(titulo) + '<p>Entregue estes dados ao usuário. A senha não será exibida novamente.</p>' +
+    '<div class="card" style="background:var(--n-50);font-size:16px"><div><b>Login:</b> ' + esc(login) + '</div><div><b>Senha:</b> <span style="font-family:monospace;font-size:18px">' + esc(senha) + '</span></div></div>' +
+    '<p class="mut peq">O usuário pode trocar a senha em "Minha conta".</p>');
+}
+
+function formUsuario(u, aoSalvar) {
+  var discs = disciplinasDe('ESPCEX');
+  var minhas = csv(u.disciplinas);
+  var md = modal(topoModal(u.id ? 'Editar usuário' : 'Novo usuário') + '<form id="fu">' +
+    '<div class="linha"><label class="campo"><span>Perfil</span><select id="u-p">' +
+    [['ALUNO', 'Aluno'], ['PROFESSOR', 'Professor'], ['ADM', 'Administração']].map(function (x) {
+      return '<option value="' + x[0] + '"' + (x[0] === u.perfil ? ' selected' : '') + '>' + x[1] + '</option>';
+    }).join('') + '</select></label>' +
+    '<label class="campo"><span>Situação</span><select id="u-at"><option value="SIM">Ativo</option><option value="NAO"' + (u.ativo === 'NAO' ? ' selected' : '') + '>Inativo</option></select></label></div>' +
+    '<label class="campo"><span>Nome completo *</span><input type="text" id="u-nome" required value="' + esc(u.nome) + '"></label>' +
+    '<div class="linha"><label class="campo"><span>E-mail</span><input type="email" id="u-email" value="' + esc(u.email) + '"></label>' +
+    '<label class="campo grp-aluno"><span>Matrícula</span><input type="text" id="u-mat" value="' + esc(u.matricula) + '"></label></div>' +
+    '<div class="grp-aluno"><label class="campo"><span>Turma</span><input type="text" id="u-tur" placeholder="Ex.: 3A" value="' + esc(u.turma) + '"></label>' +
+    '<div class="linha"><label class="campo"><span>Nome do responsável</span><input type="text" id="u-rn" value="' + esc(u.responsavelNome) + '"></label>' +
+    '<label class="campo"><span>E-mail do responsável</span><input type="email" id="u-re" value="' + esc(u.responsavelEmail) + '"></label></div>' +
+    '<label style="display:flex;gap:8px;margin-bottom:12px" class="peq"><input type="checkbox" id="u-cons"' + (u.consentimento === 'SIM' ? ' checked' : '') + '>' +
+    '<span>O responsável autorizou o tratamento dos dados de desempenho e o envio de relatórios por e-mail (LGPD).</span></label></div>' +
+    '<div class="grp-prof"><div class="campo"><span class="mut peq" style="font-weight:600">Disciplinas (nenhuma marcada = todas)</span><div style="display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px">' +
+    discs.map(function (d) { return '<label class="peq"><input type="checkbox" class="u-d" value="' + esc(d) + '"' + (minhas.indexOf(d) >= 0 ? ' checked' : '') + '> ' + esc(d) + '</label>'; }).join('') +
+    '</div></div><label class="campo"><span>Turmas que acompanha (separe por vírgula)</span><input type="text" id="u-turs" placeholder="Ex.: 3A, 3B" value="' + esc(u.turmas) + '"></label></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
+    (u.id ? '<button type="button" class="btn" id="u-rs" style="margin-right:auto">Gerar nova senha</button>' : '') +
+    '<button type="button" class="btn fechar">Cancelar</button><button class="btn pri" id="u-ok">Salvar</button></div></form>');
+  var ajustar = function () {
+    var p = $('#u-p', md.el).value;
+    $$('.grp-aluno', md.el).forEach(function (x) { x.style.display = p === 'ALUNO' ? '' : 'none'; });
+    $$('.grp-prof', md.el).forEach(function (x) { x.style.display = p === 'PROFESSOR' ? '' : 'none'; });
+  };
+  $('#u-p', md.el).onchange = ajustar; ajustar();
+  if ($('#u-rs', md.el)) $('#u-rs', md.el).onclick = function () {
+    ocupado(this, 'Gerando…', function () { return call('redefinirSenha', { id: u.id }); })
+      .then(function (r) { md.fechar(); mostrarSenha('Nova senha', u.email || u.matricula, r.senha); }).catch(function () {});
+  };
+  $('#fu', md.el).onsubmit = function (e) {
+    e.preventDefault();
+    var d = {
+      id: u.id, perfil: $('#u-p', md.el).value, ativo: $('#u-at', md.el).value, nome: $('#u-nome', md.el).value.trim(),
+      email: $('#u-email', md.el).value.trim(), matricula: $('#u-mat', md.el).value.trim(), turma: $('#u-tur', md.el).value.trim(),
+      responsavelNome: $('#u-rn', md.el).value.trim(), responsavelEmail: $('#u-re', md.el).value.trim(),
+      consentimento: $('#u-cons', md.el).checked ? 'SIM' : 'NAO',
+      disciplinas: $$('.u-d:checked', md.el).map(function (x) { return x.value; }).join(', '),
+      turmas: csv($('#u-turs', md.el).value).join(', ')
+    };
+    if (d.perfil !== 'ALUNO') { d.matricula = ''; d.turma = ''; d.responsavelNome = ''; d.responsavelEmail = ''; }
+    ocupado($('#u-ok', md.el), 'Salvando…', function () { return call('salvarUsuario', d); }).then(function (r) {
+      md.fechar(); toast('Usuário salvo.'); aoSalvar();
+      if (r.senhaInicial) mostrarSenha('Usuário criado', d.email || d.matricula, r.senhaInicial);
+    }).catch(function () {});
+  };
+}
+
+function importarAlunos(aoFim) {
+  var md = modal(topoModal('Importar alunos') +
+    '<p class="peq">Cole as linhas de uma planilha (Excel ou Google Planilhas), uma por aluno, nesta ordem de colunas:</p>' +
+    '<div class="card peq" style="background:var(--n-50);font-family:monospace">Nome · Matrícula · Turma · E-mail do aluno · Nome do responsável · E-mail do responsável · Consentimento (SIM/NÃO)</div>' +
+    '<textarea id="imp-txt" rows="10" placeholder="Cole aqui…"></textarea>' +
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Cancelar</button><button class="btn pri" id="imp-ok">Importar</button></div><div id="imp-res"></div>', true);
+  $('#imp-ok', md.el).onclick = function () {
+    ocupado(this, 'Importando…', function () { return call('importarAlunos', { texto: $('#imp-txt', md.el).value }); }).then(function (r) {
+      aoFim();
+      $('#imp-res', md.el).innerHTML = '<div class="aviso verde" style="margin-top:12px">' + r.criados.length + ' aluno(s) criado(s). Guarde as senhas abaixo; elas não serão exibidas novamente.</div>' +
+        (r.erros.length ? '<div class="aviso verm">' + r.erros.map(esc).join('<br>') + '</div>' : '') +
+        (r.criados.length ? tabelaSenhas(r.criados) : '');
+    }).catch(function () {});
+  };
+}
+</script>
+
+  <script>
+/* =====================================================================
+   MIRA — interface: banco de questões e curadoria
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- questões
 VIEWS.questoes = function (m, p) {
   var adm = S.user.perfil === 'ADM';
@@ -1888,7 +2097,7 @@ VIEWS.questoes = function (m, p) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
   }
-  var APROVAVEIS = ['ANALISE_PROF', 'VALIDADA', 'CURADA', 'REVISAR'];
+  var APROVAVEIS = ['ANALISE_PROF', 'VALIDADA'];
   var marcadas = {}, ultimas = [];
   var barraLote = function (qs) {
     var b = $('#lote'); if (!b) return;
@@ -1947,7 +2156,7 @@ VIEWS.questoes = function (m, p) {
         };
       });
       barraLote(qs);
-    }).catch(function (e) { l.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
   };
   /** Atualiza só o item da lista (sem recarregar tudo); sem informação, recarrega. */
   var atualizarItem = function (card, mud) {
@@ -2322,11 +2531,10 @@ function exportarLote() {
   var md = modal(topoModal('Exportar lote para curadoria') +
     '<p class="peq">Gera um texto com as questões que aguardam curadoria, já com as instruções. ' +
     'Cole no chat do Claude, receba a resposta e use <b>Importar curadoria</b>.</p>' +
-    '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="lt-n"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></label>' +
-    '<label class="campo" style="display:flex;align-items:flex-end;gap:8px"><input type="checkbox" id="lt-rev" style="width:auto"> <span style="margin:0;font-weight:400">Incluir as marcadas "Revisar"</span></label></div>' +
+    '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="lt-n"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></label></div>' +
     '<button class="btn pri" id="lt-ger">Gerar lote</button><div id="lt-res"></div>', true);
   $('#lt-ger', md.el).onclick = function () {
-    ocupado(this, 'Gerando…', function () { return call('exportarLote', { limite: $('#lt-n', md.el).value, incluirRevisar: $('#lt-rev', md.el).checked }); })
+    ocupado(this, 'Gerando…', function () { return call('exportarLote', { limite: $('#lt-n', md.el).value }); })
       .then(function (r) {
         var alvo = $('#lt-res', md.el);
         if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Nenhuma questão aguardando curadoria.</div>'; return; }
@@ -2367,7 +2575,7 @@ function verQuestao(q, aoMudar) {
   var ad = cur && cur.adaptacao && !cur.adaptacao.aplicada ? cur.adaptacao : null; // adaptação proposta, ainda não aplicada
   var adFeita = cur && cur.adaptacao && cur.adaptacao.aplicada ? cur.adaptacao : null;
   var gabVersao = ad ? ad.gabarito : (q.gabaritoFinal || (cur && cur.gabarito) || '');
-  var analisar = cur && ['ANALISE_PROF', 'CURADA', 'REVISAR'].indexOf(q.status) >= 0 && (autor || adm);
+  var analisar = cur && q.status === 'ANALISE_PROF' && (autor || adm);
   var nFig = String(q.imagemId || '').split(',').filter(function (x) { return x.trim(); }).length;
 
   var h = topoModal((cur ? 'Relatório de curadoria · ' : 'Questão ') + q.id) +
@@ -2399,7 +2607,7 @@ function verQuestao(q, aoMudar) {
   } else {
     // --- adaptação
     if (ad) {
-      h += '<div class="card" style="border-color:var(--azul-2)"><h3 style="margin-top:0">A curadoria propôs uma adaptação</h3>' +
+      h += '<div class="card" style="border-color:var(--marca-600)"><h3 style="margin-top:0">A curadoria propôs uma adaptação</h3>' +
         '<p class="peq" style="margin-top:0">' + esc(ad.motivo) + '</p>' +
         (ad.alteracoes && ad.alteracoes.length ? '<ul class="peq" style="margin:0;padding-left:18px">' +
           ad.alteracoes.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '') +
@@ -2470,7 +2678,7 @@ function verQuestao(q, aoMudar) {
 
   // --- decisão da coordenação
   if (adm) {
-    h += '<div class="card" style="margin-top:16px;background:var(--bg)"><h3>Decisão da coordenação</h3>' +
+    h += '<div class="card" style="margin-top:16px;background:var(--n-50)"><h3>Decisão da coordenação</h3>' +
       (ad ? '<p class="peq mut" style="margin-top:0">Aprovar agora aplica a versão adaptada, mesmo sem a análise do professor.</p>' : '') +
       '<div class="linha"><label class="campo"><span>Gabarito final</span><select id="v-gab">' +
       c.alternativas.map(function (l) { return '<option' + (l === gabVersao ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
@@ -2546,7 +2754,13 @@ function verQuestao(q, aoMudar) {
     };
   }
 }
+</script>
 
+  <script>
+/* =====================================================================
+   MIRA — interface: simulados, impressos e envio do cartão
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- simulados
 /** Exclusão definitiva: pede o código do simulado para não apagar por engano */
 function excluirSimulado(s, depois) {
@@ -2566,7 +2780,7 @@ function excluirSimulado(s, depois) {
   ok.onclick = function () {
     ocupado(ok, 'Excluindo…', function () { return call('excluirSimulado', { id: s.id, confirmacao: campo.value.trim().toUpperCase() }); })
       .then(function () { md.fechar(); toast('Simulado ' + s.codigo + ' excluído.'); depois(); })
-      .catch(function (e) { toast(msgErro(e), true); });
+      .catch(function () {}); // ocupado() já mostra o erro
   };
 }
 
@@ -2652,7 +2866,7 @@ VIEWS.simulados = function (m, p) {
           verImpresso(s, a);
         };
       });
-    }).catch(function (e) { l.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
   };
   carregar();
   if (adm && p && p.novo) formSimulado(carregar);
@@ -2725,7 +2939,7 @@ function escolherCartoes(s) {
       md.fechar(); verImpresso(s, 'cartao', ids);
     };
     desenhar();
-  }).catch(function (e) { $('#ca', md.el).innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+  }).catch(function (e) { $('#ca', md.el).innerHTML = caixaErro(e); });
 }
 
 function verImpresso(s, tipo, alunos, versao) {
@@ -2743,7 +2957,7 @@ function verImpresso(s, tipo, alunos, versao) {
     f.onload = function () { formulasNoImpresso(f); };
     f.srcdoc = r.html;
     $('#imp', md.el).onclick = function () { f.contentWindow.focus(); f.contentWindow.print(); };
-  }).catch(function (e) { $('#area', md.el).innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+  }).catch(function (e) { $('#area', md.el).innerHTML = caixaErro(e); });
   if ($('#pdf', md.el)) $('#pdf', md.el).onclick = function () {
     ocupado(this, 'Gerando PDF…', function () { return call('impressoPdf', { id: s.id, tipo: tipo, versao: versao || 1 }); }).then(function (r) {
       $('#area', md.el).insertAdjacentHTML('beforebegin', '<div class="aviso verde">PDF salvo no Drive: <a href="' + esc(r.url) + '" target="_blank">' + esc(r.nome) + '</a></div>');
@@ -2804,7 +3018,7 @@ function formSimulado(aoCriar) {
         return '<div class="card"><h3>' + esc(d[0]) + ' <span class="mut peq cont" data-d="' + esc(d[0]) + '">0/' + d[1] + '</span></h3>' +
           (qs.length ? qs.map(function (q) {
             var volta = q.temaEdital && reavaliar(d[0]).some(function (t) { return t.tema === q.temaEdital; });
-            return '<label style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--borda)"><input type="checkbox" class="s-q" value="' + q.id + '" data-d="' + esc(d[0]) + '">' +
+            return '<label style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--n-200)"><input type="checkbox" class="s-q" value="' + q.id + '" data-d="' + esc(d[0]) + '">' +
               '<span class="peq"><b>' + esc(q.id) + '</b> · ' + esc(q.conteudo) + (volta ? ' <span class="tag ambar">tema a reavaliar</span>' : '') + ' — ' + esc(semFiguras(q.enunciado).slice(0, 120)) + '…</span></label>';
           }).join('') : '<p class="mut peq">Nenhuma questão aprovada.</p>') + '</div>';
       }).join('');
@@ -2815,7 +3029,7 @@ function formSimulado(aoCriar) {
           var el = $$('.cont', alvo).filter(function (x) { return x.getAttribute('data-d') === d; })[0];
           var meta = prova.disciplinas.filter(function (x) { return x[0] === d; })[0][1];
           el.textContent = n + '/' + meta;
-          el.style.color = n === meta ? 'var(--verde)' : n > meta ? 'var(--verm)' : '';
+          el.style.color = n === meta ? 'var(--ok)' : n > meta ? 'var(--erro)' : '';
         };
       });
     };
@@ -2910,7 +3124,7 @@ function verCartao(resultadoId, titulo) {
     a.innerHTML = imgSrc(r.url)
       ? '<img src="' + imgSrc(r.url) + '" alt="Foto do cartão-resposta" class="foto-cartao">'
       : '<div class="aviso ambar">' + esc(r.aviso || 'Foto indisponível.') + (r.drive ? ' <a href="' + esc(r.drive) + '" target="_blank" rel="noopener">Abrir no Google Drive</a>' : '') + '</div>';
-  }).catch(function (e) { var a = $('#vc-area', md.el); if (a) a.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
+  }).catch(function (e) { var a = $('#vc-area', md.el); if (a) a.innerHTML = caixaErro(e); });
 }
 
 // ---------------------------------------------------------------- envio do cartão
@@ -3051,7 +3265,13 @@ VIEWS.enviar = function (m, p) {
     desenhar();
   });
 };
+</script>
 
+  <script>
+/* =====================================================================
+   MIRA — interface: relatório, estratégias de estudo, resultados e mapa da turma
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- relatório individual
 function formatarPlano(t) {
   var h = '', lista = false;
@@ -3164,7 +3384,7 @@ VIEWS.relatorio = function (m, p) {
         return '<tr><td class="num">' + (x.nv ? x.nv + '<div class="mut peq" title="Número na versão 1">(v1: ' + x.n + ')</div>' : x.n) + '</td><td>' + esc(x.disciplina) + '</td><td>' + esc(x.conteudo) +
           (x.situacao === 'errada' ? '<div class="mut peq">' + esc(x.conceito) + '</div>' : '') +
           (res ? '<details class="res"><summary>Ver questão e resolução</summary><div class="enun peq" style="margin:6px 0">' + esc(semFiguras(res.enunciado)) + '</div>' +
-            '<div class="enun peq" style="background:var(--bg);padding:8px;border-radius:6px">' + esc(res.resolucao) + '</div></details>' : '') +
+            '<div class="enun peq" style="background:var(--n-50);padding:8px;border-radius:6px">' + esc(res.resolucao) + '</div></details>' : '') +
           '</td><td style="text-align:center">' + esc(x.marcada || '—') + '</td><td style="text-align:center"><b>' + esc(x.correta) + '</b></td>' +
           '<td class="sit-' + x.situacao + '">' + sitTxt + '</td></tr>';
       }).join('') + '</table></div></div>';
@@ -3235,6 +3455,266 @@ function blocoEstrategia(e, interno, selecionavel) {
   return h + '</div>';
 }
 
+/** Liga os botões de OK/edição dentro de raiz. aoMudar() recarrega a tela. */
+function ligarEstrategias(raiz, aoMudar, lista) {
+  if (!raiz) return;
+  $$('[data-rel]', raiz).forEach(function (b) {
+    b.onclick = function (ev) { ev.preventDefault(); ir('relatorio', { id: b.getAttribute('data-rel') }); };
+  });
+  $$('.est-ok', raiz).forEach(function (b) {
+    b.onclick = function () {
+      var box = b.closest('.est');
+      var item = { id: box.getAttribute('data-id'), texto: $('.est-txt', box).value };
+      ocupado(b, 'Salvando…', function () { return call('aprovarEstrategias', { itens: [item] }); }).then(function (r) {
+        if (r.erros.length) { toast(r.erros.join(' · '), true); return; }
+        toast('Estratégia aprovada. O aluno já pode ver.');
+        aoMudar();
+      }).catch(function () {});
+    };
+  });
+  $$('.est-editar', raiz).forEach(function (a) {
+    a.onclick = function (ev) {
+      ev.preventDefault();
+      var box = a.closest('.est'), id = box.getAttribute('data-id');
+      var e = (lista || []).filter(function (x) { return x.id === id; })[0];
+      var texto = e ? e.texto : $('.est-corpo', box).innerText;
+      $('.est-corpo', box).outerHTML = '<textarea class="est-txt" rows="9">' + esc(texto) + '</textarea>';
+      $('.est-pe', box).outerHTML = '<div class="est-acoes"><span class="mut peq">O aluno passa a ver o texto novo assim que você salvar.</span>' +
+        '<button class="btn peq ok est-ok">Salvar</button></div>';
+      ligarEstrategias(box, aoMudar, lista);
+    };
+  });
+}
+
+/** Lista de estratégias para o professor (e a coordenação) dar o OK */
+VIEWS.estrategias = function (m, p) {
+  var adm = S.user.perfil === 'ADM';
+  m.innerHTML = cabPag('Estratégias de estudo', 'Montadas com as missões da curadoria, validadas por vocês em cada questão. O aluno já vê; se quiser, ajuste o texto.',
+    adm ? '<button class="btn" id="ee-exp">Exportar para a IA</button><button class="btn" id="ee-imp">Importar da IA</button>' : '') +
+    '<div class="card nao-imprimir"><div class="linha">' +
+    '<label class="campo" style="margin:0"><span>Situação</span><select id="ee-st"><option value="APROVADA">Em uso pelos alunos</option>' +
+    '<option value="SUGERIDA">Aguardando OK (antigas)</option><option value="">Todas</option></select></label>' +
+    '<label class="campo" style="margin:0"><span>Disciplina</span><select id="ee-disc"><option value="">Todas</option>' +
+    disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="campo" style="margin:0"><span>Buscar</span><input type="text" id="ee-busca" placeholder="Aluno ou turma"></label></div></div>' +
+    '<div id="ee-lote"></div><div id="lista"></div>';
+  if (p && p.status !== undefined) $('#ee-st').value = p.status;
+  if (adm) {
+    $('#ee-exp').onclick = exportarEstrategias;
+    $('#ee-imp').onclick = function () { importarEstrategias(carregar); };
+  }
+  var todas = [], marcadas = {};
+  var desenhar = function () {
+    var l = $('#lista'), disc = $('#ee-disc').value, b = $('#ee-busca').value.trim().toLowerCase();
+    var vis = todas.filter(function (e) {
+      return (!disc || e.disciplina === disc) && (!b || ((e.aluno || '') + ' ' + (e.turma || '')).toLowerCase().indexOf(b) >= 0);
+    });
+    if (!vis.length) {
+      l.innerHTML = '<div class="card vazio">' + icone('foco', 'ic-vazio') +
+        ($('#ee-st').value === 'SUGERIDA' ? 'Nenhuma estratégia aguardando o seu OK.' : 'Nenhuma estratégia encontrada.') +
+        '<p class="mut peq" style="margin:6px 0 0">As estratégias aparecem aqui quando os alunos enviam o cartão-resposta.</p></div>';
+      $('#ee-lote').innerHTML = ''; return;
+    }
+    l.innerHTML = '<p class="mut peq">' + vis.length + ' estratégia(s)</p><div class="est-lista larga">' +
+      vis.map(function (e) { return '<div class="card">' + blocoEstrategia(e, true, true) + '</div>'; }).join('') + '</div>';
+    ligarEstrategias(l, carregar, todas);
+    var selecionaveis = vis.filter(function (e) { return e.podeAprovar && e.status === 'SUGERIDA'; });
+    var lote = function () {
+      var n = Object.keys(marcadas).length;
+      $('#ee-lote').innerHTML = selecionaveis.length < 2 ? '' :
+        '<div class="lote"><label class="peq"><input type="checkbox" id="ee-todas"' + (n && n === selecionaveis.length ? ' checked' : '') + '> ' +
+        'Selecionar todas (' + selecionaveis.length + ')</label>' +
+        '<button class="btn ok" id="ee-ok"' + (n ? '' : ' disabled') + '>Dar OK nas selecionadas' + (n ? ' (' + n + ')' : '') + '</button></div>';
+      if (!$('#ee-todas')) return;
+      $('#ee-todas').onchange = function () {
+        marcadas = {};
+        if (this.checked) selecionaveis.forEach(function (e) { marcadas[e.id] = true; });
+        $$('.est-sel', l).forEach(function (c) { c.checked = !!marcadas[c.getAttribute('data-id')]; });
+        lote();
+      };
+      $('#ee-ok').onclick = function () {
+        var itens = Object.keys(marcadas).map(function (id) {
+          var box = $('.est[data-id="' + id + '"]', l);
+          return { id: id, texto: box ? $('.est-txt', box).value : undefined };
+        });
+        ocupado(this, 'Salvando…', function () { return call('aprovarEstrategias', { itens: itens }); }).then(function (r) {
+          if (r.aprovadas.length) toast(r.aprovadas.length + ' estratégia(s) aprovada(s). Os alunos já podem ver.');
+          if (r.erros.length) toast('Não aprovadas: ' + r.erros.join(' · '), true);
+          carregar();
+        }).catch(function () {});
+      };
+    };
+    $$('.est-sel', l).forEach(function (c) {
+      c.checked = !!marcadas[c.getAttribute('data-id')];
+      c.onchange = function () { if (c.checked) marcadas[c.getAttribute('data-id')] = true; else delete marcadas[c.getAttribute('data-id')]; lote(); };
+    });
+    lote();
+  };
+  var carregar = function () {
+    carregando($('#lista')); marcadas = {};
+    call('listarEstrategias', { status: $('#ee-st').value }).then(function (es) { todas = es; desenhar(); })
+      .catch(function (e) { $('#lista').innerHTML = caixaErro(e); });
+  };
+  $('#ee-st').onchange = carregar; $('#ee-disc').onchange = desenhar; $('#ee-busca').oninput = desenhar;
+  carregar();
+};
+
+function exportarEstrategias() {
+  var md = modal(topoModal('Exportar estratégias para a IA') +
+    '<p class="peq">Gera um texto com as sugestões automáticas que ainda esperam o OK, <b>sem o nome dos alunos</b>. ' +
+    'Cole no chat do Claude, receba a resposta e use <b>Importar da IA</b>. Depois, os professores conferem e dão o OK.</p>' +
+    '<button class="btn pri" id="xe-ger">Gerar lote</button><div id="xe-res"></div>', true);
+  $('#xe-ger', md.el).onclick = function () {
+    ocupado(this, 'Gerando…', function () { return call('exportarEstrategias', { limite: 30 }); }).then(function (r) {
+      var alvo = $('#xe-res', md.el);
+      if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Nenhuma sugestão automática esperando a IA.</div>'; return; }
+      alvo.innerHTML = '<div class="aviso azul" style="margin-top:12px">' + r.quantidade + ' de ' + r.total + ' sugestão(ões) neste lote.</div>' +
+        '<textarea id="xe-txt" rows="12" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
+        '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn pri" id="xe-cp">Copiar texto</button></div>';
+      $('#xe-txt', md.el).onclick = function () { this.select(); };
+      $('#xe-cp', md.el).onclick = function () { $('#xe-txt', md.el).select(); copiar(r.texto, this); };
+    }).catch(function () {});
+  };
+}
+
+function importarEstrategias(aoFim) {
+  var md = modal(topoModal('Importar estratégias da IA') +
+    '<p class="peq">Cole aqui a resposta do Claude (o bloco JSON que começa com <code>[</code>). As sugestões continuam aguardando o OK dos professores.</p>' +
+    '<textarea id="ie-txt" rows="12" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;E…&quot;, &quot;texto&quot;:&quot;…&quot;}]"></textarea>' +
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Fechar</button><button class="btn pri" id="ie-ok">Importar</button></div><div id="ie-res"></div>', true);
+  $('#ie-ok', md.el).onclick = function () {
+    ocupado(this, 'Importando…', function () { return call('importarEstrategias', { texto: $('#ie-txt', md.el).value }); }).then(function (r) {
+      $('#ie-res', md.el).innerHTML = (r.importadas.length ? '<div class="aviso verde" style="margin-top:12px">' + r.importadas.length +
+        ' sugestão(ões) atualizada(s). Os professores já podem conferir e dar o OK.</div>' : '') +
+        (r.erros.length ? '<div class="aviso verm">' + r.erros.map(esc).join('<br>') + '</div>' : '');
+      if (aoFim) aoFim();
+    }).catch(function () {});
+  };
+}
+
+// ---------------------------------------------------------------- resultados (ADM/PROF)
+VIEWS.resultados = function (m, p) {
+  m.innerHTML = cabPag('Resultados', 'Cartões corrigidos. Toque em uma linha para abrir o relatório do aluno.') +
+    '<div class="card nao-imprimir"><div class="linha"><label class="campo" style="margin:0"><span>Simulado</span><select id="r-sim"><option value="">Todos</option></select></label>' +
+    '<label class="campo" style="margin:0"><span>Turma</span><input type="text" id="r-tur" placeholder="Todas"></label>' +
+    '<label class="campo" style="margin:0"><span>Aluno</span><select id="r-alu"><option value="">Todos</option></select></label></div></div><div id="lista"></div>';
+  var alunosVistos = {};
+  call('listarSimulados').then(function (ss) {
+    $('#r-sim').innerHTML += ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.codigo + ' · ' + s.titulo) + '</option>'; }).join('');
+    if (p.simuladoId) $('#r-sim').value = p.simuladoId;
+    carregar();
+  });
+  var carregar = function () {
+    var l = $('#lista'); carregando(l);
+    call('resultados', { simuladoId: $('#r-sim').value, turma: $('#r-tur').value.trim() }).then(function (rs) {
+      // lista de alunos que já enviaram cartão (para ver aluno por aluno)
+      rs.forEach(function (r) { alunosVistos[r.alunoId] = r.aluno + (r.turma ? ' · ' + r.turma : ''); });
+      var selAlu = $('#r-alu'), escolhido = selAlu.value || (p.alunoId || '');
+      selAlu.innerHTML = '<option value="">Todos</option>' + Object.keys(alunosVistos).sort(function (x, y) { return alunosVistos[x].localeCompare(alunosVistos[y], 'pt'); })
+        .map(function (id) { return '<option value="' + esc(id) + '">' + esc(alunosVistos[id]) + '</option>'; }).join('');
+      selAlu.value = escolhido; p.alunoId = '';
+      var umAluno = selAlu.value;
+      if (umAluno) rs = rs.filter(function (r) { return r.alunoId === umAluno; });
+      if (!rs.length) {
+        l.innerHTML = '<div class="card vazio">Nenhum resultado.' + (S.user.perfil === 'PROFESSOR' && !S.user.turmas ? ' Peça à coordenação para vincular suas turmas.' : '') + '</div>';
+        return;
+      }
+      var media = Math.round(10 * rs.reduce(function (a, r) { return a + r.notaFinal; }, 0) / rs.length) / 10;
+      var aptos = rs.filter(function (r) { return r.apto; }).length;
+      // professor com disciplinas: tudo só das disciplinas dele (sem classificação geral)
+      var rec = rs[0].recorte, nomeRec = rec ? rec.join(' e ') : '', comPos = $('#r-sim').value && !rec;
+      if (comPos) rs.sort(function (a, b) { return (a.posicao || 1e9) - (b.posicao || 1e9); });
+      else if (rec && $('#r-sim').value) rs.sort(function (a, b) { return b.notaFinal - a.notaFinal; });
+      l.innerHTML = '<div class="grade"><div class="kpi"><small>Cartões</small><b>' + rs.length + '</b></div><div class="kpi"><small>' + (rec ? 'Média em ' + esc(nomeRec) : 'Média da nota final') + '</small><b>' + num(media) + '</b></div>' +
+        '<div class="kpi"><small>' + (rec ? 'Atingiram a mediana em ' + esc(nomeRec) : 'Atingiram a mediana em todas') + '</small><b>' + aptos + '</b></div></div>' +
+        (rec ? '<p class="mut peq">Você vê só <b>' + esc(nomeRec) + '</b>, a' + (rec.length > 1 ? 's suas disciplinas' : ' sua disciplina') + ': aproveitamento de 0 a 100% e a mediana dos participantes de cada simulado.' +
+            ($('#r-sim').value ? ' Lista do maior para o menor aproveitamento.' : '') + '</p>'
+          : '<p class="mut peq">Nota final com os pesos da EsPCEx (0 a 100). A mediana é a dos participantes de cada simulado.' +
+            ($('#r-sim').value ? ' Lista em ordem de classificação.' : ' Escolha um simulado para ver a ordem de classificação.') + '</p>') +
+        '<div class="card rolagem"><table class="tab"><tr>' + (comPos ? '<th class="num">Nº</th>' : '') + '<th>Aluno</th><th>Turma</th><th>Simulado</th><th class="num">' + (rec ? 'Nota em ' + esc(nomeRec) : 'Nota final') + '</th>' +
+        '<th class="num">Acertos</th><th>Mediana</th><th>Data</th><th>E-mail</th><th>Cartão</th></tr>' +
+        rs.map(function (r, i) {
+          return '<tr class="clic" data-i="' + i + '">' + (comPos ? '<td class="num">' + (r.posicao || '') + '</td>' : '') +
+            '<td>' + esc(r.aluno) + '</td><td>' + esc(r.turma) + '</td><td class="peq">' + esc(r.simulado) + '</td>' +
+            '<td class="num" style="font-weight:700">' + num(r.notaFinal) + (rec ? '%' : '') + '</td><td class="num">' + r.acertos + '/' + r.total + '</td>' +
+            '<td>' + (r.apto ? tag(STATUS_CORTE, 'SIM') : '<span title="Abaixo em ' + esc(r.abaixo.join(', ')) + '">' + tag(STATUS_CORTE, 'NAO') + '</span>') + '</td>' +
+            '<td class="peq">' + dataBr(r.criadoEm) + '</td><td class="peq mut">' + esc((r.emailStatus || '').split(' ')[0]) + '</td>' +
+            '<td>' + (r.temFoto ? '<button class="btn peq" data-cartao="' + i + '">Ver</button>' : '<span class="mut peq">sem foto</span>') + '</td></tr>';
+        }).join('') + '</table></div>';
+      $$('tr.clic', l).forEach(function (tr) { tr.onclick = function () { ir('relatorio', { id: rs[+tr.getAttribute('data-i')].id }); }; });
+      $$('[data-cartao]', l).forEach(function (bt) {
+        bt.onclick = function (ev) { ev.stopPropagation(); var r = rs[+bt.getAttribute('data-cartao')]; verCartao(r.id, 'Cartão de ' + r.aluno + ' · ' + r.codigo); };
+      });
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
+  };
+  $('#r-sim').onchange = carregar;
+  $('#r-tur').onchange = carregar;
+  $('#r-alu').onchange = carregar;
+};
+
+// ---------------------------------------------------------------- mapa da turma
+VIEWS.turmas = function (m, p) {
+  var prof = S.user.perfil === 'PROFESSOR';
+  m.innerHTML = cabPag('Mapa da turma', 'O que a turma errou, por quê, e o que trabalhar em sala') +
+    '<div class="card nao-imprimir"><div class="linha">' +
+    '<label class="campo" style="margin:0"><span>Simulado</span><select id="t-sim"></select></label>' +
+    '<label class="campo" style="margin:0"><span>Turma</span>' + (prof
+      ? '<select id="t-tur"><option value="">Todas as minhas</option>' + csv(S.user.turmas).map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') + '</select>'
+      : '<input type="text" id="t-tur" placeholder="Todas">') + '</label>' +
+    '<label class="campo" style="margin:0"><span>Disciplina</span><select id="t-disc"><option value="">' + (prof && S.user.disciplinas ? 'As minhas' : 'Todas') + '</option>' +
+    disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    '<button class="btn pri" id="t-ger" style="flex:none;align-self:flex-end">Gerar mapa</button></div></div><div id="mapa"></div>';
+  call('listarSimulados').then(function (ss) {
+    ss = ss.filter(function (s) { return s.status !== 'RASCUNHO'; });
+    $('#t-sim').innerHTML = ss.length ? ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.codigo + ' · ' + s.titulo) + '</option>'; }).join('')
+      : '<option value="">Nenhum simulado aplicado</option>';
+    if (p.simuladoId) $('#t-sim').value = p.simuladoId;
+    if ($('#t-sim').value) gerar();
+  });
+  var gerar = function () {
+    var alvo = $('#mapa'); carregando(alvo, 'Cruzando os resultados da turma…');
+    call('relatorioTurma', { simuladoId: $('#t-sim').value, turma: $('#t-tur').value.trim(), disciplina: $('#t-disc').value }).then(function (d) {
+      if (!d.participantes) { alvo.innerHTML = '<div class="card vazio">Nenhum aluno desta seleção enviou o cartão ainda.</div>'; return; }
+      var h = '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
+        '<div class="kpi"><small>Média geral</small><b>' + d.media + '%</b></div>' +
+        '<div class="kpi"><small>Turma</small><b style="font-size:20px">' + esc(d.turma) + '</b></div></div>';
+      h += '<div class="grade-2"><div class="card"><h2>Aproveitamento por disciplina</h2>' +
+        d.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct); }).join('') + '</div>' +
+        '<div class="card"><h2>Alunos que precisam de mais atenção</h2>' + d.alunos.slice(0, 8).map(function (x, i) {
+          return '<div class="clic al" data-id="' + x.resultadoId + '" style="cursor:pointer">' + barra(x.nome, x.nota) + '</div>';
+        }).join('') + '<p class="mut peq">Ordenados da menor para a maior nota. Toque para abrir o relatório.</p></div></div>';
+      h += '<h2 style="margin:10px 0">O que trabalhar em sala</h2>' +
+        (d.deficiencias.length ? d.deficiencias.slice(0, 12).map(function (x) {
+          var pct = Math.round(100 * x.alunosAfetados / d.participantes);
+          return '<div class="def"><h3>' + esc(x.conceito) + ' <span class="tag">' + esc(x.disciplina) + '</span> ' +
+            '<span class="tag verm">' + x.alunosAfetados + ' aluno(s) · ' + pct + '% da turma</span></h3>' +
+            '<div class="peq"><b>Erro típico:</b> ' + esc(x.erro) + '</div><div class="peq"><b>Sugestão:</b> ' + esc(x.recomendacao) + '</div></div>';
+        }).join('') : '<div class="card vazio">Nenhum erro mapeado.</div>');
+      h += '<div class="card" style="margin-top:14px"><h2>Questões com menor índice de acerto</h2><div class="rolagem"><table class="tab">' +
+        '<tr><th>Nº</th><th>Disciplina / conteúdo</th><th class="num">Acerto</th><th>Gab.</th><th>Distribuição</th><th>Distrator mais marcado</th></tr>' +
+        d.questoes.map(function (x) {
+          var dist = Object.keys(x.marcacoes).filter(function (k) { return x.marcacoes[k]; }).map(function (k) {
+            return (k === 'branco' ? '∅' : k) + ' ' + x.marcacoes[k];
+          }).join(' · ');
+          var dm = x.distratorMaisMarcado;
+          return '<tr><td class="num">' + x.n + '</td><td>' + esc(x.disciplina) + '<div class="mut peq">' + esc(x.conteudo) + '</div></td>' +
+            '<td class="num" style="color:' + corPct(x.pctAcerto) + ';font-weight:700">' + x.pctAcerto + '%</td><td style="text-align:center"><b>' + esc(x.correta) + '</b></td>' +
+            '<td class="peq">' + dist + '</td><td class="peq">' + (dm ? '<b>' + dm.letra + '</b> (' + dm.vezes + 'x)' +
+              (dm.diag ? ': ' + esc(dm.diag.erro) : '') : '—') + '</td></tr>';
+        }).join('') + '</table></div></div>';
+      alvo.innerHTML = h;
+      $$('.al', alvo).forEach(function (x) { x.onclick = function () { ir('relatorio', { id: x.getAttribute('data-id') }); }; });
+    }).catch(function (e) { alvo.innerHTML = caixaErro(e); });
+  };
+  $('#t-ger').onclick = gerar;
+};
+</script>
+
+  <script>
+/* =====================================================================
+   MIRA — interface: missões, edital, gráficos e telas do aluno
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- missões (estratégias aprovadas, para o aluno)
 // pontos: o toque vale pouco; o que vale mais é o que o simulado comprova (estrelas no edital)
 var PONTOS_MISSAO = 5, BONUS_ESTRATEGIA = 10, PONTOS_ESTRELA = 20, PONTOS_NIVEL = 100, META_SEMANA = 3;
@@ -3566,143 +4046,6 @@ function ligarTelaMissoes(m, es, rs) {
   desenhar();
 }
 
-/** Liga os botões de OK/edição dentro de raiz. aoMudar() recarrega a tela. */
-function ligarEstrategias(raiz, aoMudar, lista) {
-  if (!raiz) return;
-  $$('[data-rel]', raiz).forEach(function (b) {
-    b.onclick = function (ev) { ev.preventDefault(); ir('relatorio', { id: b.getAttribute('data-rel') }); };
-  });
-  $$('.est-ok', raiz).forEach(function (b) {
-    b.onclick = function () {
-      var box = b.closest('.est');
-      var item = { id: box.getAttribute('data-id'), texto: $('.est-txt', box).value };
-      ocupado(b, 'Salvando…', function () { return call('aprovarEstrategias', { itens: [item] }); }).then(function (r) {
-        if (r.erros.length) { toast(r.erros.join(' · '), true); return; }
-        toast('Estratégia aprovada. O aluno já pode ver.');
-        aoMudar();
-      }).catch(function () {});
-    };
-  });
-  $$('.est-editar', raiz).forEach(function (a) {
-    a.onclick = function (ev) {
-      ev.preventDefault();
-      var box = a.closest('.est'), id = box.getAttribute('data-id');
-      var e = (lista || []).filter(function (x) { return x.id === id; })[0];
-      var texto = e ? e.texto : $('.est-corpo', box).innerText;
-      $('.est-corpo', box).outerHTML = '<textarea class="est-txt" rows="9">' + esc(texto) + '</textarea>';
-      $('.est-pe', box).outerHTML = '<div class="est-acoes"><span class="mut peq">O aluno passa a ver o texto novo assim que você salvar.</span>' +
-        '<button class="btn peq ok est-ok">Salvar</button></div>';
-      ligarEstrategias(box, aoMudar, lista);
-    };
-  });
-}
-
-/** Lista de estratégias para o professor (e a coordenação) dar o OK */
-VIEWS.estrategias = function (m, p) {
-  var adm = S.user.perfil === 'ADM';
-  m.innerHTML = cabPag('Estratégias de estudo', 'Montadas com as missões da curadoria, validadas por vocês em cada questão. O aluno já vê; se quiser, ajuste o texto.',
-    adm ? '<button class="btn" id="ee-exp">Exportar para a IA</button><button class="btn" id="ee-imp">Importar da IA</button>' : '') +
-    '<div class="card nao-imprimir"><div class="linha">' +
-    '<label class="campo" style="margin:0"><span>Situação</span><select id="ee-st"><option value="APROVADA">Em uso pelos alunos</option>' +
-    '<option value="SUGERIDA">Aguardando OK (antigas)</option><option value="">Todas</option></select></label>' +
-    '<label class="campo" style="margin:0"><span>Disciplina</span><select id="ee-disc"><option value="">Todas</option>' +
-    disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
-    '<label class="campo" style="margin:0"><span>Buscar</span><input type="text" id="ee-busca" placeholder="Aluno ou turma"></label></div></div>' +
-    '<div id="ee-lote"></div><div id="lista"></div>';
-  if (p && p.status !== undefined) $('#ee-st').value = p.status;
-  if (adm) {
-    $('#ee-exp').onclick = exportarEstrategias;
-    $('#ee-imp').onclick = function () { importarEstrategias(carregar); };
-  }
-  var todas = [], marcadas = {};
-  var desenhar = function () {
-    var l = $('#lista'), disc = $('#ee-disc').value, b = $('#ee-busca').value.trim().toLowerCase();
-    var vis = todas.filter(function (e) {
-      return (!disc || e.disciplina === disc) && (!b || ((e.aluno || '') + ' ' + (e.turma || '')).toLowerCase().indexOf(b) >= 0);
-    });
-    if (!vis.length) {
-      l.innerHTML = '<div class="card vazio">' + icone('foco', 'ic-vazio') +
-        ($('#ee-st').value === 'SUGERIDA' ? 'Nenhuma estratégia aguardando o seu OK.' : 'Nenhuma estratégia encontrada.') +
-        '<p class="mut peq" style="margin:6px 0 0">As estratégias aparecem aqui quando os alunos enviam o cartão-resposta.</p></div>';
-      $('#ee-lote').innerHTML = ''; return;
-    }
-    l.innerHTML = '<p class="mut peq">' + vis.length + ' estratégia(s)</p><div class="est-lista larga">' +
-      vis.map(function (e) { return '<div class="card">' + blocoEstrategia(e, true, true) + '</div>'; }).join('') + '</div>';
-    ligarEstrategias(l, carregar, todas);
-    var selecionaveis = vis.filter(function (e) { return e.podeAprovar && e.status === 'SUGERIDA'; });
-    var lote = function () {
-      var n = Object.keys(marcadas).length;
-      $('#ee-lote').innerHTML = selecionaveis.length < 2 ? '' :
-        '<div class="lote"><label class="peq"><input type="checkbox" id="ee-todas"' + (n && n === selecionaveis.length ? ' checked' : '') + '> ' +
-        'Selecionar todas (' + selecionaveis.length + ')</label>' +
-        '<button class="btn ok" id="ee-ok"' + (n ? '' : ' disabled') + '>Dar OK nas selecionadas' + (n ? ' (' + n + ')' : '') + '</button></div>';
-      if (!$('#ee-todas')) return;
-      $('#ee-todas').onchange = function () {
-        marcadas = {};
-        if (this.checked) selecionaveis.forEach(function (e) { marcadas[e.id] = true; });
-        $$('.est-sel', l).forEach(function (c) { c.checked = !!marcadas[c.getAttribute('data-id')]; });
-        lote();
-      };
-      $('#ee-ok').onclick = function () {
-        var itens = Object.keys(marcadas).map(function (id) {
-          var box = $('.est[data-id="' + id + '"]', l);
-          return { id: id, texto: box ? $('.est-txt', box).value : undefined };
-        });
-        ocupado(this, 'Salvando…', function () { return call('aprovarEstrategias', { itens: itens }); }).then(function (r) {
-          if (r.aprovadas.length) toast(r.aprovadas.length + ' estratégia(s) aprovada(s). Os alunos já podem ver.');
-          if (r.erros.length) toast('Não aprovadas: ' + r.erros.join(' · '), true);
-          carregar();
-        }).catch(function () {});
-      };
-    };
-    $$('.est-sel', l).forEach(function (c) {
-      c.checked = !!marcadas[c.getAttribute('data-id')];
-      c.onchange = function () { if (c.checked) marcadas[c.getAttribute('data-id')] = true; else delete marcadas[c.getAttribute('data-id')]; lote(); };
-    });
-    lote();
-  };
-  var carregar = function () {
-    carregando($('#lista')); marcadas = {};
-    call('listarEstrategias', { status: $('#ee-st').value }).then(function (es) { todas = es; desenhar(); })
-      .catch(function (e) { $('#lista').innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
-  };
-  $('#ee-st').onchange = carregar; $('#ee-disc').onchange = desenhar; $('#ee-busca').oninput = desenhar;
-  carregar();
-};
-
-function exportarEstrategias() {
-  var md = modal(topoModal('Exportar estratégias para a IA') +
-    '<p class="peq">Gera um texto com as sugestões automáticas que ainda esperam o OK, <b>sem o nome dos alunos</b>. ' +
-    'Cole no chat do Claude, receba a resposta e use <b>Importar da IA</b>. Depois, os professores conferem e dão o OK.</p>' +
-    '<button class="btn pri" id="xe-ger">Gerar lote</button><div id="xe-res"></div>', true);
-  $('#xe-ger', md.el).onclick = function () {
-    ocupado(this, 'Gerando…', function () { return call('exportarEstrategias', { limite: 30 }); }).then(function (r) {
-      var alvo = $('#xe-res', md.el);
-      if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Nenhuma sugestão automática esperando a IA.</div>'; return; }
-      alvo.innerHTML = '<div class="aviso azul" style="margin-top:12px">' + r.quantidade + ' de ' + r.total + ' sugestão(ões) neste lote.</div>' +
-        '<textarea id="xe-txt" rows="12" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
-        '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn pri" id="xe-cp">Copiar texto</button></div>';
-      $('#xe-txt', md.el).onclick = function () { this.select(); };
-      $('#xe-cp', md.el).onclick = function () { $('#xe-txt', md.el).select(); copiar(r.texto, this); };
-    }).catch(function () {});
-  };
-}
-
-function importarEstrategias(aoFim) {
-  var md = modal(topoModal('Importar estratégias da IA') +
-    '<p class="peq">Cole aqui a resposta do Claude (o bloco JSON que começa com <code>[</code>). As sugestões continuam aguardando o OK dos professores.</p>' +
-    '<textarea id="ie-txt" rows="12" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;E…&quot;, &quot;texto&quot;:&quot;…&quot;}]"></textarea>' +
-    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Fechar</button><button class="btn pri" id="ie-ok">Importar</button></div><div id="ie-res"></div>', true);
-  $('#ie-ok', md.el).onclick = function () {
-    ocupado(this, 'Importando…', function () { return call('importarEstrategias', { texto: $('#ie-txt', md.el).value }); }).then(function (r) {
-      $('#ie-res', md.el).innerHTML = (r.importadas.length ? '<div class="aviso verde" style="margin-top:12px">' + r.importadas.length +
-        ' sugestão(ões) atualizada(s). Os professores já podem conferir e dar o OK.</div>' : '') +
-        (r.erros.length ? '<div class="aviso verm">' + r.erros.map(esc).join('<br>') + '</div>' : '');
-      if (aoFim) aoFim();
-    }).catch(function () {});
-  };
-}
-
 // ---------------------------------------------------------------- gráficos do Painel do aluno
 function num(v) { return String(Math.round(v * 10) / 10).replace('.', ','); }
 
@@ -4010,10 +4353,26 @@ VIEWS.meusres = function (m) { return VIEWS.meus(m); };
 /** Nota final (pesos do edital), mediana de cada disciplina e classificação no simulado */
 var STATUS_CORTE = { SIM: ['Atingiu', 'verde'], NAO: ['Abaixo', 'verm'], TODAS: ['Atingiu a mediana em todas', 'verde'], FORA: ['Abaixo da mediana', 'verm'],
   TODAS_C: ['Atingiu em todas', 'verde'], FORA_C: ['Abaixo em alguma', 'verm'] };
+/** Pesos do edital em texto, lidos da configuração do concurso: "Português e Matemática 2; Física e Inglês 1,5; as demais 1" */
+function textoPesos(k) {
+  var por = {}, pesos = [];
+  conc(k).provas.forEach(function (p) {
+    p.disciplinas.forEach(function (d) {
+      var w = d[2] || 1;
+      if (!por[w]) { por[w] = []; pesos.push(w); }
+      por[w].push(d[0]);
+    });
+  });
+  pesos.sort(function (a, b) { return b - a; });
+  return pesos.map(function (w, i) {
+    var nomes = pesos.length > 1 && i === pesos.length - 1 ? 'as demais' : por[w].length > 1 ? por[w].slice(0, -1).join(', ') + ' e ' + por[w][por[w].length - 1] : por[w][0];
+    return nomes + ' ' + String(w).replace('.', ',');
+  }).join('; ');
+}
 function blocoCorte(c, aluno) {
   var h = '<div class="card"><h2>Nota final e mediana</h2>' +
     '<p class="mut peq" style="margin-top:0">Como na EsPCEx: cada disciplina vale de 0 a 100 e a nota final é a média com os pesos do edital ' +
-    '(Português e Matemática 2; Física e Inglês 1,5; as demais 1). Quem fica abaixo da <b>mediana</b> em qualquer disciplina é eliminado. ' +
+    '(' + textoPesos('ESPCEX') + '). Quem fica abaixo da <b>mediana</b> em qualquer disciplina é eliminado. ' +
     'Entre os demais, a classificação segue a nota final, e passar depende do número de vagas. Aqui, a mediana é a dos ' +
     c.participantes + ' participante(s) deste simulado. A redação não entra.</p>' +
     (c.participantes < 5 ? '<div class="aviso ambar peq">Com poucos participantes, a mediana ainda diz pouco. Ela fica mais confiável quando a turma toda envia o cartão.</div>' : '') +
@@ -4030,288 +4389,13 @@ function blocoCorte(c, aluno) {
     }).join('') + '</table></div></div>';
   return h;
 }
+</script>
 
-// ---------------------------------------------------------------- resultados (ADM/PROF)
-VIEWS.resultados = function (m, p) {
-  m.innerHTML = cabPag('Resultados', 'Cartões corrigidos. Toque em uma linha para abrir o relatório do aluno.') +
-    '<div class="card nao-imprimir"><div class="linha"><label class="campo" style="margin:0"><span>Simulado</span><select id="r-sim"><option value="">Todos</option></select></label>' +
-    '<label class="campo" style="margin:0"><span>Turma</span><input type="text" id="r-tur" placeholder="Todas"></label>' +
-    '<label class="campo" style="margin:0"><span>Aluno</span><select id="r-alu"><option value="">Todos</option></select></label></div></div><div id="lista"></div>';
-  var alunosVistos = {};
-  call('listarSimulados').then(function (ss) {
-    $('#r-sim').innerHTML += ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.codigo + ' · ' + s.titulo) + '</option>'; }).join('');
-    if (p.simuladoId) $('#r-sim').value = p.simuladoId;
-    carregar();
-  });
-  var carregar = function () {
-    var l = $('#lista'); carregando(l);
-    call('resultados', { simuladoId: $('#r-sim').value, turma: $('#r-tur').value.trim() }).then(function (rs) {
-      // lista de alunos que já enviaram cartão (para ver aluno por aluno)
-      rs.forEach(function (r) { alunosVistos[r.alunoId] = r.aluno + (r.turma ? ' · ' + r.turma : ''); });
-      var selAlu = $('#r-alu'), escolhido = selAlu.value || (p.alunoId || '');
-      selAlu.innerHTML = '<option value="">Todos</option>' + Object.keys(alunosVistos).sort(function (x, y) { return alunosVistos[x].localeCompare(alunosVistos[y], 'pt'); })
-        .map(function (id) { return '<option value="' + esc(id) + '">' + esc(alunosVistos[id]) + '</option>'; }).join('');
-      selAlu.value = escolhido; p.alunoId = '';
-      var umAluno = selAlu.value;
-      if (umAluno) rs = rs.filter(function (r) { return r.alunoId === umAluno; });
-      if (!rs.length) {
-        l.innerHTML = '<div class="card vazio">Nenhum resultado.' + (S.user.perfil === 'PROFESSOR' && !S.user.turmas ? ' Peça à coordenação para vincular suas turmas.' : '') + '</div>';
-        return;
-      }
-      var media = Math.round(10 * rs.reduce(function (a, r) { return a + r.notaFinal; }, 0) / rs.length) / 10;
-      var aptos = rs.filter(function (r) { return r.apto; }).length;
-      // professor com disciplinas: tudo só das disciplinas dele (sem classificação geral)
-      var rec = rs[0].recorte, nomeRec = rec ? rec.join(' e ') : '', comPos = $('#r-sim').value && !rec;
-      if (comPos) rs.sort(function (a, b) { return (a.posicao || 1e9) - (b.posicao || 1e9); });
-      else if (rec && $('#r-sim').value) rs.sort(function (a, b) { return b.notaFinal - a.notaFinal; });
-      l.innerHTML = '<div class="grade"><div class="kpi"><small>Cartões</small><b>' + rs.length + '</b></div><div class="kpi"><small>' + (rec ? 'Média em ' + esc(nomeRec) : 'Média da nota final') + '</small><b>' + num(media) + '</b></div>' +
-        '<div class="kpi"><small>' + (rec ? 'Atingiram a mediana em ' + esc(nomeRec) : 'Atingiram a mediana em todas') + '</small><b>' + aptos + '</b></div></div>' +
-        (rec ? '<p class="mut peq">Você vê só <b>' + esc(nomeRec) + '</b>, a' + (rec.length > 1 ? 's suas disciplinas' : ' sua disciplina') + ': aproveitamento de 0 a 100% e a mediana dos participantes de cada simulado.' +
-            ($('#r-sim').value ? ' Lista do maior para o menor aproveitamento.' : '') + '</p>'
-          : '<p class="mut peq">Nota final com os pesos da EsPCEx (0 a 100). A mediana é a dos participantes de cada simulado.' +
-            ($('#r-sim').value ? ' Lista em ordem de classificação.' : ' Escolha um simulado para ver a ordem de classificação.') + '</p>') +
-        '<div class="card rolagem"><table class="tab"><tr>' + (comPos ? '<th class="num">Nº</th>' : '') + '<th>Aluno</th><th>Turma</th><th>Simulado</th><th class="num">' + (rec ? 'Nota em ' + esc(nomeRec) : 'Nota final') + '</th>' +
-        '<th class="num">Acertos</th><th>Mediana</th><th>Data</th><th>E-mail</th><th>Cartão</th></tr>' +
-        rs.map(function (r, i) {
-          return '<tr class="clic" data-i="' + i + '">' + (comPos ? '<td class="num">' + (r.posicao || '') + '</td>' : '') +
-            '<td>' + esc(r.aluno) + '</td><td>' + esc(r.turma) + '</td><td class="peq">' + esc(r.simulado) + '</td>' +
-            '<td class="num" style="font-weight:700">' + num(r.notaFinal) + (rec ? '%' : '') + '</td><td class="num">' + r.acertos + '/' + r.total + '</td>' +
-            '<td>' + (r.apto ? tag(STATUS_CORTE, 'SIM') : '<span title="Abaixo em ' + esc(r.abaixo.join(', ')) + '">' + tag(STATUS_CORTE, 'NAO') + '</span>') + '</td>' +
-            '<td class="peq">' + dataBr(r.criadoEm) + '</td><td class="peq mut">' + esc((r.emailStatus || '').split(' ')[0]) + '</td>' +
-            '<td>' + (r.temFoto ? '<button class="btn peq" data-cartao="' + i + '">Ver</button>' : '<span class="mut peq">sem foto</span>') + '</td></tr>';
-        }).join('') + '</table></div>';
-      $$('tr.clic', l).forEach(function (tr) { tr.onclick = function () { ir('relatorio', { id: rs[+tr.getAttribute('data-i')].id }); }; });
-      $$('[data-cartao]', l).forEach(function (bt) {
-        bt.onclick = function (ev) { ev.stopPropagation(); var r = rs[+bt.getAttribute('data-cartao')]; verCartao(r.id, 'Cartão de ' + r.aluno + ' · ' + r.codigo); };
-      });
-    }).catch(function (e) { l.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
-  };
-  $('#r-sim').onchange = carregar;
-  $('#r-tur').onchange = carregar;
-  $('#r-alu').onchange = carregar;
-};
-
-// ---------------------------------------------------------------- mapa da turma
-VIEWS.turmas = function (m, p) {
-  var prof = S.user.perfil === 'PROFESSOR';
-  m.innerHTML = cabPag('Mapa da turma', 'O que a turma errou, por quê, e o que trabalhar em sala') +
-    '<div class="card nao-imprimir"><div class="linha">' +
-    '<label class="campo" style="margin:0"><span>Simulado</span><select id="t-sim"></select></label>' +
-    '<label class="campo" style="margin:0"><span>Turma</span>' + (prof
-      ? '<select id="t-tur"><option value="">Todas as minhas</option>' + csv(S.user.turmas).map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') + '</select>'
-      : '<input type="text" id="t-tur" placeholder="Todas">') + '</label>' +
-    '<label class="campo" style="margin:0"><span>Disciplina</span><select id="t-disc"><option value="">' + (prof && S.user.disciplinas ? 'As minhas' : 'Todas') + '</option>' +
-    disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
-    '<button class="btn pri" id="t-ger" style="flex:none;align-self:flex-end">Gerar mapa</button></div></div><div id="mapa"></div>';
-  call('listarSimulados').then(function (ss) {
-    ss = ss.filter(function (s) { return s.status !== 'RASCUNHO'; });
-    $('#t-sim').innerHTML = ss.length ? ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.codigo + ' · ' + s.titulo) + '</option>'; }).join('')
-      : '<option value="">Nenhum simulado aplicado</option>';
-    if (p.simuladoId) $('#t-sim').value = p.simuladoId;
-    if ($('#t-sim').value) gerar();
-  });
-  var gerar = function () {
-    var alvo = $('#mapa'); carregando(alvo, 'Cruzando os resultados da turma…');
-    call('relatorioTurma', { simuladoId: $('#t-sim').value, turma: $('#t-tur').value.trim(), disciplina: $('#t-disc').value }).then(function (d) {
-      if (!d.participantes) { alvo.innerHTML = '<div class="card vazio">Nenhum aluno desta seleção enviou o cartão ainda.</div>'; return; }
-      var h = '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
-        '<div class="kpi"><small>Média geral</small><b>' + d.media + '%</b></div>' +
-        '<div class="kpi"><small>Turma</small><b style="font-size:20px">' + esc(d.turma) + '</b></div></div>';
-      h += '<div class="grade-2"><div class="card"><h2>Aproveitamento por disciplina</h2>' +
-        d.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct); }).join('') + '</div>' +
-        '<div class="card"><h2>Alunos que precisam de mais atenção</h2>' + d.alunos.slice(0, 8).map(function (x, i) {
-          return '<div class="clic al" data-id="' + x.resultadoId + '" style="cursor:pointer">' + barra(x.nome, x.nota) + '</div>';
-        }).join('') + '<p class="mut peq">Ordenados da menor para a maior nota. Toque para abrir o relatório.</p></div></div>';
-      h += '<h2 style="margin:10px 0">O que trabalhar em sala</h2>' +
-        (d.deficiencias.length ? d.deficiencias.slice(0, 12).map(function (x) {
-          var pct = Math.round(100 * x.alunosAfetados / d.participantes);
-          return '<div class="def"><h3>' + esc(x.conceito) + ' <span class="tag">' + esc(x.disciplina) + '</span> ' +
-            '<span class="tag verm">' + x.alunosAfetados + ' aluno(s) · ' + pct + '% da turma</span></h3>' +
-            '<div class="peq"><b>Erro típico:</b> ' + esc(x.erro) + '</div><div class="peq"><b>Sugestão:</b> ' + esc(x.recomendacao) + '</div></div>';
-        }).join('') : '<div class="card vazio">Nenhum erro mapeado.</div>');
-      h += '<div class="card" style="margin-top:14px"><h2>Questões com menor índice de acerto</h2><div class="rolagem"><table class="tab">' +
-        '<tr><th>Nº</th><th>Disciplina / conteúdo</th><th class="num">Acerto</th><th>Gab.</th><th>Distribuição</th><th>Distrator mais marcado</th></tr>' +
-        d.questoes.map(function (x) {
-          var dist = Object.keys(x.marcacoes).filter(function (k) { return x.marcacoes[k]; }).map(function (k) {
-            return (k === 'branco' ? '∅' : k) + ' ' + x.marcacoes[k];
-          }).join(' · ');
-          var dm = x.distratorMaisMarcado;
-          return '<tr><td class="num">' + x.n + '</td><td>' + esc(x.disciplina) + '<div class="mut peq">' + esc(x.conteudo) + '</div></td>' +
-            '<td class="num" style="color:' + corPct(x.pctAcerto) + ';font-weight:700">' + x.pctAcerto + '%</td><td style="text-align:center"><b>' + esc(x.correta) + '</b></td>' +
-            '<td class="peq">' + dist + '</td><td class="peq">' + (dm ? '<b>' + dm.letra + '</b> (' + dm.vezes + 'x)' +
-              (dm.diag ? ': ' + esc(dm.diag.erro) : '') : '—') + '</td></tr>';
-        }).join('') + '</table></div></div>';
-      alvo.innerHTML = h;
-      $$('.al', alvo).forEach(function (x) { x.onclick = function () { ir('relatorio', { id: x.getAttribute('data-id') }); }; });
-    }).catch(function (e) { alvo.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
-  };
-  $('#t-ger').onclick = gerar;
-};
-
-// ---------------------------------------------------------------- usuários (ADM)
-VIEWS.usuarios = function (m) {
-  m.innerHTML = cabPag('Usuários', 'Alunos, professores e administração',
-    '<button class="btn" id="imp">Importar alunos</button><button class="btn pri" id="novo">+ Novo usuário</button>') +
-    '<div class="card nao-imprimir"><div class="linha"><label class="campo" style="margin:0"><span>Perfil</span><select id="u-perf">' +
-    '<option value="ALUNO">Alunos</option><option value="PROFESSOR">Professores</option><option value="ADM">Administração</option></select></label>' +
-    '<label class="campo" style="margin:0"><span>Buscar</span><input type="text" id="u-busca" placeholder="Nome, turma ou matrícula"></label></div></div>' +
-    '<div id="pedidos"></div><div id="lista"></div>';
-  var todos = [];
-  var carregarPedidos = function () {
-    call('listarSolicitacoes').then(function (ps) {
-      var box = $('#pedidos'); if (!box) return;
-      if (!ps.length) { box.innerHTML = ''; return; }
-      var sel = {};
-      var desenharP = function () {
-        var n = Object.keys(sel).length;
-        box.innerHTML = '<div class="card pedidos"><div class="pedidos-cab"><h2>Pedidos de acesso <span class="tag ambar">' + ps.length + '</span></h2>' +
-          '<label class="peq"><input type="checkbox" id="pd-todos"' + (n === ps.length ? ' checked' : '') + '> Selecionar todos</label></div>' +
-          '<p class="mut peq" style="margin-top:0">Ao aprovar, o MIRA cria o login do aluno e envia a <b>senha provisória</b> para o e-mail dele. No primeiro acesso ele cria a própria senha.</p>' +
-          '<div class="rolagem"><table class="tab"><tr><th></th><th>Nome</th><th>E-mail</th><th>Matrícula</th><th>Turma</th><th>Responsável</th><th>Pedido em</th></tr>' +
-          ps.map(function (p) {
-            return '<tr><td><input type="checkbox" class="pd" data-id="' + esc(p.id) + '"' + (sel[p.id] ? ' checked' : '') + '></td>' +
-              '<td><b>' + esc(p.nome) + '</b></td><td class="peq">' + esc(p.email) + '</td><td>' + esc(p.matricula || '—') + '</td><td>' + esc(p.turma || '—') + '</td>' +
-              '<td class="peq">' + esc(p.responsavelNome || '') + '<div class="mut">' + esc(p.responsavelEmail || '') + '</div></td><td class="peq">' + dataBr(p.criadoEm) + '</td></tr>';
-          }).join('') + '</table></div>' +
-          '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px">' +
-          '<button class="btn perigo" id="pd-rec"' + (n ? '' : ' disabled') + '>Recusar</button>' +
-          '<button class="btn ok" id="pd-apr"' + (n ? '' : ' disabled') + '>Aprovar e enviar senha' + (n ? ' (' + n + ')' : '') + '</button></div></div>';
-        $('#pd-todos').onchange = function () { sel = {}; if (this.checked) ps.forEach(function (p) { sel[p.id] = true; }); desenharP(); };
-        $$('.pd', box).forEach(function (c) { c.onchange = function () { if (c.checked) sel[c.getAttribute('data-id')] = true; else delete sel[c.getAttribute('data-id')]; desenharP(); }; });
-        var decidir = function (btn, decisao) {
-          var ids = Object.keys(sel);
-          ocupado(btn, decisao === 'APROVAR' ? 'Aprovando…' : 'Recusando…', function () {
-            return call('decidirSolicitacoes', { ids: ids, decisao: decisao, enviarEmail: true });
-          }).then(function (r) {
-            if (r.erros.length) toast('Não processados: ' + r.erros.join(' · '), true);
-            if (decisao === 'APROVAR' && r.feitos.length) {
-              var semEmail = r.feitos.filter(function (f) { return !f.emailEnviado; });
-              modal(topoModal(r.feitos.length + ' acesso(s) liberado(s)') +
-                '<p class="peq">' + (semEmail.length ? 'Não foi possível enviar o e-mail para ' + semEmail.length + ' aluno(s): entregue a senha provisória a eles.'
-                  : 'A senha provisória foi enviada para o e-mail de cada aluno.') + ' Ela aparece aqui só agora.</p>' +
-                '<div class="rolagem"><table class="tab"><tr><th>Aluno</th><th>Login</th><th>Senha provisória</th><th>E-mail</th></tr>' +
-                r.feitos.map(function (f) {
-                  return '<tr><td>' + esc(f.nome) + '</td><td class="peq">' + esc(f.login) + '</td><td><code>' + esc(f.senha) + '</code></td><td>' +
-                    (f.emailEnviado ? '<span class="tag verde">enviado</span>' : '<span class="tag verm">não enviado</span>') + '</td></tr>';
-                }).join('') + '</table></div>', true);
-            } else if (r.feitos.length) toast(r.feitos.length + ' pedido(s) recusado(s).');
-            carregarPedidos(); carregar();
-          }).catch(function () {});
-        };
-        $('#pd-apr').onclick = function () { decidir(this, 'APROVAR'); };
-        $('#pd-rec').onclick = function () { var b = this; confirmar('Recusar ' + Object.keys(sel).length + ' pedido(s)? O aluno não é avisado.', 'Recusar').then(function () { decidir(b, 'RECUSAR'); }); };
-      };
-      desenharP();
-    }).catch(function () {});
-  };
-  var desenhar = function () {
-    var perf = $('#u-perf').value, b = $('#u-busca').value.toLowerCase();
-    var us = todos.filter(function (u) {
-      return u.perfil === perf && (!b || (u.nome + ' ' + u.turma + ' ' + u.turmas + ' ' + u.matricula + ' ' + u.email).toLowerCase().indexOf(b) >= 0);
-    }).sort(function (a, c) { return a.nome.localeCompare(c.nome); });
-    var l = $('#lista');
-    if (!us.length) { l.innerHTML = '<div class="card vazio">Nenhum usuário.</div>'; return; }
-    var cols = perf === 'ALUNO' ? '<th>Nome</th><th>Matrícula</th><th>Turma</th><th>Responsável</th><th>LGPD</th>'
-      : perf === 'PROFESSOR' ? '<th>Nome</th><th>E-mail</th><th>Disciplinas</th><th>Turmas</th>' : '<th>Nome</th><th>E-mail</th>';
-    l.innerHTML = '<div class="card rolagem"><p class="mut peq" style="margin-top:0">' + us.length + ' usuário(s)</p><table class="tab"><tr>' + cols + '<th></th></tr>' +
-      us.map(function (u) {
-        var inativo = u.ativo !== 'SIM' ? ' <span class="tag">inativo</span>' : '';
-        var c = perf === 'ALUNO' ? '<td>' + esc(u.nome) + inativo + '</td><td>' + esc(u.matricula) + '</td><td>' + esc(u.turma) + '</td><td class="peq">' + esc(u.responsavelNome) + '<div class="mut">' + esc(u.responsavelEmail) + '</div></td>' +
-          '<td>' + (u.consentimento === 'SIM' ? '<span class="tag verde">ok</span>' : '<span class="tag ambar">pendente</span>') + '</td>'
-          : perf === 'PROFESSOR' ? '<td>' + esc(u.nome) + inativo + '</td><td class="peq">' + esc(u.email) + '</td><td class="peq">' + esc(u.disciplinas || 'Todas') + '</td><td class="peq">' + esc(u.turmas || '—') + '</td>'
-            : '<td>' + esc(u.nome) + inativo + '</td><td class="peq">' + esc(u.email) + '</td>';
-        return '<tr class="clic" data-id="' + u.id + '">' + c + '<td class="mut peq">editar</td></tr>';
-      }).join('') + '</table></div>';
-    $$('tr.clic', l).forEach(function (tr) {
-      tr.onclick = function () { formUsuario(todos.filter(function (u) { return u.id === tr.getAttribute('data-id'); })[0], carregar); };
-    });
-  };
-  var carregar = function () {
-    carregando($('#lista'));
-    call('listarUsuarios').then(function (us) { todos = us; desenhar(); });
-  };
-  $('#u-perf').onchange = desenhar; $('#u-busca').oninput = desenhar;
-  $('#novo').onclick = function () { formUsuario({ perfil: $('#u-perf').value }, carregar); };
-  $('#imp').onclick = function () { importarAlunos(carregar); };
-  carregar();
-  carregarPedidos();
-};
-
-function mostrarSenha(titulo, login, senha) {
-  modal(topoModal(titulo) + '<p>Entregue estes dados ao usuário. A senha não será exibida novamente.</p>' +
-    '<div class="card" style="background:var(--bg);font-size:16px"><div><b>Login:</b> ' + esc(login) + '</div><div><b>Senha:</b> <span style="font-family:monospace;font-size:18px">' + esc(senha) + '</span></div></div>' +
-    '<p class="mut peq">O usuário pode trocar a senha em "Minha conta".</p>');
-}
-
-function formUsuario(u, aoSalvar) {
-  var discs = disciplinasDe('ESPCEX');
-  var minhas = csv(u.disciplinas);
-  var md = modal(topoModal(u.id ? 'Editar usuário' : 'Novo usuário') + '<form id="fu">' +
-    '<div class="linha"><label class="campo"><span>Perfil</span><select id="u-p">' +
-    [['ALUNO', 'Aluno'], ['PROFESSOR', 'Professor'], ['ADM', 'Administração']].map(function (x) {
-      return '<option value="' + x[0] + '"' + (x[0] === u.perfil ? ' selected' : '') + '>' + x[1] + '</option>';
-    }).join('') + '</select></label>' +
-    '<label class="campo"><span>Situação</span><select id="u-at"><option value="SIM">Ativo</option><option value="NAO"' + (u.ativo === 'NAO' ? ' selected' : '') + '>Inativo</option></select></label></div>' +
-    '<label class="campo"><span>Nome completo *</span><input type="text" id="u-nome" required value="' + esc(u.nome) + '"></label>' +
-    '<div class="linha"><label class="campo"><span>E-mail</span><input type="email" id="u-email" value="' + esc(u.email) + '"></label>' +
-    '<label class="campo grp-aluno"><span>Matrícula</span><input type="text" id="u-mat" value="' + esc(u.matricula) + '"></label></div>' +
-    '<div class="grp-aluno"><label class="campo"><span>Turma</span><input type="text" id="u-tur" placeholder="Ex.: 3A" value="' + esc(u.turma) + '"></label>' +
-    '<div class="linha"><label class="campo"><span>Nome do responsável</span><input type="text" id="u-rn" value="' + esc(u.responsavelNome) + '"></label>' +
-    '<label class="campo"><span>E-mail do responsável</span><input type="email" id="u-re" value="' + esc(u.responsavelEmail) + '"></label></div>' +
-    '<label style="display:flex;gap:8px;margin-bottom:12px" class="peq"><input type="checkbox" id="u-cons"' + (u.consentimento === 'SIM' ? ' checked' : '') + '>' +
-    '<span>O responsável autorizou o tratamento dos dados de desempenho e o envio de relatórios por e-mail (LGPD).</span></label></div>' +
-    '<div class="grp-prof"><div class="campo"><span class="mut peq" style="font-weight:600">Disciplinas (nenhuma marcada = todas)</span><div style="display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px">' +
-    discs.map(function (d) { return '<label class="peq"><input type="checkbox" class="u-d" value="' + esc(d) + '"' + (minhas.indexOf(d) >= 0 ? ' checked' : '') + '> ' + esc(d) + '</label>'; }).join('') +
-    '</div></div><label class="campo"><span>Turmas que acompanha (separe por vírgula)</span><input type="text" id="u-turs" placeholder="Ex.: 3A, 3B" value="' + esc(u.turmas) + '"></label></div>' +
-    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
-    (u.id ? '<button type="button" class="btn" id="u-rs" style="margin-right:auto">Gerar nova senha</button>' : '') +
-    '<button type="button" class="btn fechar">Cancelar</button><button class="btn pri" id="u-ok">Salvar</button></div></form>');
-  var ajustar = function () {
-    var p = $('#u-p', md.el).value;
-    $$('.grp-aluno', md.el).forEach(function (x) { x.style.display = p === 'ALUNO' ? '' : 'none'; });
-    $$('.grp-prof', md.el).forEach(function (x) { x.style.display = p === 'PROFESSOR' ? '' : 'none'; });
-  };
-  $('#u-p', md.el).onchange = ajustar; ajustar();
-  if ($('#u-rs', md.el)) $('#u-rs', md.el).onclick = function () {
-    ocupado(this, 'Gerando…', function () { return call('redefinirSenha', { id: u.id }); })
-      .then(function (r) { md.fechar(); mostrarSenha('Nova senha', u.email || u.matricula, r.senha); }).catch(function () {});
-  };
-  $('#fu', md.el).onsubmit = function (e) {
-    e.preventDefault();
-    var d = {
-      id: u.id, perfil: $('#u-p', md.el).value, ativo: $('#u-at', md.el).value, nome: $('#u-nome', md.el).value.trim(),
-      email: $('#u-email', md.el).value.trim(), matricula: $('#u-mat', md.el).value.trim(), turma: $('#u-tur', md.el).value.trim(),
-      responsavelNome: $('#u-rn', md.el).value.trim(), responsavelEmail: $('#u-re', md.el).value.trim(),
-      consentimento: $('#u-cons', md.el).checked ? 'SIM' : 'NAO',
-      disciplinas: $$('.u-d:checked', md.el).map(function (x) { return x.value; }).join(', '),
-      turmas: csv($('#u-turs', md.el).value).join(', ')
-    };
-    if (d.perfil !== 'ALUNO') { d.matricula = ''; d.turma = ''; d.responsavelNome = ''; d.responsavelEmail = ''; }
-    ocupado($('#u-ok', md.el), 'Salvando…', function () { return call('salvarUsuario', d); }).then(function (r) {
-      md.fechar(); toast('Usuário salvo.'); aoSalvar();
-      if (r.senhaInicial) mostrarSenha('Usuário criado', d.email || d.matricula, r.senhaInicial);
-    }).catch(function () {});
-  };
-}
-
-function importarAlunos(aoFim) {
-  var md = modal(topoModal('Importar alunos') +
-    '<p class="peq">Cole as linhas de uma planilha (Excel ou Google Planilhas), uma por aluno, nesta ordem de colunas:</p>' +
-    '<div class="card peq" style="background:var(--bg);font-family:monospace">Nome · Matrícula · Turma · E-mail do aluno · Nome do responsável · E-mail do responsável · Consentimento (SIM/NÃO)</div>' +
-    '<textarea id="imp-txt" rows="10" placeholder="Cole aqui…"></textarea>' +
-    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Cancelar</button><button class="btn pri" id="imp-ok">Importar</button></div><div id="imp-res"></div>', true);
-  $('#imp-ok', md.el).onclick = function () {
-    ocupado(this, 'Importando…', function () { return call('importarAlunos', { texto: $('#imp-txt', md.el).value }); }).then(function (r) {
-      aoFim();
-      $('#imp-res', md.el).innerHTML = '<div class="aviso verde" style="margin-top:12px">' + r.criados.length + ' aluno(s) criado(s). Guarde as senhas abaixo; elas não serão exibidas novamente.</div>' +
-        (r.erros.length ? '<div class="aviso verm">' + r.erros.map(esc).join('<br>') + '</div>' : '') +
-        (r.criados.length ? '<div class="rolagem"><table class="tab"><tr><th>Nome</th><th>Login</th><th>Senha</th></tr>' + r.criados.map(function (c) {
-          return '<tr><td>' + esc(c.nome) + '</td><td>' + esc(c.login) + '</td><td style="font-family:monospace">' + esc(c.senha) + '</td></tr>';
-        }).join('') + '</table></div>' : '');
-    }).catch(function () {});
-  };
-}
-
+  <script>
+/* =====================================================================
+   MIRA — interface: configurações, cópia de segurança e restauração
+   (parte do App; a ordem dos arquivos está em Index.html)
+   ===================================================================== */
 // ---------------------------------------------------------------- configurações (ADM)
 VIEWS.config = function (m) {
   carregando(m);
@@ -4497,9 +4581,7 @@ function abrirRestauracao() {
         var semEmail = s.feitos.filter(function (f) { return !f.emailEnviado; });
         $('#r-senhas', corpo).innerHTML = '<p class="peq">' + (s.feitos.length - semEmail.length) + ' senhas enviadas por e-mail (pode cair no spam).</p>' +
           (semEmail.length ? '<p class="peq">Estas não foram por e-mail. Entregue pessoalmente; elas não serão exibidas de novo:</p>' +
-            '<div class="rolagem"><table class="tab"><tr><th>Nome</th><th>Login</th><th>Senha</th></tr>' + semEmail.map(function (f) {
-              return '<tr><td>' + esc(f.nome) + '</td><td>' + esc(f.login) + '</td><td style="font-family:monospace">' + esc(f.senha) + '</td></tr>';
-            }).join('') + '</table></div>' : '');
+            tabelaSenhas(semEmail) : '');
       }).catch(function () {});
     };
   }
@@ -4514,9 +4596,9 @@ function cartaoMudanca(c) {
         '<p class="peq"><a href="' + MIRA_NOVO + '" target="_blank">Abrir o MIRA novo</a></p>' +
         '<button class="btn perigo" id="mu-desfazer">Voltar a usar este endereço (emergência)</button>'
       : '<p class="peq">O MIRA novo usa um banco de dados de verdade (Supabase). As telas são as mesmas.</p>' +
-        '<ol class="peq" style="padding-left:20px;margin:0 0 14px"><li><b>Copiar os dados</b>: leva usuários, questões, simulados, resultados e figuras. Pode repetir quantas vezes quiser: cada cópia substitui a anterior.</li>' +
+        '<ol class="peq" style="padding-left:20px;margin:0 0 14px"><li><b>Copiar os dados</b>: leva usuários, questões, simulados, resultados e figuras. Só funciona num servidor novo ainda vazio, e pode repetir até concluir: cada cópia substitui a anterior.</li>' +
         '<li><b>Testar</b> o MIRA novo (entre com o mesmo e-mail e senha).</li>' +
-        '<li><b>Concluir a mudança</b>: copia tudo de novo e passa todos para o endereço novo.</li></ol>' +
+        '<li><b>Concluir a mudança</b>: passa todos para o endereço novo e fecha a cópia de vez.</li></ol>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="mu-copiar">Copiar os dados</button>' +
         '<a class="btn" href="' + MIRA_NOVO + 'app.html" target="_blank">Testar o MIRA novo</a>' +
         '<button class="btn pri" id="mu-concluir">Concluir a mudança</button></div><div id="mu-res"></div>') + '</div>';
@@ -4547,9 +4629,9 @@ function ligarMudanca() {
   if ($('#mu-copiar')) $('#mu-copiar').onclick = function () { copiarParaSupabase(this).catch(function () {}); };
   if ($('#mu-concluir')) $('#mu-concluir').onclick = function () {
     var b = this;
-    confirmar('Copiar os dados uma última vez e passar todos para o MIRA novo? Alunos e professores que abrirem o endereço antigo serão levados ao novo.', 'Concluir a mudança').then(function () {
-      copiarParaSupabase(b).then(function () { return call('concluirMudanca', {}); })
-        .then(function () { toast('Mudança concluída. Todos já usam o MIRA novo.'); ir('config'); }).catch(function () {});
+    confirmar('Passar todos para o MIRA novo? Alunos e professores que abrirem o endereço antigo serão levados ao novo, e a cópia para o servidor novo fica fechada.', 'Concluir a mudança').then(function () {
+      ocupado(b, 'Concluindo…', function () { return call('concluirMudanca', {}); })
+        .then(function (r) { toast(r && r.aviso ? r.aviso : 'Mudança concluída. Todos já usam o MIRA novo.', !!(r && r.aviso)); ir('config'); }).catch(function () {});
     });
   };
   if ($('#mu-desfazer')) $('#mu-desfazer').onclick = function () {
@@ -4559,78 +4641,10 @@ function ligarMudanca() {
     });
   };
 }
+</script>
 
-// ---------------------------------------------------------------- minha conta
-VIEWS.conta = function (m) {
-  var u = S.user;
-  var dados = function (rot, v) { return v ? '<div class="dado"><span>' + rot + '</span>' + esc(v) + '</div>' : ''; };
-  m.innerHTML = cabPag('Minha conta') + '<div class="grade-2"><div class="card"><h2>Dados</h2>' +
-    '<div class="perfil-foto">' + avatar(u, 'grande') + '<div><b>' + esc(u.nome) + '</b><div class="mut peq">' + PERFIL_TXT[u.perfil] + '</div>' +
-    '<div class="foto-acoes"><label class="btn peq"><input type="file" id="ft-in" accept="image/*">' + (u.fotoUrl ? 'Trocar foto' : 'Colocar foto') + '</label>' +
-    (u.fotoUrl ? '<button class="btn peq disc" id="ft-rem">Remover</button>' : '') + '</div></div></div>' +
-    dados('E-mail', u.email) + dados('Matrícula', u.matricula) + dados('Turma', u.turma) + dados('Turmas', u.turmas) + dados('Disciplinas', u.disciplinas) + '</div>' +
-    '<form class="card" id="fs"><h2>' + (u.trocarSenha ? 'Criar minha senha' : 'Trocar senha') + '</h2>' +
-    (u.trocarSenha ? '<p class="mut peq" style="margin-top:0">Você está usando a senha provisória que recebeu. Crie uma senha só sua.</p>' : '') +
-    '<label class="campo"><span>' + (u.trocarSenha ? 'Senha provisória (a que você recebeu)' : 'Senha atual') + '</span><input type="password" id="s-a" required autocomplete="current-password"></label>' +
-    '<label class="campo"><span>Nova senha (mínimo 8 caracteres)</span><input type="password" id="s-n" required minlength="8" autocomplete="new-password"></label>' +
-    '<label class="campo"><span>Repita a nova senha</span><input type="password" id="s-n2" required minlength="8" autocomplete="new-password"></label>' +
-    '<button class="btn pri" id="s-ok">Salvar nova senha</button></form></div>' +
-    '<div class="card sobre"><img src="' + LOGO_EMBLEMA + '" alt=""><div><h3 style="margin-bottom:2px">Sobre o MIRA</h3>' +
-    '<p class="mut peq" style="margin:0">Monitoramento Inteligente de Resultados e Aprendizagem.<br>Desenvolvido por Carol J Castro.</p></div></div>';
-  var trocarAvatar = function () {
-    var b = $('#usuario .avatar'); if (b) b.outerHTML = avatar(S.user);
-    VIEWS.conta(m);
-  };
-  $('#ft-in').onchange = function (e) {
-    var f = e.target.files[0]; if (!f) return;
-    var rot = this.parentNode;
-    rot.classList.add('ocupado');
-    fotoQuadrada(f, 320).then(function (img) { return call('salvarFoto', { base64: img.base64, mime: img.mime }); })
-      .then(function (r) { S.user.fotoUrl = r.fotoUrl; toast('Foto atualizada.'); trocarAvatar(); })
-      .catch(function (er) { rot.classList.remove('ocupado'); toast(msgErro(er), true); });
-  };
-  if ($('#ft-rem')) $('#ft-rem').onclick = function () {
-    ocupado(this, 'Removendo…', function () { return call('salvarFoto', { remover: true }); })
-      .then(function () { S.user.fotoUrl = null; toast('Foto removida.'); trocarAvatar(); }).catch(function () {});
-  };
-  $('#fs').onsubmit = function (e) {
-    e.preventDefault();
-    var nova = $('#s-n').value;
-    if (nova !== $('#s-n2').value) { toast('As duas senhas novas não são iguais. Digite de novo.', true); $('#s-n2').focus(); return; }
-    ocupado($('#s-ok'), 'Salvando…', function () { return call('trocarSenha', { atual: $('#s-a').value, nova: nova }); })
-      .then(function () {
-        var era = S.user.trocarSenha;
-        S.user.trocarSenha = false;
-        toast(era ? 'Senha criada. A partir de agora, use a sua senha nova.' : 'Senha alterada.');
-        VIEWS.conta(m);
-      }).catch(function () {});
-  };
-};
-
-/** Foto de perfil: recorta o centro num quadrado e reduz */
-function fotoQuadrada(file, lado) {
-  return new Promise(function (ok, falha) {
-    var r = new FileReader();
-    r.onerror = function () { falha(new Error('Não foi possível ler a imagem.')); };
-    r.onload = function () {
-      var img = new Image();
-      img.onerror = function () { falha(new Error('Arquivo de imagem inválido.')); };
-      img.onload = function () {
-        var q = Math.min(img.width, img.height), c = document.createElement('canvas');
-        c.width = c.height = Math.min(lado, q);
-        var ctx = c.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, (img.width - q) / 2, (img.height - q) / 2, q, q, 0, 0, c.width, c.height);
-        var url = c.toDataURL('image/jpeg', 0.85);
-        ok({ base64: url.split(',')[1], mime: 'image/jpeg', url: url });
-      };
-      img.src = r.result;
-    };
-    r.readAsDataURL(file);
-  });
-}
-
-// ---------------------------------------------------------------- início
+  <script>
+/* MIRA — liga o app (sempre o último arquivo da interface) */
 (function () {
   S.token = ler('mira_token');
   if (S.token) iniciar().catch(function () { sair(true); });
