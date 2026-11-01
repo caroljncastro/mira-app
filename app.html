@@ -3096,7 +3096,9 @@ VIEWS.relatorio = function (m, p) {
       nums.push(['foco', c.apto ? 'Atingiu' : 'Abaixo', c.apto ? 'a mediana em todas' : 'da mediana em ' + c.abaixo.join(', ')]);
     }
     nums.push(['resultados', num(det.nota) + '%', 'Aproveitamento']);
-    h += notaDestaque(c ? c.notaFinal || 0 : det.nota, c ? 'nota final' : 'aproveitamento', nums, tagsRes);
+    if (d.recorte) h += '<div class="aviso azul peq">Você vê só <b>' + esc(d.recorte.join(' e ')) + '</b>, a' + (d.recorte.length > 1 ? 's suas disciplinas' : ' sua disciplina') +
+      '. A nota final e as outras matérias ficam com a coordenação e os professores delas.</div>';
+    h += notaDestaque(c ? c.notaFinal || 0 : det.nota, c ? 'nota final' : d.recorte ? 'em ' + d.recorte.join(' e ') : 'aproveitamento', nums, tagsRes);
     h += proximoPasso(det.porDisciplina, d.estrategias, aluno);
     h += '<div class="card" id="rel-disc"><h2>Por disciplina</h2>' +
       det.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct, x.acertos + '/' + x.total); }).join('') + '</div>';
@@ -4039,17 +4041,22 @@ VIEWS.resultados = function (m, p) {
       }
       var media = Math.round(10 * rs.reduce(function (a, r) { return a + r.notaFinal; }, 0) / rs.length) / 10;
       var aptos = rs.filter(function (r) { return r.apto; }).length;
-      if ($('#r-sim').value) rs.sort(function (a, b) { return (a.posicao || 1e9) - (b.posicao || 1e9); });
-      l.innerHTML = '<div class="grade"><div class="kpi"><small>Cartões</small><b>' + rs.length + '</b></div><div class="kpi"><small>Média da nota final</small><b>' + num(media) + '</b></div>' +
-        '<div class="kpi"><small>Atingiram a mediana em todas</small><b>' + aptos + '</b></div></div>' +
-        '<p class="mut peq">Nota final com os pesos da EsPCEx (0 a 100). A mediana é a dos participantes de cada simulado.' +
-        ($('#r-sim').value ? ' Lista em ordem de classificação.' : ' Escolha um simulado para ver a ordem de classificação.') + '</p>' +
-        '<div class="card rolagem"><table class="tab"><tr>' + ($('#r-sim').value ? '<th class="num">Nº</th>' : '') + '<th>Aluno</th><th>Turma</th><th>Simulado</th><th class="num">Nota final</th>' +
+      // professor com disciplinas: tudo só das disciplinas dele (sem classificação geral)
+      var rec = rs[0].recorte, nomeRec = rec ? rec.join(' e ') : '', comPos = $('#r-sim').value && !rec;
+      if (comPos) rs.sort(function (a, b) { return (a.posicao || 1e9) - (b.posicao || 1e9); });
+      else if (rec && $('#r-sim').value) rs.sort(function (a, b) { return b.notaFinal - a.notaFinal; });
+      l.innerHTML = '<div class="grade"><div class="kpi"><small>Cartões</small><b>' + rs.length + '</b></div><div class="kpi"><small>' + (rec ? 'Média em ' + esc(nomeRec) : 'Média da nota final') + '</small><b>' + num(media) + '</b></div>' +
+        '<div class="kpi"><small>' + (rec ? 'Atingiram a mediana em ' + esc(nomeRec) : 'Atingiram a mediana em todas') + '</small><b>' + aptos + '</b></div></div>' +
+        (rec ? '<p class="mut peq">Você vê só <b>' + esc(nomeRec) + '</b>, a' + (rec.length > 1 ? 's suas disciplinas' : ' sua disciplina') + ': aproveitamento de 0 a 100% e a mediana dos participantes de cada simulado.' +
+            ($('#r-sim').value ? ' Lista do maior para o menor aproveitamento.' : '') + '</p>'
+          : '<p class="mut peq">Nota final com os pesos da EsPCEx (0 a 100). A mediana é a dos participantes de cada simulado.' +
+            ($('#r-sim').value ? ' Lista em ordem de classificação.' : ' Escolha um simulado para ver a ordem de classificação.') + '</p>') +
+        '<div class="card rolagem"><table class="tab"><tr>' + (comPos ? '<th class="num">Nº</th>' : '') + '<th>Aluno</th><th>Turma</th><th>Simulado</th><th class="num">' + (rec ? 'Nota em ' + esc(nomeRec) : 'Nota final') + '</th>' +
         '<th class="num">Acertos</th><th>Mediana</th><th>Data</th><th>E-mail</th><th>Cartão</th></tr>' +
         rs.map(function (r, i) {
-          return '<tr class="clic" data-i="' + i + '">' + ($('#r-sim').value ? '<td class="num">' + (r.posicao || '') + '</td>' : '') +
+          return '<tr class="clic" data-i="' + i + '">' + (comPos ? '<td class="num">' + (r.posicao || '') + '</td>' : '') +
             '<td>' + esc(r.aluno) + '</td><td>' + esc(r.turma) + '</td><td class="peq">' + esc(r.simulado) + '</td>' +
-            '<td class="num" style="font-weight:700">' + num(r.notaFinal) + '</td><td class="num">' + r.acertos + '/' + r.total + '</td>' +
+            '<td class="num" style="font-weight:700">' + num(r.notaFinal) + (rec ? '%' : '') + '</td><td class="num">' + r.acertos + '/' + r.total + '</td>' +
             '<td>' + (r.apto ? tag(STATUS_CORTE, 'SIM') : '<span title="Abaixo em ' + esc(r.abaixo.join(', ')) + '">' + tag(STATUS_CORTE, 'NAO') + '</span>') + '</td>' +
             '<td class="peq">' + dataBr(r.criadoEm) + '</td><td class="peq mut">' + esc((r.emailStatus || '').split(' ')[0]) + '</td>' +
             '<td>' + (r.temFoto ? '<button class="btn peq" data-cartao="' + i + '">Ver</button>' : '<span class="mut peq">sem foto</span>') + '</td></tr>';
