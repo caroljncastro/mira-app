@@ -2786,7 +2786,7 @@ function excluirSimulado(s, depois) {
 
 VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
-  m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: caderno de prova, gabarito comentado, resultados e mapa da turma',
+  m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: caderno de prova e gabarito comentado',
     adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
   if (adm) $('#novo').onclick = function () { formSimulado(carregar); };
   var verArquivados = false;
@@ -2820,8 +2820,8 @@ VIEWS.simulados = function (m, p) {
           '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
           (adm ? '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
           '<button class="btn peq" data-a="gabarito" data-i="' + i + '">Gabarito comentado</button>' +
-          '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
-          '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' +
+          (adm ? '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
+            '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' : '') +
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
             '<button class="btn peq" data-a="ajustar" data-i="' + i + '">Anular ou trocar gabarito</button>' +
             '<select data-a="status" data-i="' + i + '" style="width:auto;margin-left:auto;padding:5px 8px">' +
@@ -3676,7 +3676,7 @@ VIEWS.resultados = function (m, p) {
       var umAluno = selAlu.value;
       if (umAluno) rs = rs.filter(function (r) { return r.alunoId === umAluno; });
       if (!rs.length) {
-        l.innerHTML = '<div class="card vazio">Nenhum resultado.' + (S.user.perfil === 'PROFESSOR' && !S.user.turmas ? ' Peça à coordenação para vincular suas turmas.' : '') + '</div>';
+        l.innerHTML = '<div class="card vazio">Nenhum resultado.</div>';
         return;
       }
       var media = Math.round(10 * rs.reduce(function (a, r) { return a + r.notaFinal; }, 0) / rs.length) / 10;
@@ -3718,7 +3718,7 @@ VIEWS.turmas = function (m, p) {
   m.innerHTML = cabPag('Mapa da turma', 'O que a turma errou, por quê, e o que trabalhar em sala') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Simulado</span><select id="t-sim"></select></label>' +
-    '<label class="campo" style="margin:0"><span>Turma</span>' + (prof
+    '<label class="campo" style="margin:0"><span>Turma</span>' + (prof && S.user.turmas
       ? '<select id="t-tur"><option value="">Todas as minhas</option>' + csv(S.user.turmas).map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') + '</select>'
       : '<input type="text" id="t-tur" placeholder="Todas">') + '</label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="t-disc"><option value="">' + (prof && S.user.disciplinas ? 'As minhas' : 'Todas') + '</option>' +
