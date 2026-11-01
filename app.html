@@ -485,43 +485,61 @@
   .mis.feita .mis-pts { color: var(--n-400); background: var(--n-50); }
   .mis-fecho { margin: 8px 0 0; font-size: 13.5px; color: var(--n-700); font-weight: 600; }
   .mis-pe { margin-top: 8px; font-size: 12.5px; color: var(--n-400); }
-  .mis-conteudo, .ed-por, .ed-pend { display: inline-block; margin-left: 8px; font-size: 11.5px; font-weight: 600; border-radius: 99px; padding: 1px 8px; vertical-align: 1px; }
-  .mis-conteudo { background: var(--n-100); color: var(--n-700); }
-  .ed-por { background: var(--marca-100); color: var(--marca-700); }
-  .ed-pend { background: var(--alerta-bg); color: var(--alerta); }
-  .mis-feitas { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 13px; color: var(--marca-700); }
-  .mis-feitas .ic { width: 16px; height: 16px; }
-  .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); }
+  .mis-quando { flex: none; font-size: 12px; color: var(--n-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); margin-bottom: 14px; }
   .mis-vazio .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
   .mis-vazio b { display: block; color: var(--marca-700); }
   .mis-vazio span { font-size: 13.5px; color: var(--n-500); }
-  .ed-geral { margin: 0 0 10px; height: 8px; }
+  /* ---------- edital (temas estudados, estrelas e Dominando) ---------- */
+  .ed-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .ed-resumo .mis-num b small { font-size: 15px; color: var(--n-500); font-weight: 600; }
+  .mis-num .ed-ic-estrela { font-size: 22px; line-height: 20px; color: var(--marca-600); }
+  .ed-regra { margin: 12px 0 14px; line-height: 1.5; }
   .ed-discs { display: grid; gap: 10px; }
   .ed-disc { border: 1px solid var(--n-200); border-radius: var(--r-card); background: #fff; }
-  .ed-disc.completa { border-color: var(--marca-100); background: var(--marca-50); }
-  .ed-disc summary { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "selo nome cont" "barra barra barra"; align-items: center;
+  .ed-disc summary { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nome cont" "barra barra"; align-items: center;
     gap: 6px 10px; padding: 12px 16px; cursor: pointer; list-style: none; }
   .ed-disc summary::-webkit-details-marker { display: none; }
   .ed-disc summary b { grid-area: nome; font-size: 16px; font-weight: 600; }
+  .ed-disc summary b::before { content: "▸"; display: inline-block; width: 16px; color: var(--n-400); transition: transform .15s; }
+  .ed-disc[open] summary b::before { transform: rotate(90deg); }
   .ed-disc summary .ed-cont { grid-area: cont; font-size: 13px; font-weight: 600; color: var(--n-500); font-variant-numeric: tabular-nums; }
   .ed-disc summary .mis-mini { grid-area: barra; margin: 0; display: block; }
-  .ed-selo { grid-area: selo; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--n-300); display: grid; place-items: center; }
-  .ed-selo.ok { background: var(--marca-700); border-color: var(--marca-700); }
-  .ed-selo.ok::after { content: ""; width: 5px; height: 10px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) translate(-1px, -1px); }
-  .ed-lista { list-style: none; margin: 0; padding: 0 16px 8px; }
+  .ed-est-n { color: var(--marca-600); }
+  .ed-lista { list-style: none; margin: 0; padding: 0 16px 6px; }
   .ed-lista > li + li { border-top: 1px solid var(--n-100); }
-  .ed-item .mis { padding: 9px 2px; }
-  .ed-item.feito .mis-txt { color: var(--n-700); }
-  .mis.auto { cursor: default; }
-  .mis input:disabled:checked + .mis-caixa { background: var(--marca-600); border-color: var(--marca-600); }
-  .ed-missoes { list-style: none; margin: -2px 0 8px 32px; padding: 0; }
-  .ed-missoes li { display: flex; gap: 6px; align-items: baseline; font-size: 13px; color: var(--n-500); padding: 2px 0; }
-  .ed-missoes .ic { width: 14px; height: 14px; color: var(--marca-600); flex: none; align-self: center; }
-  .ed-missoes span { flex: 1; min-width: 0; }
-  .ed-missoes time { flex: none; font-size: 12px; color: var(--n-400); }
-  .ed-soltas { padding: 4px 16px 10px; font-size: 13px; }
-  .ed-soltas .ed-missoes { margin-left: 0; margin-top: 4px; }
+  .ed-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+  .ed-tema { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; }
+  .ed-tema b { font-size: 14.5px; font-weight: 500; line-height: 1.4; }
+  .ed-linha { flex-basis: 100%; display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; }
+  .ed-estrelas { display: inline-flex; flex-wrap: wrap; gap: 1px; font-size: 16px; line-height: 1; letter-spacing: 0; }
+  .ed-estrelas i { font-style: normal; color: var(--n-300); }
+  .ed-estrelas i.on { color: var(--marca-600); }
+  .ed-vezes { font-size: 12.5px; color: var(--n-500); }
+  .mis.ed-estudei { flex: none; padding: 4px 0; font-size: 13px; font-weight: 600; color: var(--n-500); align-items: center; gap: 8px; }
+  .ed-item.feito .ed-estudei { color: var(--marca-700); }
+  /* ---------- Início do aluno ---------- */
+  .ini-cards { margin-top: 4px; }
+  .ini-card { display: flex; flex-direction: column; }
+  .ini-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ini-cab h2 { margin: 0; display: inline-flex; align-items: center; gap: 8px; }
+  .ini-cab h2 .ic { width: 20px; height: 20px; color: var(--marca-600); }
+  .ini-cab .mut { margin-left: auto; }
+  .ini-lista { list-style: none; margin: 0 0 8px; padding: 0; }
+  .ini-lista li { padding: 8px 0; font-size: 14.5px; line-height: 1.45; }
+  .ini-lista li + li { border-top: 1px solid var(--n-100); }
+  .ini-lista small { display: block; font-size: 12px; font-weight: 600; color: var(--marca-600); }
+  .ini-mais, .ini-txt { margin: 0 0 12px; }
+  .ini-barra { height: 8px; margin: 4px 0 12px; }
+  .ini-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .ini-nums b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .ini-nums b small { font-size: 14px; color: var(--n-500); }
+  .ini-nums span { font-size: 12.5px; color: var(--n-500); }
+  .ini-card > .btn { margin-top: auto; align-self: flex-start; }
+  .sec-tit { margin: 28px 0 12px; }
   @media (max-width: 820px) {
+    .ed-resumo { gap: 8px; }
+    .ed-resumo .mis-num { padding: 10px 12px; }
     .mis-placar { grid-template-columns: 1fr 1fr; }
     .mis-nivel { grid-column: 1 / -1; }
   }
@@ -1347,13 +1365,13 @@ var MENUS = {
     ['estrategias', 'Estratégias de estudo'], ['turmas', 'Mapa da turma'], ['usuarios', 'Usuários'], ['config', 'Configurações'], ['conta', 'Minha conta']],
   PROFESSOR: [['questoes', 'Minhas questões'], ['simulados', 'Simulados'], ['turmas', 'Mapa da turma'],
     ['resultados', 'Resultados'], ['estrategias', 'Estratégias de estudo'], ['conta', 'Minha conta']],
-  ALUNO: [['painel', 'Painel'], ['meus', 'Meus simulados'], ['conta', 'Minha conta']]
+  ALUNO: [['painel', 'Início'], ['missoes', 'Missões'], ['edital', 'Edital'], ['meus', 'Simulados'], ['conta', 'Conta']]
 };
 // ícone de cada tela (Icones.html)
 var ICONE_ROTA = {
   painel: 'painel', questoes: 'biblioteca', simulados: 'avaliacao', resultados: 'resultados', turmas: 'turmas',
   usuarios: 'alunos', config: 'ajustes', conta: 'perfil', meus: 'avaliacao', meusres: 'evolucao',
-  relatorio: 'relatorio', enviar: 'avaliacao', estrategias: 'foco'
+  relatorio: 'relatorio', enviar: 'avaliacao', estrategias: 'foco', missoes: 'tarefas', edital: 'aprendizagem'
 };
 function iniciais(nome) {
   var p = String(nome || '').trim().split(/\s+/);
@@ -1548,9 +1566,10 @@ function ir(rota, params) {
   S.rota = rota; S.params = params || {};
   var menu = MENUS[S.user.perfil];
   $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' + menu.map(function (m) {
-    var ativo = m[0] === rota || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'painel'))) ||
+    var ativo = m[0] === rota || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
       (rota === 'enviar' && (m[0] === 'meus' || m[0] === 'simulados'));
-    return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ICONE_ROTA[m[0]]) + '<span>' + esc(m[1]) + '</span></button>';
+    var ic = S.user.perfil === 'ALUNO' && m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
+    return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ic) + '<span>' + esc(m[1]) + '</span></button>';
   }).join('');
   $$('#menu button').forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-r')); }; });
   avisoSenha();
@@ -2592,9 +2611,16 @@ function escolherAluno(s) {
 
 // ---------------------------------------------------------------- aluno: simulados
 VIEWS.meus = function (m) {
-  m.innerHTML = cabPag('Meus simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="lista"></div>';
+  m.innerHTML = cabPag('Simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="lista"></div><div id="evolucao"></div>';
   var l = $('#lista'); carregando(l);
-  return call('listarSimulados').then(function (ss) {
+  return Promise.all([call('listarSimulados'), call('resultados')]).then(function (rr) {
+    var ss = rr[0], rs = rr[1], notaDe = {};
+    rs.forEach(function (x) { notaDe[x.id] = x; });
+    if (rs.length) {
+      $('#evolucao').innerHTML = blocoEvolucao(rs);
+      graficoEvolucao($('#g-evol'), rs);
+      graficoDisciplinas($('#g-disc'), rs);
+    }
     if (!ss.length) {
       l.innerHTML = '<div class="card vazio">' + icone('avaliacao', 'ic-vazio') + 'Nenhum simulado disponível no momento.' +
         '<p class="mut peq" style="margin:6px 0 0">Os simulados aparecem aqui quando a coordenação os abre para a sua turma.</p></div>';
@@ -2606,6 +2632,7 @@ VIEWS.meus = function (m) {
           : '<span class="mut peq">Encerrado sem envio</span>';
       return '<div class="card"><div class="q-meta">' + tag(STATUS_S, s.status) +
         (s.resultadoId ? '<span class="tag verde">Enviado</span>' : '') +
+        (s.resultadoId && notaDe[s.resultadoId] ? '<span class="tag azul">Nota final ' + num(notaDe[s.resultadoId].notaFinal) + '</span>' : '') +
         '<span class="tag azul">' + esc(s.concursoNome) + ' · ' + esc(s.provaTitulo) + '</span><span class="tag">' + s.total + ' questões</span>' +
         '<span class="mut peq" style="margin-left:auto;font-family:monospace;font-weight:700">' + esc(s.codigo) + '</span></div>' +
         '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="flex:1">' + esc(s.titulo) + '</h2>' + acao + '</div></div>';
@@ -2844,7 +2871,7 @@ VIEWS.relatorio = function (m, p) {
 
     // estratégias de estudo (o aluno só vê as aprovadas pelo professor)
     h += aluno && d.estrategias.length ? '<div class="card" id="rel-est"><h2>Suas missões deste simulado</h2>' +
-        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam no Painel.</p>' +
+        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam em Missões.</p>' +
         '<div class="mis-grupos">' + d.estrategias.map(grupoMissoes).join('') + '</div></div>'
       : '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
       ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Sugeridas a partir deste relatório. O aluno só vê depois do OK do professor da disciplina.</p>') +
@@ -2903,7 +2930,7 @@ VIEWS.relatorio = function (m, p) {
           ' <span class="mut">(números do caderno do aluno; confira na foto)</span></div>' : '') + '</div>';
     }
     m.innerHTML = h;
-    $('#voltar').onclick = function () { ir(aluno ? 'painel' : 'resultados'); };
+    $('#voltar').onclick = function () { ir(aluno ? 'meus' : 'resultados'); };
     if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = function () { window.print(); };
@@ -2986,34 +3013,32 @@ function placarMissoes(todas, atuais) {
       ['conquista', 'Disciplina completa', 'Cumpra todas as missões de uma disciplina', completas >= 1],
       ['tempo', '3 dias seguidos', 'Cumpra missões em 3 dias seguidos', maior >= 3],
       ['calendario', 'Semana no foco', 'Cumpra missões em 7 dias seguidos', maior >= 7],
-      ['evolucao', 'Tudo em dia', 'Cumpra todas as missões atuais', !!emDia],
-      ['aprendizagem', 'Disciplina do edital', 'Estude todos os conteúdos do edital de uma disciplina', estadoEdital(todas).discsCompletas >= 1]
+      ['evolucao', 'Tudo em dia', 'Cumpra todas as missões atuais', !!emDia]
     ]
   };
 }
+function itemMissao(x) {
+  return '<li><label class="mis' + (x.feitaEm ? ' feita' : '') + '"><input type="checkbox" data-chave="' + esc(x.chave) + '"' + (x.feitaEm ? ' checked' : '') + '>' +
+    '<span class="mis-caixa" aria-hidden="true"></span><span class="mis-txt">' + esc(x.texto) + '</span>' +
+    (x.feitaEm ? '<time class="mis-quando">' + dataBr(x.feitaEm) + '</time>' : '<span class="mis-pts">+' + PONTOS_MISSAO + '</span>') + '</label></li>';
+}
+/** Missões de uma estratégia: as pendentes primeiro; as cumpridas ficam marcadas no fim (dá para desmarcar) */
 function grupoMissoes(e) {
   var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; }).length, pct = ms.length ? Math.round(100 * f / ms.length) : 0;
   var completa = ms.length && f === ms.length;
   return '<div class="mis-grupo' + (completa ? ' completa' : '') + '" data-id="' + esc(e.id) + '">' +
     '<div class="mis-cab"><h3>' + esc(e.disciplina) + '</h3><span class="mis-cont">' + (completa ? icone('conquista') + 'Completa' : f + ' de ' + ms.length + ' cumpridas') + '</span></div>' +
     '<div class="mis-mini" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Missões de ' + esc(e.disciplina) + '"><i style="width:' + pct + '%"></i></div>' +
-    (e.contexto && e.contexto.length ? '<p class="mis-ctx">' + esc(e.contexto.join(' ')) + '</p>' : '') +
-    '<ul class="mis-lista">' + ms.filter(function (x) { return !x.feitaEm; }).map(function (x) {
-      return '<li><label class="mis"><input type="checkbox" data-chave="' + esc(x.chave) + '">' +
-        '<span class="mis-caixa" aria-hidden="true"></span><span class="mis-txt">' + esc(x.texto) +
-        (x.conteudo ? '<small class="mis-conteudo">' + esc(x.conteudo) + '</small>' : '') + '</span>' +
-        '<span class="mis-pts">+' + PONTOS_MISSAO + '</span></label></li>';
-    }).join('') + '</ul>' +
-    (f ? '<p class="mis-feitas">' + icone('tarefas') + f + (f === 1 ? ' missão cumprida já está' : ' missões cumpridas já estão') + ' em Conteúdos do edital, no Painel.</p>' : '') +
-    (e.fecho ? '<p class="mis-fecho">' + esc(e.fecho) + '</p>' : '') +
+    (e.contexto && e.contexto.length && !completa ? '<p class="mis-ctx">' + esc(e.contexto.join(' ')) + '</p>' : '') +
+    '<ul class="mis-lista">' + ms.filter(function (x) { return !x.feitaEm; }).concat(ms.filter(function (x) { return x.feitaEm; })).map(itemMissao).join('') + '</ul>' +
+    (e.fecho && !completa ? '<p class="mis-fecho">' + esc(e.fecho) + '</p>' : '') +
     '<div class="mis-pe">' + (e.professorNome ? 'Preparada por ' + esc(e.professorNome) : '') + (e.simulado ? (e.professorNome ? ' · ' : '') + esc(e.simulado) : '') + '</div></div>';
 }
 function painelMissoes(todas, atuais) {
-  if (!atuais.length) return '<h2>Suas missões</h2><p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui. ' +
+  if (!atuais.length) return '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui. ' +
     'Cada missão cumprida vale pontos e conquistas.</p>';
   var p = placarMissoes(todas, atuais);
-  return '<div class="mis-titulo"><h2>Suas missões</h2><span class="mut peq">Marque cada missão quando cumprir</span></div>' +
-    '<div class="mis-placar">' +
+  return '<div class="mis-placar">' +
     '<div class="mis-nivel"><span class="mis-selo"><b>' + p.nivel + '</b><small>nível</small></span><div><b>' + esc(p.nomeNivel) + '</b>' +
     '<div class="mis-xp" role="progressbar" aria-valuenow="' + p.noNivel + '" aria-valuemin="0" aria-valuemax="' + PONTOS_NIVEL + '" aria-label="Pontos no nível"><i style="width:' + p.noNivel + '%"></i></div>' +
     '<span class="mis-falta">' + p.pontos + ' pontos · faltam ' + (PONTOS_NIVEL - p.noNivel) + ' para o nível ' + (p.nivel + 1) + '</span></div></div>' +
@@ -3025,69 +3050,78 @@ function painelMissoes(todas, atuais) {
     '<p class="mis-regras mut peq">Cada missão vale ' + PONTOS_MISSAO + ' pontos. Cumpriu todas de uma disciplina? Ganha mais ' + BONUS_ESTRATEGIA + '. A cada ' + PONTOS_NIVEL + ' pontos, você sobe de nível.</p>' +
     (function () {
       var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
-      return pend.length ? '<div class="mis-grupos">' + pend.map(grupoMissoes).join('') + '</div>'
-        : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>Elas estão em Conteúdos do edital, logo abaixo. As próximas chegam com o próximo simulado.</span></div></div>';
+      var feitas = atuais.filter(function (e) { return pend.indexOf(e) < 0; });
+      return (pend.length ? '' : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>As próximas chegam com o próximo simulado.</span></div></div>') +
+        '<div class="mis-grupos">' + pend.concat(feitas).map(grupoMissoes).join('') + '</div>';
     })();
 }
 
-// ---------------------------------------------------------------- conteúdos do edital (o que o aluno já estudou)
+// ---------------------------------------------------------------- edital (o que o aluno já estudou e o que já domina)
 function chaveConteudo(disc, cont) { return disc + '::' + cont; }
-/** Situação de cada conteúdo do edital: feito pela missão, marcado pelo aluno, ou com missão pendente */
-function estadoEdital(todas) {
-  var ed = (conc('ESPCEX') || {}).edital || {}, marcados = (S.user && S.user.edital) || {}, porConteudo = {}, soltas = {};
-  todas.forEach(function (e) {
-    (e.missoes || []).forEach(function (x) {
-      if (x.conteudo) {
-        var k = chaveConteudo(e.disciplina, x.conteudo);
-        var o = porConteudo[k] = porConteudo[k] || { feitas: [], pendentes: 0 };
-        if (x.feitaEm) o.feitas.push(x); else o.pendentes++;
-      } else if (x.feitaEm) (soltas[e.disciplina] = soltas[e.disciplina] || []).push(x);
+/**
+ * Situação de cada tema do edital. rs = resultados do aluno (do mais novo para o mais antigo), cada um com temas
+ * [{ disciplina, tema, acertos, total }]. Estrela: um simulado em que acertou todas as questões do tema.
+ * Dominando: acertou todas no último simulado que cobrou o tema. Estudado: o aluno marcou "Já estudei".
+ */
+function estadoEdital(rs) {
+  var ed = (conc('ESPCEX') || {}).edital || {}, marcados = (S.user && S.user.edital) || {}, por = {};
+  (rs || []).forEach(function (r, i) {
+    (r.temas || []).forEach(function (t) {
+      if (!t.total) return;
+      var k = chaveConteudo(t.disciplina, t.tema), o = por[k] = por[k] || { vezes: 0, estrelas: 0, dominando: null, ultimo: null };
+      var tudo = t.acertos >= t.total;
+      o.vezes++; if (tudo) o.estrelas++;
+      if (o.dominando === null) { o.dominando = tudo; o.ultimo = { acertos: t.acertos, total: t.total, simulado: r.simulado }; }
     });
   });
-  var discs = disciplinasDe('ESPCEX').filter(function (d) { return ed[d]; }), totalFeitos = 0, total = 0, discsCompletas = 0;
-  var lista = discs.map(function (d) {
-    var itens = ed[d].map(function (t) {
-      var k = chaveConteudo(d, t), o = porConteudo[k] || { feitas: [], pendentes: 0 };
-      var auto = o.feitas.length > 0, manual = !!marcados[k];
-      return { nome: t, feito: auto || manual, auto: auto, pendentes: o.pendentes, feitas: o.feitas };
+  var tot = { estudados: 0, temas: 0, estrelas: 0, dominando: 0 };
+  var lista = disciplinasDe('ESPCEX').filter(function (d) { return ed[d]; }).map(function (d) {
+    var g = { disciplina: d, estudados: 0, estrelas: 0, dominando: 0 };
+    g.itens = ed[d].map(function (t) {
+      var k = chaveConteudo(d, t), o = por[k] || { vezes: 0, estrelas: 0, dominando: false, ultimo: null };
+      var it = { nome: t, estudado: !!marcados[k], vezes: o.vezes, estrelas: o.estrelas, dominando: !!o.dominando, ultimo: o.ultimo };
+      if (it.estudado) g.estudados++;
+      g.estrelas += it.estrelas; if (it.dominando) g.dominando++;
+      return it;
     });
-    var feitos = itens.filter(function (i) { return i.feito; }).length;
-    totalFeitos += feitos; total += itens.length;
-    if (feitos === itens.length) discsCompletas++;
-    return { disciplina: d, itens: itens, feitos: feitos, soltas: soltas[d] || [] };
+    tot.estudados += g.estudados; tot.temas += g.itens.length; tot.estrelas += g.estrelas; tot.dominando += g.dominando;
+    return g;
   });
-  return { lista: lista, feitos: totalFeitos, total: total, discsCompletas: discsCompletas };
+  tot.lista = lista;
+  return tot;
 }
-function painelEdital(todas) {
-  var st = estadoEdital(todas), nome = (conc('ESPCEX') || {}).nome || 'EsPCEx';
-  var pct = st.total ? Math.round(100 * st.feitos / st.total) : 0;
-  return '<div class="mis-titulo"><h2>Conteúdos do edital ' + esc(nome) + '</h2><span class="mut peq">' + st.feitos + ' de ' + st.total + ' estudados' +
-    (st.discsCompletas ? ' · ' + st.discsCompletas + (st.discsCompletas > 1 ? ' disciplinas completas' : ' disciplina completa') : '') + '</span></div>' +
-    '<div class="mis-mini ed-geral" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Conteúdos estudados"><i style="width:' + pct + '%"></i></div>' +
-    '<p class="mut peq" style="margin:0 0 12px">Cada missão cumprida marca o conteúdo dela com ✓. Você também pode marcar os conteúdos que já estudou por conta própria.</p>' +
+function estrelasTema(i) {
+  if (!i.vezes) return '';
+  var h = '';
+  for (var n = 0; n < i.vezes; n++) h += '<i class="' + (n < i.estrelas ? 'on' : '') + '" aria-hidden="true">★</i>';
+  return '<span class="ed-estrelas" role="img" aria-label="' + i.estrelas + ' de ' + i.vezes + ' estrelas">' + h + '</span>' +
+    '<span class="ed-vezes">' + i.estrelas + ' de ' + i.vezes + (i.vezes === 1 ? ' simulado' : ' simulados') + '</span>';
+}
+var SIT_TEMA = { DOM: ['Dominando', 'verde'] };
+function painelEdital(rs) {
+  var st = estadoEdital(rs);
+  return '<div class="ed-resumo">' +
+    '<div class="mis-num">' + icone('tarefas') + '<b>' + st.estudados + '<small> de ' + st.temas + '</small></b><span>temas estudados</span></div>' +
+    '<div class="mis-num ed-num-estrela"><span class="ed-ic-estrela" aria-hidden="true">★</span><b>' + st.estrelas + '</b><span>' + (st.estrelas === 1 ? 'estrela' : 'estrelas') + '</span></div>' +
+    '<div class="mis-num">' + icone('conquista') + '<b>' + st.dominando + '</b><span>' + (st.dominando === 1 ? 'tema dominando' : 'temas dominando') + '</span></div></div>' +
+    '<p class="mut peq ed-regra">Marque <b>Já estudei</b> nos temas que você estudou. A cada simulado em que você acerta <b>todas</b> as questões de um tema, ganha uma ★ nele. ' +
+    'Acertou tudo no último simulado que cobrou o tema? Ele fica como <b>Dominando</b>.</p>' +
     '<div class="ed-discs">' + st.lista.map(function (g) {
-      var completa = g.feitos === g.itens.length, ativo = g.feitos || g.soltas.length || g.itens.some(function (i) { return i.pendentes; });
-      var p = Math.round(100 * g.feitos / g.itens.length);
-      return '<details class="ed-disc' + (completa ? ' completa' : '') + '"' + (ativo ? ' open' : '') + '><summary>' +
-        '<span class="ed-selo' + (completa ? ' ok' : '') + '" aria-label="' + (completa ? 'Disciplina completa' : 'Disciplina em andamento') + '"></span>' +
-        '<b>' + esc(g.disciplina) + '</b><span class="ed-cont">' + g.feitos + '/' + g.itens.length + '</span>' +
+      var p = Math.round(100 * g.estudados / g.itens.length), ativo = g.estudados || g.estrelas;
+      return '<details class="ed-disc"' + (ativo ? ' open' : '') + '><summary>' +
+        '<b>' + esc(g.disciplina) + '</b><span class="ed-cont">' + g.estudados + '/' + g.itens.length + ' estudados' +
+        (g.estrelas ? ' · <span class="ed-est-n">★ ' + g.estrelas + '</span>' : '') + '</span>' +
         '<span class="mis-mini"><i style="width:' + p + '%"></i></span></summary>' +
         '<ul class="ed-lista">' + g.itens.map(function (i) {
-          return '<li class="ed-item' + (i.feito ? ' feito' : '') + '"><label class="mis' + (i.auto ? ' auto' : '') + '">' +
-            '<input type="checkbox" data-disc="' + esc(g.disciplina) + '" data-cont="' + esc(i.nome) + '"' + (i.feito ? ' checked' : '') + (i.auto ? ' disabled' : '') + '>' +
-            '<span class="mis-caixa" aria-hidden="true"></span><span class="mis-txt">' + esc(i.nome) +
-            (i.auto ? '<small class="ed-por">pela missão</small>' : '') + (i.pendentes && !i.feito ? '<small class="ed-pend">missão pendente</small>' : '') + '</span></label>' +
-            (i.feitas.length ? '<ul class="ed-missoes">' + i.feitas.map(function (x) {
-              return '<li>' + icone('tarefas') + '<span>' + esc(x.texto) + '</span><time>' + dataBr(x.feitaEm) + '</time></li>';
-            }).join('') + '</ul>' : '') + '</li>';
-        }).join('') + '</ul>' +
-        (g.soltas.length ? '<div class="ed-soltas"><b>Outras missões cumpridas</b><ul class="ed-missoes">' + g.soltas.map(function (x) {
-          return '<li>' + icone('tarefas') + '<span>' + esc(x.texto) + '</span><time>' + dataBr(x.feitaEm) + '</time></li>';
-        }).join('') + '</ul></div>' : '') +
-        '</details>';
+          var est = estrelasTema(i);
+          return '<li class="ed-item' + (i.estudado ? ' feito' : '') + '"><div class="ed-tema"><b>' + esc(i.nome) + '</b>' + (i.dominando ? tag(SIT_TEMA, 'DOM') : '') +
+            (est ? '<div class="ed-linha">' + est + '</div>' : '') + '</div>' +
+            '<label class="mis ed-estudei" title="Já estudei ' + esc(i.nome) + '"><input type="checkbox" data-disc="' + esc(g.disciplina) + '" data-cont="' + esc(i.nome) + '"' + (i.estudado ? ' checked' : '') +
+            ' aria-label="Já estudei ' + esc(i.nome) + '"><span class="mis-caixa" aria-hidden="true"></span><span>Já estudei</span></label></li>';
+        }).join('') + '</ul></details>';
     }).join('') + '</div>';
 }
-function ligarEdital(raiz, todas) {
+function ligarEdital(raiz, rs) {
   if (!raiz) return;
   $$('input[data-cont]', raiz).forEach(function (cx) {
     cx.onchange = function () {
@@ -3095,15 +3129,19 @@ function ligarEdital(raiz, todas) {
       S.user.edital = S.user.edital || {};
       var antes = S.user.edital[k];
       if (cx.checked) S.user.edital[k] = antes || hojeIso(0); else delete S.user.edital[k];
-      var abertos = $$('details.ed-disc[open] b', raiz).map(function (b) { return b.textContent; });
+      var abertos = $$('details.ed-disc[open] summary b', raiz).map(function (b) { return b.textContent; });
+      var y = window.scrollY;
       var redesenhar = function () {
-        raiz.innerHTML = painelEdital(todas);
-        $$('details.ed-disc', raiz).forEach(function (d) { d.open = abertos.indexOf($('b', d).textContent) >= 0; });
-        ligarEdital(raiz, todas);
+        raiz.innerHTML = painelEdital(rs);
+        $$('details.ed-disc', raiz).forEach(function (d) { d.open = abertos.indexOf($('summary b', d).textContent) >= 0; });
+        ligarEdital(raiz, rs);
+        window.scrollTo(0, y);
+        var novo = $$('input[data-cont]', raiz).filter(function (x) { return x.getAttribute('data-disc') === disc && x.getAttribute('data-cont') === cont; })[0];
+        if (novo) novo.focus({ preventScroll: true });
       };
       redesenhar();
-      var g = estadoEdital(todas).lista.filter(function (x) { return x.disciplina === disc; })[0];
-      if (cx.checked) toast(g && g.feitos === g.itens.length ? 'Todos os conteúdos de ' + disc + ' estudados!' : cont + ': estudado ✓');
+      var g = estadoEdital(rs).lista.filter(function (x) { return x.disciplina === disc; })[0];
+      if (cx.checked) toast(g && g.estudados === g.itens.length ? 'Todos os temas de ' + disc + ' estudados!' : cont + ': estudado ✓');
       call('marcarConteudo', { disciplina: disc, conteudo: cont, feito: cx.checked }).then(function (r) { S.user.edital = r.edital; })
         .catch(function (e) { if (antes) S.user.edital[k] = antes; else delete S.user.edital[k]; redesenhar(); toast(msgErro(e), true); });
     };
@@ -3124,9 +3162,9 @@ function ligarMissoes(raiz, todas, atuais) {
       var depois = placarMissoes(todas, atuais);
       var desenhar = function () {
         if (noPainel) {
+          var y = window.scrollY;
           raiz.innerHTML = painelMissoes(todas, atuais); ligarMissoes(raiz, todas, atuais);
-          var ed = $('#pa-edital');
-          if (ed) { ed.innerHTML = painelEdital(todas); ligarEdital(ed, todas); }
+          window.scrollTo(0, y);
         } else { grupo.outerHTML = grupoMissoes(e); ligarMissoes(raiz, todas); }
       };
       desenhar();
@@ -3134,7 +3172,7 @@ function ligarMissoes(raiz, todas, atuais) {
         var ms = e.missoes, completa = ms.every(function (x) { return x.feitaEm; });
         toast(depois.nivel > antes.nivel ? 'Você subiu para o nível ' + depois.nivel + ': ' + depois.nomeNivel + '!'
           : completa ? 'Todas as missões de ' + e.disciplina + ' cumpridas! +' + (PONTOS_MISSAO + BONUS_ESTRATEGIA) + ' pontos'
-            : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos' + (mi.conteudo ? ' · ' + mi.conteudo + ' ✓' : ''));
+            : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos');
       }
       call('marcarMissao', { id: id, chave: chave, feita: cx.checked }).then(function (r) {
         mi.feitaEm = r.feitas[chave] || '';
@@ -3415,58 +3453,103 @@ function graficoDisciplinas(alvo, rs) {
   desenhar(0);
 }
 
-// ---------------------------------------------------------------- painel do aluno
+// ---------------------------------------------------------------- telas do aluno: Início, Missões, Edital, Simulados
+/** A estratégia mais recente de cada disciplina (as missões que aparecem agora) */
+function estrategiasAtuais(es) {
+  var vistas = {};
+  return es.filter(function (e) { if (vistas[e.disciplina]) return false; vistas[e.disciplina] = true; return true; });
+}
+function ligarIr(m) {
+  $$('[data-ir]', m).forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-ir')); }; });
+}
+
+/** Início: só o resumo (último simulado, próximas missões e edital); cada bloco leva à sua tela */
 VIEWS.painelAluno = function (m) {
   carregando(m);
   return Promise.all([call('resultados'), call('listarEstrategias', { status: 'APROVADA' })]).then(function (r) {
     var rs = r[0], es = r[1];
-    var h = cabSaudacao('', 'Seus resultados, suas missões de estudo e suas conquistas');
+    var h = cabSaudacao('', 'Como você está e o que estudar agora');
     if (!rs.length) {
       m.innerHTML = h + '<div class="card vazio">' + icone('evolucao', 'ic-vazio') + 'Você ainda não enviou nenhum cartão-resposta.' +
-        '<p class="mut peq" style="margin:6px 0 12px">Depois de fazer um simulado, envie a foto do cartão em Meus simulados. O relatório e as estratégias aparecem aqui.</p>' +
-        '<button class="btn pri" id="pa-ir">Ir para Meus simulados</button></div>';
-      $('#pa-ir').onclick = function () { ir('meus'); };
+        '<p class="mut peq" style="margin:6px 0 12px">Depois de fazer um simulado, envie a foto do cartão em Simulados. O relatório e as missões aparecem aqui.</p>' +
+        '<button class="btn pri" data-ir="meus">Ir para Simulados</button></div>';
+      ligarIr(m);
       return;
     }
     var media = Math.round(10 * rs.reduce(function (a, x) { return a + x.notaFinal; }, 0) / rs.length) / 10;
-    var u0 = rs[0];
+    var u0 = rs[0], atuais = estrategiasAtuais(es);
     h += notaDestaque(u0.notaFinal, 'nota final', [
       ['foco', u0.apto ? 'Atingiu' : 'Abaixo', u0.apto ? 'a mediana em todas' : 'da mediana em ' + u0.abaixo.join(', ')],
       ['evolucao', num(media), 'Média em ' + rs.length + (rs.length > 1 ? ' simulados' : ' simulado')],
       ['resultados', u0.acertos + '/' + u0.total, 'Acertos']
     ], '<button class="btn verde peq" id="pa-rel">Ver relatório completo</button>', 'Último simulado: ' + u0.simulado);
-    // a estratégia mais recente de cada disciplina
-    var vistas = {}, atuais = es.filter(function (e) { if (vistas[e.disciplina]) return false; vistas[e.disciplina] = true; return true; });
-    h += proximoPasso(u0.porDisciplina, atuais.filter(function (e) { return e.resultadoId === u0.id; }), true).replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir-ancora="pa-est"');
-    h += '<p class="mut peq" style="margin:-4px 0 16px">Nota final de 0 a 100, com os pesos das disciplinas na EsPCEx. Toque num relatório para ver a mediana de cada disciplina.</p>';
-    h += '<div class="card missoes" id="pa-est">' + painelMissoes(es, atuais) + '</div>';
-    h += '<div class="card" id="pa-edital">' + painelEdital(es) + '</div>';
-    h += '<div class="grade-2 graficos"><div class="card graf-card"><h2>Evolução da nota</h2>' +
-      '<p class="mut peq" style="margin-top:0">' + (rs.length < 2 ? 'Faça mais simulados para acompanhar a sua evolução.' : 'Nota final (0 a 100) em cada simulado.') + '</p>' +
-      '<div id="g-evol"></div></div>' +
-      '<div class="card graf-card"><h2>Desempenho por disciplina</h2><div id="g-disc"></div></div></div>';
-    h += '<div class="card"><h2>Relatórios dos simulados</h2>' + rs.map(function (x, i) {
-      return '<div class="clic rel-item" data-i="' + i + '">' + barra(x.simulado, x.notaFinal, num(x.notaFinal), 'var(--marca-600)') +
-        '<div class="mut peq">Nota final · ' + x.acertos + '/' + x.total + ' acertos · ' + dataBr(x.criadoEm) + ' · ' +
-        (x.apto ? 'atingiu a mediana em todas' : 'abaixo da mediana em ' + esc(x.abaixo.join(', '))) + '</div></div>';
-    }).join('') + '</div>';
-    h += '<details class="card tabela-graf"><summary>Ver os números em tabela</summary><div class="rolagem"><table class="tab"><tr><th>Simulado</th><th>Data</th><th class="num">Nota final</th>' +
-      '<th class="num">Acertos</th><th>Por disciplina</th></tr>' + rs.map(function (x) {
-        return '<tr><td>' + esc(x.simulado) + '</td><td>' + dataBr(x.criadoEm) + '</td><td class="num">' + num(x.notaFinal) + '</td><td class="num">' + x.acertos + '/' + x.total + '</td>' +
-          '<td class="peq">' + (x.porDisciplina || []).map(function (d) { return esc(d.disciplina) + ' ' + d.acertos + '/' + d.total; }).join(' · ') + '</td></tr>';
-      }).join('') + '</table></div></details>';
+    h += proximoPasso(u0.porDisciplina, atuais.filter(function (e) { return e.resultadoId === u0.id; }), true)
+      .replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir="missoes"');
+
+    // missões: placar curto e as próximas três
+    var p = placarMissoes(es, atuais), pend = [];
+    atuais.forEach(function (e) { (e.missoes || []).forEach(function (x) { if (!x.feitaEm) pend.push({ d: e.disciplina, t: x.texto }); }); });
+    var cardMis = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('tarefas') + 'Missões</h2>' +
+      (atuais.length ? '<span class="mut peq">Nível ' + p.nivel + ' · ' + p.pontos + ' pontos</span>' : '') + '</div>' +
+      (pend.length ? '<ul class="ini-lista">' + pend.slice(0, 3).map(function (x) {
+        return '<li><small>' + esc(x.d) + '</small><span>' + esc(x.t) + '</span></li>';
+      }).join('') + '</ul>' + (pend.length > 3 ? '<p class="mut peq ini-mais">E mais ' + (pend.length - 3) + (pend.length - 3 === 1 ? ' missão' : ' missões') + ' para cumprir.</p>' : '')
+        : '<p class="mut peq ini-txt">' + (atuais.length ? 'Todas as missões cumpridas! As próximas chegam com o próximo simulado.'
+          : 'Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões.') + '</p>') +
+      '<button class="btn" data-ir="missoes">' + (pend.length ? 'Ver todas as missões' : 'Abrir Missões') + '</button></div>';
+
+    // edital: quanto já estudou e o que já domina
+    var st = estadoEdital(rs), pct = st.temas ? Math.round(100 * st.estudados / st.temas) : 0;
+    var cardEd = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('aprendizagem') + 'Edital ' + esc((conc('ESPCEX') || {}).nome || 'EsPCEx') + '</h2>' +
+      '<span class="mut peq">' + pct + '% estudado</span></div>' +
+      '<div class="mis-mini ini-barra" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Temas estudados"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="ini-nums"><div><b>' + st.estudados + '<small>/' + st.temas + '</small></b><span>temas estudados</span></div>' +
+      '<div><b class="ed-est-n">★ ' + st.estrelas + '</b><span>' + (st.estrelas === 1 ? 'estrela' : 'estrelas') + '</span></div>' +
+      '<div><b>' + st.dominando + '</b><span>dominando</span></div></div>' +
+      '<button class="btn" data-ir="edital">Abrir o edital</button></div>';
+    h += '<div class="grade-2 ini-cards">' + cardMis + cardEd + '</div>';
     m.innerHTML = h;
-    ligarMissoes($('#pa-est'), es, atuais);
-    ligarEdital($('#pa-edital'), es);
-    graficoEvolucao($('#g-evol'), rs);
-    graficoDisciplinas($('#g-disc'), rs);
-    $$('.rel-item', m).forEach(function (d) { d.onclick = function () { ir('relatorio', { id: rs[+d.getAttribute('data-i')].id }); }; });
+    ligarIr(m);
     $('#pa-rel').onclick = function () { ir('relatorio', { id: u0.id }); };
     $$('[data-ir-rel]', m).forEach(function (b) { b.onclick = function () { ir('relatorio', { id: u0.id }); }; });
-    $$('[data-ir-ancora]', m).forEach(function (b) { b.onclick = function () { $('#' + b.getAttribute('data-ir-ancora')).scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
   });
 };
-VIEWS.meusres = VIEWS.painelAluno;
+
+/** Missões: placar, conquistas e a lista para marcar */
+VIEWS.missoes = function (m) {
+  carregando(m);
+  return call('listarEstrategias', { status: 'APROVADA' }).then(function (es) {
+    var atuais = estrategiasAtuais(es);
+    m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, marque e ganhe pontos.') +
+      '<div class="card missoes" id="pa-est">' + painelMissoes(es, atuais) + '</div>';
+    ligarMissoes($('#pa-est'), es, atuais);
+  });
+};
+
+/** Edital: temas por disciplina, com "Já estudei", estrelas e Dominando */
+VIEWS.edital = function (m) {
+  carregando(m);
+  return call('resultados').then(function (rs) {
+    m.innerHTML = cabPag('Edital ' + esc((conc('ESPCEX') || {}).nome || 'EsPCEx'), 'Os temas do conteúdo programático, disciplina por disciplina.') +
+      '<div class="card" id="pa-edital">' + painelEdital(rs) + '</div>';
+    ligarEdital($('#pa-edital'), rs);
+  });
+};
+
+/** Gráficos e tabela da evolução (vão na tela Simulados) */
+function blocoEvolucao(rs) {
+  return '<h2 class="sec-tit">Sua evolução</h2><div class="grade-2 graficos"><div class="card graf-card"><h2>Evolução da nota</h2>' +
+    '<p class="mut peq" style="margin-top:0">' + (rs.length < 2 ? 'Faça mais simulados para acompanhar a sua evolução.' : 'Nota final (0 a 100) em cada simulado.') + '</p>' +
+    '<div id="g-evol"></div></div>' +
+    '<div class="card graf-card"><h2>Desempenho por disciplina</h2><div id="g-disc"></div></div></div>' +
+    '<p class="mut peq" style="margin:-4px 0 12px">Nota final de 0 a 100, com os pesos das disciplinas na EsPCEx. Abra um relatório para ver a mediana de cada disciplina.</p>' +
+    '<details class="card tabela-graf"><summary>Ver os números em tabela</summary><div class="rolagem"><table class="tab"><tr><th>Simulado</th><th>Data</th><th class="num">Nota final</th>' +
+    '<th class="num">Acertos</th><th>Por disciplina</th></tr>' + rs.map(function (x) {
+      return '<tr><td>' + esc(x.simulado) + '</td><td>' + dataBr(x.criadoEm) + '</td><td class="num">' + num(x.notaFinal) + '</td><td class="num">' + x.acertos + '/' + x.total + '</td>' +
+        '<td class="peq">' + (x.porDisciplina || []).map(function (d) { return esc(d.disciplina) + ' ' + d.acertos + '/' + d.total; }).join(' · ') + '</td></tr>';
+    }).join('') + '</table></div></details>';
+}
+VIEWS.meusres = function (m) { return VIEWS.meus(m); };
 
 /** Nota final (pesos do edital), mediana de cada disciplina e classificação no simulado */
 var STATUS_CORTE = { SIM: ['Atingiu', 'verde'], NAO: ['Abaixo', 'verm'], TODAS: ['Atingiu a mediana em todas', 'verde'], FORA: ['Abaixo da mediana', 'verm'],
