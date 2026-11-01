@@ -705,6 +705,7 @@
   .sit-certa { color: var(--ok); font-weight: 600; }
   .sit-errada { color: var(--erro); font-weight: 600; }
   .sit-branco, .sit-dupla { color: var(--alerta); font-weight: 600; }
+  .sit-anulada { color: var(--n-500); font-weight: 600; }
   details.res summary { cursor: pointer; color: var(--marca-600); font-size: 13px; }
 
   /* janelas, avisos flutuantes, carregando, avisos */
@@ -1399,7 +1400,6 @@ function disciplinasDe(k, dia) {
 function csv(s) { return String(s || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); }
 function dataBr(s) { if (!s) return ''; var p = String(s).split(' ')[0].split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
 
-/** Lê imagem do aparelho, reduz e devolve {base64, mime, nome} */
 /**
  * Abre a imagem escolhida e redesenha num canvas (fundo branco, JPEG).
  * recorte(img) devolve [sx, sy, sw, sh, largura, altura]: o pedaço da imagem e o tamanho final.
@@ -2786,7 +2786,7 @@ function excluirSimulado(s, depois) {
 
 VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
-  m.innerHTML = cabPag('Simulados', 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado',
+  m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: gabarito comentado, resultados e mapa da turma',
     adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
   if (adm) $('#novo').onclick = function () { formSimulado(carregar); };
   var verArquivados = false;
@@ -2817,12 +2817,13 @@ VIEWS.simulados = function (m, p) {
           (adm && s.status === 'RASCUNHO' ? '<p class="mut peq" style="margin:0 0 12px">Em rascunho, os alunos ainda não veem este simulado. ' +
             'Mude para <b>Aberto</b> quando aplicar a prova: aí cada aluno envia a foto do cartão em <b>Meus simulados</b>.</p>' : '') +
           '<div class="sim-acoes">' +
-          '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
-          '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' +
+          (adm ? '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
+            '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
           '<button class="btn peq" data-a="gabarito" data-i="' + i + '">Gabarito comentado</button>' +
           '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
           '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' +
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
+            '<button class="btn peq" data-a="ajustar" data-i="' + i + '">Anular ou trocar gabarito</button>' +
             '<select data-a="status" data-i="' + i + '" style="width:auto;margin-left:auto;padding:5px 8px">' +
             Object.keys(STATUS_S).map(function (k) { return '<option value="' + k + '"' + (k === s.status ? ' selected' : '') + '>' + STATUS_S[k][0] + '</option>'; }).join('') +
             '</select>' : '') + '</div>' +
@@ -2861,6 +2862,7 @@ VIEWS.simulados = function (m, p) {
           if (a === 'res') return ir('resultados', { simuladoId: s.id });
           if (a === 'mapa') return ir('turmas', { simuladoId: s.id });
           if (a === 'lancar') return escolherAluno(s);
+          if (a === 'ajustar') return ajustarGabarito(s, carregar);
           if (a === 'cartao' && adm) return escolherCartoes(s);
           if (a === 'caderno' && s.versoes > 1) return escolherVersao(s);
           verImpresso(s, a);
@@ -2871,6 +2873,61 @@ VIEWS.simulados = function (m, p) {
   carregar();
   if (adm && p && p.novo) formSimulado(carregar);
 };
+
+/**
+ * Coordenação: anular uma questão (ponto para todos) ou trocar o gabarito depois da aplicação.
+ * Vale só neste simulado; todos os cartões já enviados são corrigidos de novo.
+ */
+function ajustarGabarito(s, depois) {
+  var md = modal(topoModal('Anular ou trocar gabarito · ' + s.codigo) + '<div id="ag-corpo"></div>', true);
+  var corpo = $('#ag-corpo', md.el);
+  var desenhar = function () {
+    carregando(corpo);
+    call('gabaritoSimulado', { simuladoId: s.id }).then(function (g) {
+      var feitos = g.questoes.filter(function (q) { return q.ajuste; });
+      var rotulo = function (q) { return q.n + ' · ' + q.disciplina + (q.conteudo ? ' · ' + q.conteudo : '') + ' · gabarito ' + (q.original || '?'); };
+      corpo.innerHTML = '<p class="peq" style="margin-top:0">Use quando uma questão tiver erro depois da aplicação. ' +
+        'Anulada, ela vale ponto para todos; com o gabarito trocado, conta a letra nova. Vale só neste simulado ' +
+        '(a questão no banco não muda) e ' + (g.cartoes ? 'os <b>' + g.cartoes + ' cartões</b> já enviados são corrigidos de novo.' : 'os cartões enviados depois já saem corrigidos assim.') +
+        ' Os números seguem a <b>versão 1</b> do caderno.</p>' +
+        '<label class="campo"><span>Questão</span><select id="ag-q">' + g.questoes.map(function (q, i) {
+          return '<option value="' + i + '">' + esc(rotulo(q)) + (q.ajuste ? ' (já ajustada)' : '') + '</option>';
+        }).join('') + '</select></label>' +
+        '<div class="linha"><label class="campo"><span>O que fazer</span><select id="ag-tipo"><option value="ANULAR">Anular (ponto para todos)</option>' +
+          g.alternativas.map(function (l) { return '<option value="G' + l + '">Trocar o gabarito para ' + l + '</option>'; }).join('') + '</select></label></div>' +
+        '<label class="campo"><span>Motivo (aparece no relatório dos alunos)</span><textarea id="ag-motivo" rows="2" maxlength="300" placeholder="Ex.: enunciado com dois dados contraditórios"></textarea></label>' +
+        '<button class="btn pri" id="ag-ok">Aplicar e corrigir os cartões</button>' +
+        (feitos.length ? '<h3 style="margin:22px 0 8px">Ajustes deste simulado</h3><div class="rolagem"><table class="tab"><tr><th>Nº</th><th>Ajuste</th><th>Motivo</th><th></th></tr>' +
+          feitos.map(function (q) {
+            return '<tr><td class="num">' + q.n + '</td><td>' + (q.ajuste.tipo === 'ANULAR' ? 'Anulada' : 'Gabarito ' + esc(q.original) + ' → ' + esc(q.ajuste.gabarito)) +
+              '<div class="mut peq">' + esc(q.ajuste.por) + ' · ' + esc(dataBr(q.ajuste.em)) + '</div></td><td class="peq">' + esc(q.ajuste.motivo) + '</td>' +
+              '<td><button class="btn peq" data-desfazer="' + esc(q.id) + '">Desfazer</button></td></tr>';
+          }).join('') + '</table></div>' : '');
+      $('#ag-ok', corpo).onclick = function () {
+        var q = g.questoes[+$('#ag-q', corpo).value], t = $('#ag-tipo', corpo).value, motivo = $('#ag-motivo', corpo).value.trim();
+        if (!motivo) { toast('Escreva o motivo.', true); return; }
+        var dados = { simuladoId: s.id, questaoId: q.id, motivo: motivo, tipo: t === 'ANULAR' ? 'ANULAR' : 'GABARITO', gabarito: t.slice(1) };
+        var texto = (t === 'ANULAR' ? 'Anular a questão ' + q.n + '? Ela passa a valer ponto para todos.' : 'Trocar o gabarito da questão ' + q.n + ' de ' + q.original + ' para ' + t.slice(1) + '?') +
+          (g.cartoes ? ' Os ' + g.cartoes + ' cartões já enviados serão corrigidos de novo.' : '');
+        var b = this;
+        confirmar(texto, 'Aplicar').then(function () {
+          ocupado(b, 'Corrigindo…', function () { return call('ajustarQuestao', dados); })
+            .then(function (r) { toast('Feito. ' + r.recorrigidos + ' cartão(ões) corrigido(s) de novo.'); desenhar(); if (depois) depois(); }).catch(function () {});
+        });
+      };
+      $$('[data-desfazer]', corpo).forEach(function (b) {
+        b.onclick = function () {
+          var id = b.getAttribute('data-desfazer');
+          confirmar('Desfazer o ajuste desta questão? Ela volta ao gabarito original e os cartões são corrigidos de novo.', 'Desfazer').then(function () {
+            ocupado(b, 'Corrigindo…', function () { return call('ajustarQuestao', { simuladoId: s.id, questaoId: id, tipo: 'DESFAZER' }); })
+              .then(function (r) { toast('Ajuste desfeito. ' + r.recorrigidos + ' cartão(ões) corrigido(s) de novo.'); desenhar(); if (depois) depois(); }).catch(function () {});
+          });
+        };
+      });
+    }).catch(function (e) { corpo.innerHTML = caixaErro(e); });
+  };
+  desenhar();
+}
 
 /** Escolher qual versão do caderno imprimir */
 function escolherVersao(s) {
@@ -3379,13 +3436,16 @@ VIEWS.relatorio = function (m, p) {
       (d.resolucoesLiberadas ? '' : '<div class="aviso azul peq">As resoluções comentadas serão liberadas quando o simulado for encerrado.</div>') +
       '<div class="rolagem"><table class="tab"><tr><th>Nº</th><th>Disciplina</th><th>Conteúdo</th><th>Marcou</th><th>Gabarito</th><th>Situação</th></tr>' +
       det.porQuestao.slice().sort(function (a, b) { return (a.nv || a.n) - (b.nv || b.n); }).map(function (x) {
-        var sitTxt = { certa: 'Certa', errada: 'Errada', branco: 'Em branco', dupla: 'Rasurada' }[x.situacao];
+        var sitTxt = { certa: 'Certa', errada: 'Errada', branco: 'Em branco', dupla: 'Rasurada', anulada: 'Anulada' }[x.situacao];
+        var aj = (d.ajustesQuestoes || {})[x.n];
         var res = d.resolucoes[x.n];
         return '<tr><td class="num">' + (x.nv ? x.nv + '<div class="mut peq" title="Número na versão 1">(v1: ' + x.n + ')</div>' : x.n) + '</td><td>' + esc(x.disciplina) + '</td><td>' + esc(x.conteudo) +
           (x.situacao === 'errada' ? '<div class="mut peq">' + esc(x.conceito) + '</div>' : '') +
+          (aj ? '<div class="mut peq">' + (aj.tipo === 'ANULAR' ? 'Questão anulada: ponto para todos.' : 'Gabarito alterado de ' + esc(aj.anterior) + ' para ' + esc(aj.gabarito) + '.') +
+            (aj.motivo ? ' ' + esc(aj.motivo) : '') + '</div>' : '') +
           (res ? '<details class="res"><summary>Ver questão e resolução</summary><div class="enun peq" style="margin:6px 0">' + esc(semFiguras(res.enunciado)) + '</div>' +
             '<div class="enun peq" style="background:var(--n-50);padding:8px;border-radius:6px">' + esc(res.resolucao) + '</div></details>' : '') +
-          '</td><td style="text-align:center">' + esc(x.marcada || '—') + '</td><td style="text-align:center"><b>' + esc(x.correta) + '</b></td>' +
+          '</td><td style="text-align:center">' + esc(x.marcada || '—') + '</td><td style="text-align:center"><b>' + (x.situacao === 'anulada' ? '—' : esc(x.correta)) + '</b></td>' +
           '<td class="sit-' + x.situacao + '">' + sitTxt + '</td></tr>';
       }).join('') + '</table></div></div>';
 
@@ -3698,7 +3758,7 @@ VIEWS.turmas = function (m, p) {
           }).join(' · ');
           var dm = x.distratorMaisMarcado;
           return '<tr><td class="num">' + x.n + '</td><td>' + esc(x.disciplina) + '<div class="mut peq">' + esc(x.conteudo) + '</div></td>' +
-            '<td class="num" style="color:' + corPct(x.pctAcerto) + ';font-weight:700">' + x.pctAcerto + '%</td><td style="text-align:center"><b>' + esc(x.correta) + '</b></td>' +
+            '<td class="num" style="color:' + corPct(x.pctAcerto) + ';font-weight:700">' + x.pctAcerto + '%</td><td style="text-align:center"><b>' + (x.anulada ? 'Anulada' : esc(x.correta)) + '</b></td>' +
             '<td class="peq">' + dist + '</td><td class="peq">' + (dm ? '<b>' + dm.letra + '</b> (' + dm.vezes + 'x)' +
               (dm.diag ? ': ' + esc(dm.diag.erro) : '') : '—') + '</td></tr>';
         }).join('') + '</table></div></div>';
