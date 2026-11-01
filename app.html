@@ -574,6 +574,39 @@
   .ciclo-num.sobe { color: var(--ok); }
   .ciclo-num.cai { color: var(--alerta); }
   .ciclo-lista p { margin: 2px 0 0; font-size: 14px; color: var(--n-500); line-height: 1.45; }
+  /* temas do último simulado (professor e coordenação) */
+  .temas-ult > summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; list-style: none; }
+  .temas-ult > summary::-webkit-details-marker { display: none; }
+  .temas-ult > summary h2 { margin: 0; }
+  .temas-ult > summary h2::before { content: "▸"; display: inline-block; width: 18px; color: var(--n-400); transition: transform .15s; }
+  .temas-ult[open] > summary h2::before { transform: rotate(90deg); }
+  .tm-dica { margin: 10px 0 14px; line-height: 1.5; }
+  .temas-grade { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+  .tm-disc { border: 1px solid var(--n-200); border-radius: var(--r-card); padding: 14px 16px; background: #fff; }
+  .tm-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tm-cab h3 { margin: 0; font-size: 17px; }
+  .tm-cols { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); }
+  .tm-tit { margin: 4px 0 6px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .tm-tit.erro { color: var(--alerta); }
+  .tm-tit.ok { color: var(--ok); }
+  .tm-lista { list-style: none; margin: 0; padding: 0; }
+  .tm-lista li { padding: 6px 0; }
+  .tm-lista li + li { border-top: 1px solid var(--n-100); }
+  .tm-lin { display: flex; align-items: baseline; gap: 8px; }
+  .tm-nome { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .tm-pct { font-size: 14px; font-variant-numeric: tabular-nums; }
+  .tm-pct.erro { color: var(--alerta); }
+  .tm-pct.ok { color: var(--ok); }
+  .tm-barra { height: 5px; border-radius: 99px; background: var(--n-100); margin: 5px 0 4px; overflow: hidden; }
+  .tm-barra i { display: block; height: 100%; border-radius: 99px; }
+  .tm-barra i.erro { background: var(--alerta); }
+  .tm-barra i.ok { background: var(--ok); }
+  .tm-pe { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; font-size: 12px; color: var(--n-500); }
+  .tm-volta { font-weight: 700; color: var(--alerta); background: var(--alerta-bg); border-radius: 99px; padding: 0 7px; }
+  .tm-nova { margin-left: auto; }
+  .s-rep { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 6px; font-size: 14px; line-height: 1.45; }
+  .s-rep input { margin-top: 3px; }
+  .s-temas ul { margin: 4px 0 0; padding-left: 18px; }
   .mis-quando { flex: none; font-size: 12px; color: var(--n-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); margin-bottom: 14px; }
   .mis-vazio .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
@@ -1815,8 +1848,21 @@ VIEWS.questoes = function (m, p) {
     Object.keys(STATUS_Q).map(function (k) { return '<option value="' + k + '">' + STATUS_Q[k][0] + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="f-disc"><option value="">Todas</option>' +
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label></div></div>' +
-    '<div id="aviso-an"></div><div id="lote"></div><div id="lista"></div>';
+    '<div id="aviso-an"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
   if (p.status) $('#f-status').value = p.status;
+  call('temasUltimoSimulado', {}).then(function (dados) {
+    var minhasD = !adm && S.user.disciplinas ? csv(S.user.disciplinas) : discs;
+    var alvo = $('#temas-ult'); if (!alvo) return;
+    var tem = minhasD.some(function (d) { return dados[d] && dados[d].temas.length; });
+    if (!tem) return;
+    alvo.innerHTML = '<details class="card temas-ult"' + (adm ? '' : ' open') + '><summary><h2>Temas do último simulado</h2>' +
+      '<span class="mut peq">' + (adm ? 'todas as turmas' : 'suas turmas') + '</span></summary>' +
+      '<p class="mut peq tm-dica">Escreva questões novas dos <b>temas mais errados</b>: os que ficaram abaixo de ' + CORTE_REAVALIAR + '% voltam no sorteio do próximo simulado, ' +
+      'para conferir se os alunos corrigiram o erro com as missões.</p>' + painelTemas(dados, minhasD, { botao: true }) + '</details>';
+    $$('.tm-nova', alvo).forEach(function (b) {
+      b.onclick = function () { formQuestao({ disciplina: b.getAttribute('data-d'), conteudo: b.getAttribute('data-t') }); };
+    });
+  }).catch(function () {});
   call('listarQuestoes', { status: 'ANALISE_PROF' }).then(function (qs) {
     var minhas = qs.filter(function (q) { return q.autorId === S.user.id; });
     if (!minhas.length) return;
@@ -2018,6 +2064,35 @@ function lerOrigem(el) {
 function rotuloOrigem(txt) { return !txt ? '' : txt === 'Autoral' ? 'Questão autoral' : txt; }
 
 // ---------------------------------------------------------------- formulário da questão
+// ---------------------------------------------------------------- temas do último simulado (mais errados e mais acertados)
+var CORTE_REAVALIAR = 60;
+/**
+ * Um cartão por disciplina com os temas mais errados e mais acertados no último simulado que cobrou a disciplina.
+ * dados: resposta de temasUltimoSimulado. op.botao: mostra "+ Questão" nos temas errados (tela de questões).
+ */
+function painelTemas(dados, discs, op) {
+  op = op || {};
+  var lista = discs.filter(function (d) { return dados[d] && dados[d].temas.length; });
+  if (!lista.length) return '<p class="mut peq" style="margin:0">Ainda não há simulado corrigido' + (op.vazio || '') + '.</p>';
+  return '<div class="temas-grade">' + lista.map(function (d) {
+    var x = dados[d], ts = x.temas;
+    var errados = ts.filter(function (t) { return t.pct < 70; }).slice(0, 4);
+    var acertados = ts.filter(function (t) { return t.pct >= 70; }).slice().reverse().slice(0, 3);
+    var linha = function (t, erro) {
+      var reav = erro && t.pct < CORTE_REAVALIAR;
+      return '<li><div class="tm-lin"><span class="tm-nome">' + esc(t.tema) + '</span><b class="tm-pct' + (erro ? ' erro' : ' ok') + '">' + num(t.pct) + '%</b></div>' +
+        '<div class="tm-barra"><i class="' + (erro ? 'erro' : 'ok') + '" style="width:' + Math.max(3, t.pct) + '%"></i></div>' +
+        '<div class="tm-pe"><span>' + t.acertos + ' de ' + t.total + ' respostas certas</span>' + (reav ? '<span class="tm-volta">volta no próximo</span>' : '') +
+        (erro && op.botao ? '<button type="button" class="btn peq tm-nova" data-d="' + esc(d) + '" data-t="' + esc(t.tema) + '">+ Questão</button>' : '') + '</div></li>';
+    };
+    return '<section class="tm-disc"><div class="tm-cab"><h3>' + esc(d) + '</h3><span class="mut peq">' + esc(x.simulado) + ' · ' + x.alunos + (x.alunos === 1 ? ' aluno' : ' alunos') + '</span></div>' +
+      '<div class="tm-cols"><div><h4 class="tm-tit erro">Mais errados</h4>' + (errados.length ? '<ul class="tm-lista">' + errados.map(function (t) { return linha(t, true); }).join('') + '</ul>'
+        : '<p class="mut peq">Nenhum tema abaixo de 70%. Muito bem!</p>') + '</div>' +
+      '<div><h4 class="tm-tit ok">Mais acertados</h4>' + (acertados.length ? '<ul class="tm-lista">' + acertados.map(function (t) { return linha(t, false); }).join('') + '</ul>'
+        : '<p class="mut peq">Nenhum tema com 70% ou mais.</p>') + '</div></div></section>';
+  }).join('') + '</div>';
+}
+
 function formQuestao(q) {
   var c = conc('ESPCEX');
   var discs = disciplinasDe('ESPCEX');
@@ -2671,6 +2746,9 @@ function formSimulado(aoCriar) {
     '<div class="campo"><span class="mut peq" style="font-weight:600">Montagem</span>' +
     '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="auto" checked> Automática: sorteia questões aprovadas, priorizando as nunca usadas</label>' +
     '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="manual"> Manual: eu escolho as questões</label></div>' +
+    '<label class="s-rep"><input type="checkbox" id="s-rep" checked> <span><b>Repetir os temas mais errados do último simulado</b> ' +
+    '(abaixo de ' + CORTE_REAVALIAR + '%): até 40% de cada disciplina, de preferência com questões novas. Serve para conferir se os alunos corrigiram o erro com as missões.</span></label>' +
+    '<div id="s-temas"></div>' +
     '<div id="s-manual"></div>' +
     '<label style="display:block;margin:10px 0"><input type="checkbox" id="s-red"> Permitir simulado reduzido (menos questões que o padrão)</label>' +
     '<div class="linha" style="align-items:flex-end"><label class="campo" style="max-width:220px"><span>Versões do caderno</span><select id="s-ver">' +
@@ -2680,7 +2758,23 @@ function formSimulado(aoCriar) {
     '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn fechar">Cancelar</button>' +
     '<button class="btn pri" id="s-criar">Criar simulado</button></div></form>', true);
 
-  var aprovadas = null;
+  var aprovadas = null, ultimos = null;
+  var reavaliar = function (d) {
+    return ((ultimos || {})[d] && ultimos[d].temas || []).filter(function (t) { return t.pct < CORTE_REAVALIAR; });
+  };
+  var desenharTemas = function () {
+    var alvo = $('#s-temas', md.el); if (!alvo || !ultimos) return;
+    var prova = c.provas.filter(function (p) { return String(p.dia) === $('#s-dia', md.el).value; })[0];
+    var linhas = prova.disciplinas.map(function (d) {
+      var r = reavaliar(d[0]);
+      return r.length ? '<li><b>' + esc(d[0]) + ':</b> ' + r.map(function (t) { return esc(t.tema) + ' (' + num(t.pct) + '%)'; }).join(', ') + '</li>' : '';
+    }).join('');
+    var manual = $('input[name=s-modo]:checked', md.el).value === 'manual';
+    $('.s-rep', md.el).style.display = manual ? 'none' : '';
+    alvo.innerHTML = (manual || $('#s-rep', md.el).checked) && linhas ? '<div class="aviso azul peq s-temas"><b>' +
+      (manual ? 'Temas mais errados no último simulado (marcados abaixo como "tema a reavaliar"):' : 'Voltam neste simulado:') + '</b><ul>' + linhas + '</ul></div>' : '';
+  };
+  call('temasUltimoSimulado', {}).then(function (d) { ultimos = d; desenharTemas(); if (aprovadas) desenharManual(); }).catch(function () {});
   var desenharManual = function () {
     var alvo = $('#s-manual', md.el);
     if ($('input[name=s-modo]:checked', md.el).value !== 'manual') { alvo.innerHTML = ''; return; }
@@ -2691,8 +2785,9 @@ function formSimulado(aoCriar) {
         var qs = aprovadas.filter(function (q) { return q.disciplina === d[0]; });
         return '<div class="card"><h3>' + esc(d[0]) + ' <span class="mut peq cont" data-d="' + esc(d[0]) + '">0/' + d[1] + '</span></h3>' +
           (qs.length ? qs.map(function (q) {
+            var volta = q.temaEdital && reavaliar(d[0]).some(function (t) { return t.tema === q.temaEdital; });
             return '<label style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--borda)"><input type="checkbox" class="s-q" value="' + q.id + '" data-d="' + esc(d[0]) + '">' +
-              '<span class="peq"><b>' + esc(q.id) + '</b> · ' + esc(q.conteudo) + ' — ' + esc(semFiguras(q.enunciado).slice(0, 120)) + '…</span></label>';
+              '<span class="peq"><b>' + esc(q.id) + '</b> · ' + esc(q.conteudo) + (volta ? ' <span class="tag ambar">tema a reavaliar</span>' : '') + ' — ' + esc(semFiguras(q.enunciado).slice(0, 120)) + '…</span></label>';
           }).join('') : '<p class="mut peq">Nenhuma questão aprovada.</p>') + '</div>';
       }).join('');
       $$('.s-q', alvo).forEach(function (cb) {
@@ -2712,8 +2807,9 @@ function formSimulado(aoCriar) {
       call('listarQuestoes', { status: 'APROVADA' }).then(function (qs) { aprovadas = qs; montar(); });
     }
   };
-  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = desenharManual; });
-  $('#s-dia', md.el).onchange = desenharManual;
+  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = function () { desenharManual(); desenharTemas(); }; });
+  $('#s-dia', md.el).onchange = function () { desenharManual(); desenharTemas(); };
+  $('#s-rep', md.el).onchange = desenharTemas;
 
   $('#fs', md.el).onsubmit = function (e) {
     e.preventDefault();
@@ -2722,12 +2818,13 @@ function formSimulado(aoCriar) {
       turmas: csv($('#s-tur', md.el).value).join(', '), dataAplicacao: $('#s-data', md.el).value,
       modo: $('input[name=s-modo]:checked', md.el).value, permitirIncompleto: $('#s-red', md.el).checked,
       questoes: $$('.s-q:checked', md.el).map(function (x) { return x.value; }),
-      versoes: Number($('#s-ver', md.el).value)
+      versoes: Number($('#s-ver', md.el).value), repetirErrados: $('#s-rep', md.el).checked
     };
     ocupado($('#s-criar', md.el), 'Montando…', function () { return call('criarSimulado', d); }).then(function (r) {
       md.fechar();
       toast('Simulado ' + r.simulado.codigo + ' criado como rascunho. Abra-o para os alunos quando for aplicar.');
       if (r.faltas.length) toast('Simulado reduzido: ' + r.faltas.join('; '), true);
+      if (r.reavaliados && r.reavaliados.length) toast('Temas que voltaram para reavaliar: ' + r.reavaliados.map(function (x) { return x.disciplina + ' (' + x.temas.join(', ') + ')'; }).join('; '));
       aoCriar();
     }).catch(function () {});
   };
