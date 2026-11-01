@@ -382,6 +382,7 @@
   .diag .d-alt { white-space: pre-wrap; }
   .diag .d-exp { background: var(--n-50); border-left: 1px solid var(--n-200); font-size: 13.5px; color: var(--n-700); }
   .diag .d-exp p { margin: 0 0 4px; }
+  .diag .d-exp ul { margin: 0 0 4px; padding-left: 18px; }
   .diag .d-exp textarea, .diag .d-exp input { font-size: 13px; margin-bottom: 6px; }
   .diag.certa { border-color: #9BD3B0; }
   .diag.certa .d-alt, .diag.certa .d-exp { background: var(--ok-bg); }
@@ -1200,6 +1201,11 @@ function esc(s) {
   return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+/** Endereço de imagem só se for uma imagem de verdade (data:image/jpeg|png|webp;base64 ou blob: do próprio aparelho) */
+function imgSrc(u) {
+  u = String(u || '');
+  return /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]*$/.test(u) || /^blob:/.test(u) ? u : '';
+}
 function guardar(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
 function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
@@ -1540,7 +1546,7 @@ function iniciais(nome) {
 }
 /** Círculo do usuário: a foto, se houver; senão, as iniciais */
 function avatar(u, classe) {
-  return '<span class="avatar' + (classe ? ' ' + classe : '') + '">' + (u.fotoUrl ? '<img src="' + u.fotoUrl + '" alt="">' : esc(iniciais(u.nome))) + '</span>';
+  return '<span class="avatar' + (classe ? ' ' + classe : '') + '">' + (imgSrc(u.fotoUrl) ? '<img src="' + imgSrc(u.fotoUrl) + '" alt="">' : esc(iniciais(u.nome))) + '</span>';
 }
 /** Ícone da família MIRA (Icones.html): traço na cor do texto em volta (currentColor) */
 function icone(nome, classe) {
@@ -1968,7 +1974,7 @@ function enunciadoHtml(texto, urls, total, classe) {
   var usadas = {}, h = '';
   var fig = function (n) {
     usadas[n] = true;
-    return urls[n] ? '<img class="figura" src="' + urls[n] + '" alt="Figura ' + (n + 1) + '">'
+    return imgSrc(urls[n]) ? '<img class="figura" src="' + imgSrc(urls[n]) + '" alt="Figura ' + (n + 1) + '">'
       : '<div class="fig-ph">Figura ' + (n + 1) + (n < total ? ' (carregando…)' : ' (não encontrada)') + '</div>';
   };
   String(texto).split(/\[FIGURA\s+(\d+)\]/i).forEach(function (p, i) {
@@ -2178,7 +2184,7 @@ function formQuestao(q) {
     if (!figuras.length) { box.innerHTML = '<p class="mut peq" style="margin:4px 0">Nenhuma figura.</p>'; return; }
     box.innerHTML = figuras.map(function (f, i) {
       var n = i + 1, marcada = new RegExp('\\[FIGURA\\s+' + n + '\\]', 'i').test(enun.value) || (n === 1 && /\[FIGURA\]/i.test(enun.value));
-      return '<div class="fig-card"><img src="' + f.url + '" alt="Figura ' + n + '"><div><b>Figura ' + n + '</b><br>' +
+      return '<div class="fig-card"><img src="' + imgSrc(f.url) + '" alt="Figura ' + n + '"><div><b>Figura ' + n + '</b><br>' +
         '<span class="mut peq">' + (marcada ? 'No texto, onde está [FIGURA ' + n + ']' : 'Aparece depois do texto') + '</span><br>' +
         (marcada ? '' : '<button type="button" class="btn peq" data-ins="' + i + '">Inserir no texto</button> ') +
         '<button type="button" class="btn peq perigo" data-rem="' + i + '">Remover</button></div></div>';
@@ -2425,11 +2431,14 @@ function verQuestao(q, aoMudar) {
         '<label class="peq"><b>Deficiência</b> (rótulo curto)' + (d.plausivel === false ? ' <span class="tag ambar">fraca</span>' : '') +
         '<input type="text" class="d-conc" value="' + esc(d.conceito) + '"></label>' +
         '<label class="peq"><b>Por que o aluno erra</b><textarea class="d-erro" rows="3">' + esc(d.erro) + '</textarea></label>' +
-        '<label class="peq"><b>O que estudar</b><textarea class="d-rec" rows="2">' + esc(d.recomendacao) + '</textarea></label></div>';
+        '<label class="peq"><b>O que estudar</b><textarea class="d-rec" rows="2">' + esc(d.recomendacao) + '</textarea></label>' +
+        '<label class="peq"><b>Missões para o aluno</b> (uma por linha, até 3)<textarea class="d-mis" rows="3">' + esc((d.missoes || []).join('\n')) + '</textarea></label></div>';
       else dir = '<div class="d-exp"><span class="rot">' + esc(d.conceito) + '</span>' +
         (d.plausivel === false ? ' <span class="tag ambar">distrator fraco</span>' : '') +
         '<p><b>Por que o aluno erra:</b> ' + esc(d.erro) + '</p>' +
-        (d.recomendacao ? '<p><b>O que estudar:</b> ' + esc(d.recomendacao) + '</p>' : '') + '</div>';
+        (d.recomendacao ? '<p><b>O que estudar:</b> ' + esc(d.recomendacao) + '</p>' : '') +
+        (d.missoes && d.missoes.length ? '<p style="margin-bottom:2px"><b>Missões para o aluno que errar aqui:</b></p><ul class="d-mis-lista">' +
+          d.missoes.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
       return '<div class="diag' + (certa ? ' certa' : '') + (mudou ? ' mudou' : '') + '">' + esq + dir + '</div>';
     }).join('');
 
@@ -2448,8 +2457,8 @@ function verQuestao(q, aoMudar) {
   if (analisar) {
     h += '<div class="card parecer"><h3 style="margin-top:0">' + (autor ? 'Sua análise' : 'Análise do professor (' + esc(q.autorNome) + ')') + '</h3>' +
       (!autor ? '<p class="mut peq" style="margin-top:0">Como coordenação, você pode registrar a análise no lugar do professor.</p>' : '') +
-      '<p class="peq" style="margin-top:0">Concorda com ' + (ad ? 'a adaptação, ' : '') + 'o gabarito e os diagnósticos? Se sim, clique em <b>De acordo</b>' +
-      (ad ? ' e a versão adaptada passa a valer' : '') + '. Se algo precisa mudar, descreva abaixo: o pedido vai para a próxima curadoria.</p>' +
+      '<p class="peq" style="margin-top:0">Concorda com ' + (ad ? 'a adaptação, ' : '') + 'o gabarito, os diagnósticos e as missões? Se sim, clique em <b>De acordo</b>' +
+      (ad ? ' e a versão adaptada passa a valer' : '') + '. As missões vão direto para os alunos que errarem esta questão. Se algo precisa mudar, descreva abaixo: o pedido vai para a próxima curadoria.</p>' +
       '<label class="campo"><span>O que deve ser alterado (só se não estiver de acordo)</span>' +
       '<textarea id="p-com" rows="3" placeholder="Ex.: na alternativa D, prefiro um erro de sinal no calor do gelo; manter o valor 20 °C."></textarea></label>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
@@ -2510,6 +2519,8 @@ function verQuestao(q, aoMudar) {
         copia.distratores[l].erro = $('.d-erro', el).value;
         copia.distratores[l].conceito = $('.d-conc', el).value;
         copia.distratores[l].recomendacao = $('.d-rec', el).value;
+        copia.distratores[l].missoes = $('.d-mis', el).value.split('\n').map(function (t) { return t.replace(/^\s*[-•*]\s*/, '').trim(); })
+          .filter(Boolean).slice(0, 3);
       });
       return copia;
     };
@@ -2893,8 +2904,8 @@ function verCartao(resultadoId, titulo) {
   call('fotoCartao', { id: resultadoId }).then(function (r) {
     var a = $('#vc-area', md.el);
     if (!a) return;
-    a.innerHTML = r.url
-      ? '<img src="' + r.url + '" alt="Foto do cartão-resposta" class="foto-cartao">'
+    a.innerHTML = imgSrc(r.url)
+      ? '<img src="' + imgSrc(r.url) + '" alt="Foto do cartão-resposta" class="foto-cartao">'
       : '<div class="aviso ambar">' + esc(r.aviso || 'Foto indisponível.') + (r.drive ? ' <a href="' + esc(r.drive) + '" target="_blank" rel="noopener">Abrir no Google Drive</a>' : '') + '</div>';
   }).catch(function (e) { var a = $('#vc-area', md.el); if (a) a.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
 }
@@ -2937,7 +2948,7 @@ VIEWS.enviar = function (m, p) {
           '<label class="btn"><input type="file" class="foto-in" accept="image/*">Anexar foto da galeria</label></div>' +
           '<p class="mut peq" style="margin:8px 0 0">Já fotografou o cartão com a câmera do celular? Use <b>Anexar foto da galeria</b> e escolha a imagem.</p>' +
           '<div id="prev">' + (st.erroLeitura ? '<div class="aviso verm" style="margin-top:12px">' + esc(st.erroLeitura) + '</div>' : '') +
-          (st.foto ? '<img class="foto-prev" src="' + st.foto.url + '">' : '') + '</div>' +
+          (st.foto ? '<img class="foto-prev" src="' + imgSrc(st.foto.url) + '">' : '') + '</div>' +
           (st.erroLeitura && L.iaConfigurada ? '<button class="btn" id="ia">Tentar leitura com IA</button> ' : '') +
           '<p class="peq" style="margin-top:16px"><a href="#" id="manual">Prefiro digitar minhas respostas</a></p></div>';
       } else {
@@ -3115,7 +3126,7 @@ VIEWS.relatorio = function (m, p) {
         '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam em Missões.</p>' +
         '<div class="mis-grupos">' + d.estrategias.map(grupoMissoes).join('') + '</div></div>'
       : '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
-      ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Sugeridas a partir deste relatório. O aluno só vê depois do OK do professor da disciplina.</p>') +
+      ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Montadas com as missões da curadoria dos erros deste relatório. O aluno já vê; o professor da disciplina pode ajustar.</p>') +
         '<div class="est-lista">' + d.estrategias.map(function (e) { return blocoEstrategia(e, !aluno); }).join('') + '</div>'
       : '<p class="mut" style="margin:0">' + (aluno ? (d.estrategiasPendentes
         ? 'Seus professores estão conferindo as estratégias deste simulado. Elas aparecem aqui e no seu Painel assim que forem aprovadas.'
@@ -3200,7 +3211,7 @@ function blocoEstrategia(e, interno, selecionavel) {
     '<h3>' + esc(e.disciplina) + '</h3>' + de + (interno ? tag(STATUS_E, e.status) : '') + '</div>';
   if (interno) {
     h += '<div class="est-meta">' + (e.aluno ? '<b>' + esc(e.aluno) + '</b>' + (e.turma ? ' · ' + esc(e.turma) : '') + ' · ' : '') + esc(e.simulado) +
-      ' · ' + (e.origem === 'IA' ? 'sugestão da IA' : 'sugestão automática') + (e.editada ? ' · ajustada' : '') + '</div>';
+      ' · ' + (e.origem === 'IA' ? 'sugestão da IA' : e.origem === 'CURADORIA' ? 'missões da curadoria' : 'sugestão automática') + (e.editada ? ' · ajustada' : '') + '</div>';
   }
   h += editar
     ? '<textarea class="est-txt" rows="9">' + esc(e.texto) + '</textarea>' +
@@ -3208,7 +3219,8 @@ function blocoEstrategia(e, interno, selecionavel) {
       (e.resultadoId && S.rota !== 'relatorio' ? '<button class="btn peq" data-rel="' + esc(e.resultadoId) + '">Ver relatório</button>' : '') +
       '<button class="btn peq ok est-ok">Dar OK</button></div>'
     : '<div class="plano est-corpo">' + formatarPlano(e.texto) + '</div>' +
-      '<div class="est-pe mut peq">' + (e.status === 'APROVADA' ? 'Aprovada por ' + esc(e.professorNome || 'professor(a)') + (e.decididoEm ? ' em ' + dataBr(e.decididoEm) : '') : '') +
+      '<div class="est-pe mut peq">' + (e.status === 'APROVADA' ? (interno && e.origem === 'CURADORIA' && !e.editada ? 'Missões validadas na curadoria das questões'
+        : 'Aprovada por ' + esc(e.professorNome || 'professor(a)')) + (e.decididoEm ? ' em ' + dataBr(e.decididoEm) : '') : '') +
       (!interno && e.simulado ? (e.status === 'APROVADA' ? ' · ' : '') + esc(e.simulado) : '') +
       (interno && e.missoes && e.missoes.length ? ' · Missões cumpridas pelo aluno: <b>' + e.missoes.filter(function (x) { return x.feitaEm; }).length + ' de ' + e.missoes.length + '</b>' +
         (function () {
@@ -3585,11 +3597,11 @@ function ligarEstrategias(raiz, aoMudar, lista) {
 /** Lista de estratégias para o professor (e a coordenação) dar o OK */
 VIEWS.estrategias = function (m, p) {
   var adm = S.user.perfil === 'ADM';
-  m.innerHTML = cabPag('Estratégias de estudo', 'Sugestões feitas a partir do relatório de cada aluno. Confira, ajuste se precisar e dê o OK: só então o aluno vê.',
+  m.innerHTML = cabPag('Estratégias de estudo', 'Montadas com as missões da curadoria, validadas por vocês em cada questão. O aluno já vê; se quiser, ajuste o texto.',
     adm ? '<button class="btn" id="ee-exp">Exportar para a IA</button><button class="btn" id="ee-imp">Importar da IA</button>' : '') +
     '<div class="card nao-imprimir"><div class="linha">' +
-    '<label class="campo" style="margin:0"><span>Situação</span><select id="ee-st"><option value="SUGERIDA">Aguardando OK</option>' +
-    '<option value="APROVADA">Aprovadas</option><option value="">Todas</option></select></label>' +
+    '<label class="campo" style="margin:0"><span>Situação</span><select id="ee-st"><option value="APROVADA">Em uso pelos alunos</option>' +
+    '<option value="SUGERIDA">Aguardando OK (antigas)</option><option value="">Todas</option></select></label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="ee-disc"><option value="">Todas</option>' +
     disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Buscar</span><input type="text" id="ee-busca" placeholder="Aluno ou turma"></label></div></div>' +
@@ -3608,7 +3620,7 @@ VIEWS.estrategias = function (m, p) {
     if (!vis.length) {
       l.innerHTML = '<div class="card vazio">' + icone('foco', 'ic-vazio') +
         ($('#ee-st').value === 'SUGERIDA' ? 'Nenhuma estratégia aguardando o seu OK.' : 'Nenhuma estratégia encontrada.') +
-        '<p class="mut peq" style="margin:6px 0 0">As sugestões aparecem aqui quando os alunos enviam o cartão-resposta.</p></div>';
+        '<p class="mut peq" style="margin:6px 0 0">As estratégias aparecem aqui quando os alunos enviam o cartão-resposta.</p></div>';
       $('#ee-lote').innerHTML = ''; return;
     }
     l.innerHTML = '<p class="mut peq">' + vis.length + ' estratégia(s)</p><div class="est-lista larga">' +
@@ -4304,13 +4316,13 @@ VIEWS.config = function (m) {
     m.innerHTML = cabPag('Configurações') +
       '<div class="card"><h2>Modo de funcionamento</h2>' +
       (c.iaConfigurada
-        ? '<div class="aviso verde"><b>Modo com IA automática.</b> A curadoria acontece ao salvar a questão e a IA sugere as estratégias de estudo. A leitura do cartão continua no celular, com a IA como reserva.</div>'
-        : '<div class="aviso azul"><b>Modo gratuito.</b> A leitura do cartão é feita no próprio celular, a curadoria é feita por lotes no chat do Claude ' +
-          '(Banco de questões › Exportar lote) e as estratégias de estudo começam por regras (Estratégias de estudo › Exportar para a IA). Nenhum custo de uso.</div>') +
-      '<p class="peq">Opcional: com uma chave da API (<a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>, cobrada por uso), a curadoria e as sugestões de estratégias ficam automáticas.</p>' +
+        ? '<div class="aviso verde"><b>Modo com IA automática.</b> A curadoria acontece ao salvar a questão. A leitura do cartão continua no celular, com a IA como reserva.</div>'
+        : '<div class="aviso azul"><b>Modo gratuito.</b> A leitura do cartão é feita no próprio celular e a curadoria é feita por lotes no chat do Claude ' +
+          '(Banco de questões › Exportar lote). Nenhum custo de uso.</div>') +
+      '<p class="peq">As estratégias de estudo são montadas com as missões que a curadoria escreve para cada erro e que o professor valida na questão: vão direto para o aluno, sem custo.</p>' +
+      '<p class="peq">Opcional: com uma chave da API (<a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, cobrada por uso), a curadoria fica automática.</p>' +
       '<div class="linha"><label class="campo"><span>' + (c.iaConfigurada ? 'Substituir chave' : 'Chave da API') + '</span><input type="password" id="c-chave" placeholder="sk-ant-…" autocomplete="off"></label>' +
       '<label class="campo"><span>Modelo</span><input type="text" id="c-mod" value="' + esc(c.modelo) + '"></label></div>' +
-      '<label style="display:block;margin-bottom:8px"><input type="checkbox" id="c-plano"' + (c.planoIa ? ' checked' : '') + '> Usar a IA automática para sugerir as estratégias de estudo (os professores continuam dando o OK)</label>' +
       '<label style="display:block;margin-bottom:12px"><input type="checkbox" id="c-email"' + (c.emailResponsavel ? ' checked' : '') + '> Enviar relatório por e-mail ao responsável (apenas com consentimento registrado)</label>' +
       '<div style="display:flex;gap:8px"><button class="btn pri" id="c-salvar">Salvar</button><button class="btn" id="c-teste">Testar conexão com a IA</button></div></div>' +
       (window.MIRA_SUPABASE
@@ -4331,7 +4343,7 @@ VIEWS.config = function (m) {
           p.disciplinas.map(function (d) { return esc(d[0]) + ' ' + d[1]; }).join(' · ') + '</p>';
       }).join('') + '<p class="mut peq">Para atualizar conforme um novo edital, altere o bloco CONCURSOS no arquivo Code.gs.</p></div>';
     $('#c-salvar').onclick = function () {
-      var d = { chave: $('#c-chave').value, modelo: $('#c-mod').value, planoIa: $('#c-plano').checked, emailResponsavel: $('#c-email').checked };
+      var d = { chave: $('#c-chave').value, modelo: $('#c-mod').value, emailResponsavel: $('#c-email').checked };
       ocupado(this, 'Salvando…', function () { return call('salvarConfiguracao', d); }).then(function () { toast('Configurações salvas.'); ir('config'); }).catch(function () {});
     };
     $('#c-copia').onclick = function () { baixarCopia(this, function () { ir('config'); }); };
@@ -4447,8 +4459,8 @@ VIEWS.conta = function (m) {
     '<form class="card" id="fs"><h2>' + (u.trocarSenha ? 'Criar minha senha' : 'Trocar senha') + '</h2>' +
     (u.trocarSenha ? '<p class="mut peq" style="margin-top:0">Você está usando a senha provisória que recebeu. Crie uma senha só sua.</p>' : '') +
     '<label class="campo"><span>' + (u.trocarSenha ? 'Senha provisória (a que você recebeu)' : 'Senha atual') + '</span><input type="password" id="s-a" required autocomplete="current-password"></label>' +
-    '<label class="campo"><span>Nova senha (mínimo 6 caracteres)</span><input type="password" id="s-n" required minlength="6" autocomplete="new-password"></label>' +
-    '<label class="campo"><span>Repita a nova senha</span><input type="password" id="s-n2" required minlength="6" autocomplete="new-password"></label>' +
+    '<label class="campo"><span>Nova senha (mínimo 8 caracteres)</span><input type="password" id="s-n" required minlength="8" autocomplete="new-password"></label>' +
+    '<label class="campo"><span>Repita a nova senha</span><input type="password" id="s-n2" required minlength="8" autocomplete="new-password"></label>' +
     '<button class="btn pri" id="s-ok">Salvar nova senha</button></form></div>' +
     '<div class="card sobre"><img src="' + LOGO_EMBLEMA + '" alt=""><div><h3 style="margin-bottom:2px">Sobre o MIRA</h3>' +
     '<p class="mut peq" style="margin:0">Monitoramento Inteligente de Resultados e Aprendizagem.<br>Desenvolvido por Carol J Castro.</p></div></div>';
