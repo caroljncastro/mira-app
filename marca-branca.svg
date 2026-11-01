@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="950" height="640" viewBox="225 135 950 640" >
+ <defs>
+  <linearGradient id="mira-gradiente" x1="485" y1="420" x2="915" y2="420" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ffffff"/>
+   <stop offset="1" stop-color="#ffffff"/>
+  </linearGradient>
+  <mask id="recorte-simbolo" maskUnits="userSpaceOnUse" x="0" y="0" width="1400" height="900">
+   <rect width="1400" height="900" fill="white"/>
+   <g fill="none" stroke="black" stroke-width="73" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M360 498V332L464 456L558 332V498 M626 332V498 M698 498V332H774C861 332 861 431 774 431H698 M771 431L827 498 M887 498L974 332L1056 498"/>
+   </g>
+   <path d="M700 190V650" stroke="black" stroke-width="38"/>
+  </mask>
+ </defs>
+ <g id="mira-circular" fill="none" stroke="#ffffff" stroke-width="18">
+  <circle cx="700" cy="420" r="204" mask="url(#recorte-simbolo)"/>
+  <path id="hastes-verticais" d="M700 181V284 M700 556V659" stroke="#ffffff" stroke-linecap="round"/>
+ </g>
+ <g id="MIRA" fill="none" stroke="#ffffff" stroke-width="54" stroke-linejoin="round" stroke-linecap="round" aria-label="MIRA" mask="url(#folga-horizontal)">
+  <path id="M" d="M360 498V332L464 456L558 332V498"/>
+  <path id="I" d="M626 332V498"/>
+  <path id="R" d="M698 498V332H774C861 332 861 431 774 431H698 M771 431L827 498"/>
+  
+  <path id="A-sem-travessao" d="M887 498L974 332L1056 498"/>
+ </g>
+ 
+ <defs>
+  <mask id="folga-horizontal" maskUnits="userSpaceOnUse" x="0" y="0" width="1400" height="900">
+   <rect width="1400" height="900" fill="white"/>
+   <path d="M280 420H380 M1022 420H1114" stroke="black" stroke-width="30" stroke-linecap="round"/>
+  </mask>
+ </defs>
+ <g id="hastes-horizontais" fill="none" stroke="#ffffff" stroke-width="17" stroke-linecap="round">
+  <path d="M280 420H380 M1022 420H1114"/>
+ </g>
+ <g id="slogan-editavel" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="37" letter-spacing="2" text-anchor="middle">
+  <text id="slogan-linha-1" x="700" y="710">MONITORAMENTO INTELIGENTE</text>
+  <text id="slogan-linha-2" x="700" y="754">DE RESULTADOS E APRENDIZAGEM</text>
+ </g>
+</svg>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MIRA</title>
 <meta name="description" content="Monitoramento Inteligente de Resultados e Aprendizagem">
-<meta name="theme-color" content="#0B2350" id="cor-tema">
+<meta name="theme-color" content="#51237E" id="cor-tema">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MIRA">
@@ -14,37 +14,34 @@
 <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icone-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --marca-900: #0B2350; --marca-700: #143A78; --marca-600: #1D4E9E; --marca-100: #E6EDF8;
-    --acento-600: #C1272D; --n-900: #0F172A; --n-500: #64748B; --n-300: #CBD5E1; --n-200: #E2E8F0;
+    --marca-900: #51237E; --marca-700: #51237E; --marca-600: #6A3A9E; --marca-100: #EEE7F5;
+    --acento-600: #63C4AF; --n-900: #28212F; --n-500: #665E6E; --n-300: #D3CDDA; --n-200: #E7E2ED;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--marca-900); color: #fff;
-    font: 400 15px/1.5 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    font: 400 15px/1.5 Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
   #app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding-top: env(safe-area-inset-top); background: var(--marca-900); display: none; }
   #app iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
   body.abrindo #app { display: block; }
   body.abrindo #instalar { display: none; }
   #instalar { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: calc(40px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom)); text-align: center;
-    background: radial-gradient(circle at 50% 30%, #143A78 0, var(--marca-900) 70%); }
-  .faixa { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--marca-600) 50%, var(--acento-600) 50%); }
+    background: var(--marca-700); }
+  .faixa { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #63C4AF, #9ACC57); }
   .icone { width: 112px; height: 112px; border-radius: 24px; box-shadow: 0 12px 32px rgba(0,0,0,.35); }
-  h1 { font: 700 40px/1.2 'Archivo', sans-serif; font-stretch: 75%; letter-spacing: .12em; margin: 20px 0 4px; }
-  .sub { color: #C9D4E8; font-size: 14px; margin: 0 0 32px; max-width: 280px; }
+  h1 { font: 700 40px/1.2 Arial, Helvetica, sans-serif; letter-spacing: .12em; margin: 20px 0 4px; }
+  .sub { color: #E4DAEF; font-size: 14px; margin: 0 0 32px; max-width: 280px; }
   .cartao { background: #fff; color: var(--n-900); border-radius: 16px; padding: 24px 20px; width: 100%; max-width: 380px; text-align: left; }
-  .cartao h2 { font: 700 20px/1.2 'Archivo', sans-serif; font-stretch: 80%; margin: 0 0 8px; }
+  .cartao h2 { font: 700 20px/1.2 Arial, Helvetica, sans-serif; margin: 0 0 8px; }
   .cartao p { margin: 0 0 16px; color: var(--n-500); font-size: 14px; }
   ol { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: p; }
   ol li { counter-increment: p; position: relative; padding: 0 0 12px 36px; font-size: 15px; }
   ol li::before { content: counter(p); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 999px;
     background: var(--marca-100); color: var(--marca-700); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; }
   .sym { display: inline-block; vertical-align: -3px; width: 18px; height: 18px; color: var(--marca-600); }
-  button { font: 600 15px 'IBM Plex Sans', sans-serif; height: 44px; border-radius: 8px; width: 100%; cursor: pointer; }
+  button { font: 600 15px Arial, Helvetica, sans-serif; height: 44px; border-radius: 8px; width: 100%; cursor: pointer; }
   .principal { background: var(--marca-700); color: #fff; border: 0; margin-bottom: 8px; }
   .secundario { background: #fff; color: var(--n-900); border: 1px solid var(--n-300); }
   button:focus-visible { outline: 2px solid var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
@@ -64,19 +61,18 @@
   }
   #abertura video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
   .ab-btn { position: absolute; top: calc(14px + env(safe-area-inset-top)); height: 36px; padding: 0 14px; border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.35); background: rgba(8,20,31,.55); color: #fff; font: 600 14px 'IBM Plex Sans', sans-serif;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(8,20,31,.55); color: #fff; font: 600 14px Arial, Helvetica, sans-serif;
     width: auto; cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
   #ab-pular { right: 16px; }
   #ab-som { left: 16px; }
-  .credito { margin-top: 24px; font-size: 12px; color: #8FA3C4; }
+  .credito { margin-top: 24px; font-size: 12px; color: #CDBFE0; }
+  .marca-entrada { display: block; width: 260px; max-width: 80vw; height: auto; margin: 0 auto 28px; }
 </style>
 </head>
 <body>
 <div id="instalar">
   <div class="faixa"></div>
-  <img class="icone" src="icone-180.png" alt="">
-  <h1>MIRA</h1>
-  <p class="sub">Monitoramento Inteligente de Resultados e Aprendizagem</p>
+  <img class="marca-entrada" src="marca-branca.svg" alt="MIRA: Monitoramento Inteligente de Resultados e Aprendizagem">
 
   <div class="cartao">
     <div id="passos-iphone" hidden>
@@ -145,7 +141,7 @@
     var terminar = function () {
       if (fim) return; fim = true;
       ab.classList.add('saindo');
-      tema.setAttribute('content', '#0B2350');
+      tema.setAttribute('content', '#51237E');
       setTimeout(function () {
         try { v.pause(); } catch (e) {}
         ab.remove(); document.documentElement.classList.remove('na-vinheta');
