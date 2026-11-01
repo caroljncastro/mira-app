@@ -22,6 +22,10 @@
     --acento-600: #63C4AF; /* turquesa: só acento visual (traços, indicadores) */
     --verde-marca: #9ACC57;
     --grad-mira: linear-gradient(90deg, #63C4AF, #9ACC57);
+    --grad-menu: linear-gradient(180deg, #51237E 0%, #3B1A5C 100%);
+    --grad-destaque: radial-gradient(130% 120% at 0% 0%, #6A3A9E 0%, #51237E 42%, #2E1248 100%);
+    --sombra-card: 0 1px 2px rgba(81, 35, 126, .06), 0 8px 24px -10px rgba(81, 35, 126, .16);
+    --sombra-botao: 0 8px 20px -8px rgba(81, 35, 126, .55);
     --n-900: #28212F;
     --n-700: #463E4F;
     --n-500: #665E6E;
@@ -34,7 +38,7 @@
     --alerta: #B45309; --alerta-bg: #FEF6E7;
     --erro: #B91C1C;   --erro-bg: #FDECEC;
 
-    --r-tag: 6px; --r-ctl: 8px; --r-card: 12px; --r-jan: 16px;
+    --r-tag: 8px; --r-ctl: 12px; --r-card: 20px; --r-jan: 24px;
     --fonte: Arial, Helvetica, sans-serif;
     --estreita: var(--fonte); /* nome antigo: títulos e números grandes também em Arial */
     --sombra-jan: 0 24px 60px rgba(40, 33, 47, .22), 0 2px 6px rgba(40, 33, 47, .08);
@@ -58,97 +62,155 @@
   a { color: var(--marca-600); text-underline-offset: 2px; }
   a:hover { color: var(--marca-700); }
   h1, h2, h3 { margin: 0; line-height: 1.2; color: var(--n-900); }
-  h1 { font-family: var(--estreita); font-size: 28px; font-weight: 700; letter-spacing: -.1px; }
-  h2 { font-size: 17px; font-weight: 600; }
+  h1 { font-family: var(--estreita); font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
+  h2 { font-size: 18px; font-weight: 700; }
   h3 { font-size: 15px; font-weight: 600; }
   :focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-  /* ---------- topo ---------- */
-  .topo { background: var(--marca-700); color: #fff; display: flex; align-items: center; gap: 12px;
-    padding: 0 16px 0 20px; height: 56px; position: sticky; top: 0; z-index: 20; }
-  .topo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-    background: var(--grad-mira); }
-  .marca { display: flex; align-items: center; gap: 10px; }
-  .marca .emblema { width: 36px; height: 36px; flex: none; display: block; }
-  .marca b { font-family: var(--estreita); font-size: 21px; font-weight: 800; letter-spacing: 2px; line-height: 1; color: #fff; }
-  .usuario { margin-left: auto; position: relative; }
-  .usuario > button { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; color: #fff;
-    padding: 6px 8px 6px 6px; border-radius: var(--r-ctl); cursor: pointer; text-align: left; }
-  .usuario > button:hover, .usuario.aberto > button { background: rgba(255, 255, 255, .1); }
-  .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none;
-    background: #fff; color: var(--marca-700); font-weight: 700; font-size: 13px; }
-  .avatar { overflow: hidden; }
+  /* ---------- casca: menu lateral roxo (logo no alto) + topo claro com busca, sino e usuário ---------- */
+  .casca { display: flex; min-height: 100vh; }
+  nav.menu { width: 248px; flex: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 15;
+    display: flex; flex-direction: column; padding: 22px 14px 18px; color: #fff; background: var(--grad-menu); }
+  .menu-logo { display: block; width: 150px; height: auto; margin: 0 10px 26px; }
+  nav.menu button { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    background: none; border: 0; padding: 10px 12px; border-radius: var(--r-ctl); cursor: pointer;
+    color: rgba(255, 255, 255, .82); font-weight: 600; font-size: 14.5px; margin-bottom: 4px; transition: background .12s; }
+  nav.menu .ic { width: 22px; height: 22px; color: currentColor; }
+  nav.menu button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+  nav.menu button.ativo { background: #fff; color: var(--marca-700); box-shadow: var(--sombra-card); }
+  nav.menu button.ativo::before { content: ""; position: absolute; left: -14px; top: 10px; bottom: 10px; width: 4px;
+    border-radius: 0 4px 4px 0; background: var(--acento-600); }
+  .conteudo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topo { position: sticky; top: 0; z-index: 12; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 24px 0 32px;
+    background: rgba(247, 245, 250, .88); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--n-200); }
+  .topo .marca { display: none; }
+  .marca .emblema { width: 34px; height: 34px; display: block; }
+  /* busca */
+  .busca { position: relative; flex: 1; max-width: 460px; }
+  .busca-campo { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; background: #fff;
+    border: 1px solid var(--n-200); border-radius: 999px; color: var(--n-500); }
+  .busca-campo:focus-within { border-color: var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
+  .busca-campo .ic { width: 18px; height: 18px; color: var(--n-500); }
+  .busca-campo input { flex: 1; width: 100%; min-width: 0; border: 0 !important; outline: 0 !important; min-height: 0 !important; padding: 0 !important; background: transparent !important;
+    font-size: 14.5px; box-shadow: none !important; }
+  .busca-abrir { display: none; }
+  .busca-res { position: absolute; left: 0; right: 0; top: calc(100% + 8px); background: #fff; border: 1px solid var(--n-200);
+    border-radius: var(--r-card); box-shadow: var(--sombra-flut); padding: 8px; max-height: 70vh; overflow-y: auto; display: none; }
+  .busca.aberta .busca-res { display: block; }
+  .busca-res h4 { margin: 8px 10px 4px; font-size: 12px; font-weight: 700; color: var(--n-500); text-transform: uppercase; letter-spacing: .04em; }
+  .busca-res button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0;
+    padding: 9px 10px; border-radius: var(--r-ctl); cursor: pointer; font-size: 14px; color: var(--n-900); }
+  .busca-res button:hover, .busca-res button.foco { background: var(--marca-50); }
+  .busca-res button .ic { width: 18px; height: 18px; }
+  .busca-res button small { display: block; color: var(--n-500); font-size: 12.5px; }
+  .busca-res .nada { padding: 14px 10px; color: var(--n-500); font-size: 14px; }
+  /* sino */
+  .topo-acoes { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .sino { position: relative; }
+  .sino > button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--n-200); background: #fff; display: grid; place-items: center;
+    cursor: pointer; color: var(--marca-700); }
+  .sino > button:hover { background: var(--marca-50); }
+  .sino > button .ic { width: 20px; height: 20px; }
+  .sino .bolha { position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+    background: var(--erro); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; }
+  .sino-lista { position: absolute; right: 0; top: calc(100% + 8px); width: 340px; max-width: calc(100vw - 24px); background: #fff;
+    border: 1px solid var(--n-200); border-radius: var(--r-card); box-shadow: var(--sombra-flut); padding: 8px; display: none; }
+  .sino.aberto .sino-lista { display: block; }
+  .sino-lista h4 { margin: 6px 10px 8px; font-size: 15px; }
+  .sino-lista button { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0;
+    padding: 10px; border-radius: var(--r-ctl); cursor: pointer; }
+  .sino-lista button:hover { background: var(--marca-50); }
+  .sino-lista .n { min-width: 30px; height: 30px; border-radius: 999px; background: var(--marca-100); color: var(--marca-700);
+    font-weight: 700; font-size: 14px; display: grid; place-items: center; flex: none; padding: 0 6px; }
+  .sino-lista b { display: block; font-size: 14px; }
+  .sino-lista span { color: var(--n-500); font-size: 13px; }
+  .sino-lista .nada { padding: 12px 10px 14px; color: var(--n-500); font-size: 14px; }
+  /* usuário */
+  .usuario { position: relative; }
+  .usuario > button { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; color: var(--n-900);
+    padding: 4px 8px 4px 4px; border-radius: 999px; cursor: pointer; text-align: left; }
+  .usuario > button:hover, .usuario.aberto > button { background: var(--n-100); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; overflow: hidden;
+    background: var(--marca-700); color: #fff; font-weight: 700; font-size: 14px; }
   .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .avatar.grande { width: 72px; height: 72px; font-size: 24px; background: var(--marca-100); }
-  .usuario .nome { font-size: 14px; font-weight: 600; line-height: 1.2; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .usuario .nome small { display: block; font-weight: 400; font-size: 12px; color: rgba(255, 255, 255, .7); }
-  .usuario .seta { width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
-    transform: rotate(45deg) translateY(-3px); opacity: .8; margin-left: 2px; }
-  .usuario-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; background: #fff; color: var(--n-900);
+  .avatar.grande { width: 72px; height: 72px; font-size: 24px; }
+  .usuario .nome { font-size: 14px; font-weight: 700; line-height: 1.2; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .usuario .nome small { display: block; font-weight: 400; font-size: 12px; color: var(--n-500); }
+  .usuario .seta { width: 9px; height: 9px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: rotate(45deg) translateY(-3px); opacity: .6; margin: 0 4px 0 2px; }
+  .usuario-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 210px; background: #fff; color: var(--n-900);
     border: 1px solid var(--n-200); border-radius: var(--r-card); box-shadow: var(--sombra-flut); padding: 6px; display: none; }
   .usuario.aberto .usuario-menu { display: block; }
-  .usuario-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 9px 12px;
+  .usuario-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 10px 12px;
     border-radius: var(--r-ctl); cursor: pointer; font-size: 14px; }
   .usuario-menu button:hover { background: var(--n-100); }
   .usuario-menu hr { border: 0; border-top: 1px solid var(--n-200); margin: 6px 0; }
   .usuario-menu .perigo { color: var(--erro); }
 
-  /* ---------- layout ---------- */
-  .casca { display: flex; min-height: calc(100vh - 56px);
-    background: linear-gradient(90deg, #fff 0 247px, var(--n-200) 247px 248px, transparent 248px); }
-  nav.menu { width: 248px; flex: none; background: #fff; border-right: 1px solid var(--n-200); padding: 14px 12px;
-    display: flex; flex-direction: column; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; }
-  nav.menu button { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-    background: none; border: 0; padding: 7px 10px; border-radius: var(--r-ctl); cursor: pointer;
-    color: var(--n-700); font-weight: 500; font-size: 14.5px; margin-bottom: 2px; }
-  .ic { width: 24px; height: 24px; flex: none; color: var(--marca-700); }
-  nav.menu .ic { width: 24px; height: 24px; }
-  nav.menu button:hover { background: var(--n-100); color: var(--n-900); }
-  nav.menu button.ativo { background: var(--marca-100); color: var(--marca-700); font-weight: 600; }
-  nav.menu button.ativo::before { content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px;
-    border-radius: 0 3px 3px 0; background: var(--acento-600); }
-  .conteudo { flex: 1; min-width: 0; }
   main { width: 100%; padding: 28px 32px 56px; max-width: 1160px; }
   #aviso-senha { max-width: 1160px; padding: 0 32px; }
   #aviso-senha .aviso { margin: 20px 0 -8px; }
-  .cab-pag { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 18px;
-    border-bottom: 1px solid var(--n-200); }
+  .cab-pag { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
   .cab-pag p { margin: 6px 0 0; color: var(--n-500); font-size: 14.5px; max-width: 72ch; }
   .cab-pag .acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .cab-pag .sobre-tit { margin: 0 0 4px; color: var(--n-500); font-size: 14px; }
 
   @media (max-width: 820px) {
-    .topo { padding: 0 8px 0 12px; }
-    .usuario .nome { display: none; }
-    .casca { flex-direction: column; background: none; }
-    nav.menu { width: 100%; height: auto; flex-direction: row; overflow-x: auto; padding: 6px 8px; gap: 2px;
-      top: 56px; z-index: 10; border-right: 0; border-bottom: 1px solid var(--n-200); }
-    nav.menu button { white-space: nowrap; width: auto; padding: 6px 10px 6px 6px; font-size: 14px; margin: 0; gap: 8px; }
-    nav.menu .ic { width: 24px; height: 24px; }
-    nav.menu button.ativo::before { left: 8px; right: 8px; top: auto; bottom: -6px; width: auto; height: 3px; border-radius: 3px 3px 0 0; }
-    .menu-pe { display: none; }
-    main { padding: 20px 16px 64px; }
+    .casca { display: block; }
+    .topo { padding: 0 12px 0 16px; gap: 8px; }
+    .topo .marca { display: flex; }
+    .usuario .nome, .usuario .seta { display: none; }
+    .usuario > button { padding: 2px; }
+    .busca { position: static; flex: 0 0 auto; margin-left: auto; }
+    .busca-campo { display: none; }
+    .busca-abrir { display: grid; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--n-200); background: #fff;
+      place-items: center; color: var(--marca-700); cursor: pointer; }
+    .busca-abrir .ic { width: 20px; height: 20px; }
+    .busca.aberta .busca-campo { display: flex; position: absolute; left: 12px; right: 12px; top: 11px; z-index: 2; box-shadow: var(--sombra-flut); }
+    .busca-res { left: 12px; right: 12px; top: 60px; }
+    .topo-acoes { margin-left: 0; }
+    nav.menu { position: fixed; left: 10px; right: 10px; bottom: 10px; top: auto; width: auto; height: auto; z-index: 20;
+      flex-direction: row; padding: 6px; gap: 2px; border-radius: 22px; overflow-x: auto; box-shadow: 0 10px 30px rgba(40, 33, 47, .28);
+      padding-bottom: calc(6px + env(safe-area-inset-bottom) / 2); scrollbar-width: none; }
+    nav.menu::-webkit-scrollbar { display: none; }
+    .menu-logo { display: none; }
+    nav.menu button { width: auto; flex: 1 0 auto; min-width: 72px; flex-direction: column; gap: 3px; padding: 8px 8px 7px; margin: 0;
+      font-size: 11.5px; text-align: center; justify-content: center; border-radius: 16px; white-space: nowrap; }
+    nav.menu button span { max-width: 84px; overflow: hidden; text-overflow: ellipsis; }
+    nav.menu button.ativo { background: rgba(255, 255, 255, .16); color: #fff; box-shadow: none; }
+    nav.menu button.ativo::before { left: 30%; right: 30%; top: auto; bottom: 2px; width: auto; height: 3px; border-radius: 3px; }
+    main { padding: 18px 16px 120px; }
     #aviso-senha { padding: 0 16px; }
     #aviso-senha .aviso { margin: 16px 0 -4px; }
-    h1 { font-size: 24px; }
+    h1 { font-size: 26px; }
+    .grade { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .kpi { padding: 14px 16px; }
+    .kpi .chip { width: 32px; height: 32px; margin-bottom: 8px; }
+    .kpi b { font-size: 28px; }
+    .anel-d { width: 128px; height: 128px; }
+    .anel-d > div { width: 104px; height: 104px; }
+    .anel-d b { font-size: 38px; }
   }
 
   /* ---------- componentes ---------- */
-  .card { background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); padding: 20px; margin-bottom: 16px; }
+  .card { background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); padding: 22px; margin-bottom: 16px; box-shadow: var(--sombra-card); }
   .card > h2, .card > h3 { margin-bottom: 12px; }
-  .grade { display: grid; gap: 0; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px;
-    background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); overflow: hidden; }
+  .grade { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
   .grade-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
-  .kpi { padding: 16px 20px; border-right: 1px solid var(--n-200); }
-  .kpi:last-child { border-right: 0; }
+  .kpi { padding: 18px 20px; background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); box-shadow: var(--sombra-card); }
+  .kpi .chip { width: 36px; height: 36px; border-radius: 12px; background: var(--marca-100); display: grid; place-items: center; margin-bottom: 12px; }
+  .kpi .chip .ic { width: 20px; height: 20px; }
   .kpi small { color: var(--n-500); font-size: 13px; }
   .kpi b { display: block; font-family: var(--estreita); font-size: 36px; font-weight: 700; line-height: 1.1; color: var(--n-900); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
-  .btn { border: 1px solid var(--n-300); background: #fff; min-height: 38px; padding: 7px 14px; border-radius: var(--r-ctl);
+  .btn { border: 1px solid var(--n-300); background: #fff; min-height: 40px; padding: 8px 16px; border-radius: var(--r-ctl);
     cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; color: var(--n-900);
     transition: background .12s, border-color .12s; }
   .btn:hover { background: var(--n-100); }
-  .btn.pri { background: var(--marca-700); border-color: var(--marca-700); color: #fff; }
+  .btn.pri { background: var(--marca-700); border-color: var(--marca-700); color: #fff; box-shadow: var(--sombra-botao); }
+  .btn.verde { background: var(--verde-marca); border-color: var(--verde-marca); color: var(--n-900); }
+  .btn.verde:hover { background: #8BBE48; }
   .btn.pri:hover { background: var(--marca-900); border-color: var(--marca-900); }
   .btn.perigo { color: var(--erro); border-color: #E7B4B6; }
   .btn.perigo:hover { background: var(--erro-bg); }
@@ -162,7 +224,7 @@
   label.campo { display: block; margin-bottom: 16px; }
   label.campo > span { display: block; font-size: 13px; font-weight: 600; color: var(--n-700); margin-bottom: 6px; }
   input[type=text], input[type=email], input[type=password], input[type=date], select, textarea {
-    width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--n-300); border-radius: var(--r-ctl); background: #fff; }
+    width: 100%; min-height: 44px; padding: 9px 14px; border: 1px solid var(--n-300); border-radius: var(--r-ctl); background: #fff; }
   input::placeholder, textarea::placeholder { color: var(--n-400); }
   input:focus, select:focus, textarea:focus { outline: 3px solid var(--marca-100); outline-offset: 0; border-color: var(--marca-600); }
   input[type=checkbox], input[type=radio] { accent-color: var(--marca-700); }
@@ -442,21 +504,22 @@
 
   /* entrada */
   .login { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 44%) 1fr; background: #fff; }
-  .login-marca { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 56px 40px; color: #fff; text-align: center;
-    background: var(--marca-700); }
-  .login-marca::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
-    background: var(--grad-mira); }
-  .login-reticula { position: absolute; left: 50%; top: 40%; width: 820px; height: 820px; transform: translate(-50%, -50%);
-    opacity: .07; pointer-events: none; }
-  .login-id { position: relative; }
-  .login-emblema { display: block; width: 300px; max-width: 100%; height: auto; margin: 0 auto; }
-  .login-nome { font-family: var(--estreita); font-weight: 800; font-size: 64px;
-    letter-spacing: 10px; line-height: 1; margin-right: -10px; }
-  .login-tag { margin: 14px auto 0; max-width: 250px; font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, .72); }
+  .login-marca { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start;
+    gap: 40px; padding: 40px 48px; color: #fff; text-align: left; background: var(--grad-destaque); }
+  .login-marca::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--grad-mira); }
+  .login-reticula { position: absolute; right: -260px; top: 50%; width: 820px; height: 820px; transform: translateY(-50%);
+    opacity: .1; pointer-events: none; }
+  .login-id { position: relative; max-width: 520px; margin: auto 0; }
+  .login-emblema { position: relative; display: block; width: 150px; height: auto; }
+  .login-frase { color: #fff; font-size: 46px; line-height: 1.08; letter-spacing: -1px; font-weight: 700; margin: 0; }
+  .login-frase em { font-style: normal; color: var(--verde-marca); }
+  .login-tag { margin: 18px 0 0; max-width: 420px; font-size: 16px; line-height: 1.5; color: rgba(255, 255, 255, .8); }
+  .login-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--marca-700);
+    background: var(--marca-100); border-radius: 999px; padding: 4px 12px 4px 8px; margin-bottom: 14px; }
+  .login-chip .ic { width: 16px; height: 16px; }
   .login-form { display: flex; flex-direction: column; align-items: center; padding: 48px 32px 24px; }
   .login-caixa { width: 100%; max-width: 360px; margin: auto 0; }
-  .login-caixa h1 { font-size: 30px; margin: 0 0 6px; }
+  .login-caixa h1 { font-size: 32px; margin: 0 0 6px; letter-spacing: -.5px; }
   .login-sub { color: var(--n-500); margin: 0 0 28px; font-size: 14.5px; }
   .login-form .credito { margin-top: 32px; text-align: center; }
   .btn.grande { width: 100%; justify-content: center; min-height: 44px; font-size: 15px; margin-top: 4px; }
@@ -472,11 +535,11 @@
   .isca { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   @media (max-width: 860px) {
     .login { grid-template-columns: 1fr; }
-    .login-marca { padding: 32px 20px 36px; }
-    .login-reticula { width: 560px; height: 560px; top: 46%; }
-    .login-emblema { width: 210px; }
-    .login-nome { font-size: 38px; letter-spacing: 6px; margin-right: -6px; }
-    .login-tag { font-size: 13px; margin-top: 8px; }
+    .login-marca { padding: 24px 20px 30px; gap: 22px; }
+    .login-reticula { width: 520px; height: 520px; right: -220px; }
+    .login-emblema { width: 124px; }
+    .login-frase { font-size: 30px; }
+    .login-tag { font-size: 14px; margin-top: 10px; }
     .login-form { padding: 28px 20px 24px; }
     .login-caixa { margin: 0; }
     .login-caixa h1 { font-size: 26px; }
@@ -499,6 +562,56 @@
   .aviso-senha > div:first-child { flex: 1; min-width: 220px; }
   .aviso-senha .acoes { display: flex; gap: 6px; }
   .sobre img { width: 120px; height: auto; flex: none; }
+
+
+  /* ---------- destaque (cartão roxo em degradê) e próximo passo ---------- */
+  .destaque { position: relative; overflow: hidden; color: #fff; background: var(--grad-destaque); border-radius: 24px;
+    padding: 26px 28px; margin-bottom: 16px; box-shadow: 0 18px 40px -18px rgba(46, 18, 72, .6); }
+  .destaque::after { content: ""; position: absolute; right: -90px; top: -90px; width: 320px; height: 320px; border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, .1); box-shadow: 0 0 0 60px rgba(255, 255, 255, .03), 0 0 0 61.5px rgba(255, 255, 255, .08); pointer-events: none; }
+  .destaque > * { position: relative; z-index: 1; }
+  .destaque h2, .destaque h3 { color: #fff; }
+  .destaque .mut, .destaque p { color: rgba(255, 255, 255, .78); }
+  .destaque .rot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 10px;
+    border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; margin-bottom: 8px; }
+  .destaque .rot .ic { width: 14px; height: 14px; color: var(--verde-marca); }
+  .destaque-pend { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .destaque-pend .grande { font-size: 64px; font-weight: 700; line-height: 1; color: var(--verde-marca); font-variant-numeric: tabular-nums; }
+  .destaque-pend .t { flex: 1; min-width: 220px; }
+  .destaque-pend h2 { font-size: 24px; margin: 0 0 4px; }
+  .destaque-pend p { margin: 0; font-size: 14.5px; }
+  .destaque .btn { box-shadow: none; }
+  .destaque .outras { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .14); display: flex; flex-wrap: wrap; gap: 8px; }
+  .destaque .outras button { display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, .1); color: #fff; border: 0;
+    border-radius: 999px; padding: 7px 14px 7px 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .destaque .outras button:hover { background: rgba(255, 255, 255, .18); }
+  .destaque .outras b { min-width: 24px; height: 24px; border-radius: 999px; background: #fff; color: var(--marca-700); display: grid; place-items: center; font-size: 12.5px; padding: 0 6px; }
+  /* nota em anel + números (relatório e painel do aluno) */
+  .nota-destaque { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+  .anel-d { width: 150px; height: 150px; border-radius: 50%; flex: none; display: grid; place-items: center; }
+  .anel-d > div { width: 122px; height: 122px; border-radius: 50%; background: #3D1960; display: grid; place-items: center; text-align: center; }
+  .anel-d b { display: block; font-size: 44px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+  .anel-d small { color: rgba(255, 255, 255, .75); font-size: 12.5px; }
+  .nota-destaque .lado { flex: 1; min-width: 240px; }
+  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .numeros > div { background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 255, 255, .12); border-radius: 16px; padding: 12px 14px; }
+  .numeros .ic { width: 20px; height: 20px; color: var(--verde-marca); display: block; margin-bottom: 6px; }
+  .numeros b { display: block; font-size: 24px; line-height: 1.15; color: #fff; }
+  .numeros span { font-size: 12.5px; color: rgba(255, 255, 255, .75); }
+  .destaque .q-meta { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .destaque .tag { background: rgba(255, 255, 255, .92); }
+  .proximo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--marca-50); border: 1px dashed #CDBDE0;
+    border-radius: var(--r-card); padding: 18px 20px; margin-bottom: 16px; }
+  .proximo .chip { width: 44px; height: 44px; border-radius: 14px; background: var(--marca-100); display: grid; place-items: center; flex: none; }
+  .proximo .chip .ic { width: 22px; height: 22px; }
+  .proximo .t { flex: 1; min-width: 200px; }
+  .proximo b { display: block; font-size: 16px; color: var(--marca-700); }
+  .proximo span { color: var(--n-500); font-size: 14px; }
+  @media (max-width: 600px) {
+    .destaque { padding: 22px 20px; border-radius: 20px; }
+    .nota-destaque { justify-content: center; }
+    .destaque-pend .grande { font-size: 52px; }
+  }
 
   @media print {
     .topo, nav.menu, .nao-imprimir, #toast { display: none !important; }
@@ -834,7 +947,7 @@ function msgErro(e) { return String((e && e.message) || e).replace(/^Error:\s*/,
 // Qualquer gravação limpa tudo, para nunca mostrar dado velho depois de uma ação.
 var LEITURAS = { me: 45, concursos: 86400, listarSimulados: 45, listarUsuarios: 45, listarQuestoes: 45, resultados: 45,
   listarEstrategias: 45, imagemQuestao: 600, relatorioTurma: 45, relatorio: 45, painel: 45, listarSolicitacoes: 45,
-  layoutCartao: 600, configuracao: 45 };
+  layoutCartao: 600, configuracao: 45, notificacoes: 30 };
 var GUARDADO = {};
 function limparGuardado() { GUARDADO = {}; }
 function call(acao, dados) {
@@ -967,7 +1080,9 @@ function telaLogin(msg, aba) {
   $('#app').innerHTML =
     '<div class="login">' +
     '<section class="login-marca">' + reticula +
-    '<div class="login-id"><img class="login-emblema" src="' + LOGO_PRINCIPAL_BRANCO + '" alt="MIRA: Monitoramento Inteligente de Resultados e Aprendizagem"></div>' +
+    '<img class="login-emblema" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA: Monitoramento Inteligente de Resultados e Aprendizagem">' +
+    '<div class="login-id"><h2 class="login-frase">Cada simulado te deixa <em>mais perto</em> da aprovação.</h2>' +
+    '<p class="login-tag">Veja sua evolução, descubra onde focar e siga estratégias pensadas pelos seus professores.</p></div>' +
     '</section>' +
     '<section class="login-form"><div class="login-caixa">' +
     (msg ? '<div class="aviso ' + (msg.tipo || 'ambar') + '">' + esc(msg.texto || msg) + '</div>' : '') +
@@ -975,7 +1090,7 @@ function telaLogin(msg, aba) {
   var corpo = $('#login-corpo');
 
   if (aba === 'entrar') {
-    corpo.innerHTML = '<h1>Entrar</h1><p class="login-sub">Use o login e a senha que você recebeu da coordenação.</p>' +
+    corpo.innerHTML = '<span class="login-chip">' + icone('foco') + 'Bem-vindo de volta</span><h1>Entrar no MIRA</h1><p class="login-sub">Use o login e a senha que você recebeu da coordenação.</p>' +
       '<form id="f-login">' +
       '<label class="campo"><span>E-mail ou matrícula</span><input type="text" id="l-email" autocomplete="username" required></label>' +
       '<label class="campo"><span>Senha</span><input type="password" id="l-senha" autocomplete="current-password" required></label>' +
@@ -1063,15 +1178,24 @@ function iniciar() {
   return Promise.all([call('me'), call('concursos')]).then(function (r) {
     S.user = r[0]; S.conc = r[1];
     $('#app').innerHTML =
-      '<header class="topo"><div class="marca"><img class="emblema" src="' + LOGO_SIMBOLO_BRANCO + '" alt="MIRA"></div>' +
+      '<div class="casca"><nav class="menu" id="menu" aria-label="Menu"></nav><div class="conteudo">' +
+      '<header class="topo"><div class="marca"><img class="emblema" src="' + LOGO_SIMBOLO + '" alt="MIRA"></div>' +
+      '<div class="busca" id="busca"><button class="busca-abrir" aria-label="Buscar">' + icone('busca') + '</button>' +
+      '<label class="busca-campo">' + icone('busca') + '<input type="search" id="busca-in" placeholder="' + esc(BUSCA_DICA[S.user.perfil]) + '" autocomplete="off" aria-label="Buscar"></label>' +
+      '<div class="busca-res" id="busca-res" role="listbox"></div></div>' +
+      '<div class="topo-acoes"><div class="sino" id="sino"><button aria-label="Notificações" aria-haspopup="true" aria-expanded="false">' + icone('notificacoes') + '</button>' +
+      '<div class="sino-lista" role="menu"></div></div>' +
       '<div class="usuario" id="usuario"><button aria-haspopup="true" aria-expanded="false">' + avatar(S.user) +
       '<span class="nome">' + esc(S.user.nome) + '<small>' + PERFIL_TXT[S.user.perfil] + '</small></span><span class="seta"></span></button>' +
-      '<div class="usuario-menu" role="menu"><button data-u="conta">Minha conta</button><hr><button data-u="sair" class="perigo">Sair</button></div></div></header>' +
-      '<div class="casca"><nav class="menu" id="menu"></nav><div class="conteudo"><div id="aviso-senha"></div><main id="main"></main></div></div>';
+      '<div class="usuario-menu" role="menu"><button data-u="conta">Minha conta</button><hr><button data-u="sair" class="perigo">Sair</button></div></div></div></header>' +
+      '<div id="aviso-senha"></div><main id="main"></main></div></div>';
+    ligarBusca();
+    atualizarSino();
     var um = $('#usuario');
     $('button', um).onclick = function (e) {
       e.stopPropagation();
       var ab = um.classList.toggle('aberto'); this.setAttribute('aria-expanded', ab ? 'true' : 'false');
+      $('#sino').classList.remove('aberto');
     };
     document.addEventListener('click', function () { um.classList.remove('aberto'); });
     $$('[data-u]', um).forEach(function (b) {
@@ -1080,6 +1204,132 @@ function iniciar() {
     avisoSenha();
     ir(MENUS[S.user.perfil][0][0]);
   });
+}
+
+// ---------------------------------------------------------------- busca e notificações (topo)
+var BUSCA_DICA = { ADM: 'Buscar aluno, questão, simulado…', PROFESSOR: 'Buscar questão, aluno, simulado…', ALUNO: 'Buscar simulado ou relatório…' };
+function semAcento(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+/** Fontes da busca, conforme o perfil (as mesmas listas das telas, já filtradas pelo servidor) */
+function fontesBusca() {
+  var perfil = S.user.perfil;
+  var pedidos = perfil === 'ALUNO' ? [call('listarSimulados'), call('resultados')]
+    : [call('listarSimulados'), call('resultados'), call('listarQuestoes', {}), perfil === 'ADM' ? call('listarUsuarios') : Promise.resolve([])];
+  return Promise.all(pedidos).then(function (r) { return { sims: r[0], res: r[1], qs: r[2] || [], us: r[3] || [] }; });
+}
+
+function resultadosBusca(f, q) {
+  var t = semAcento(q), tem = function () {
+    for (var i = 0; i < arguments.length; i++) if (semAcento(arguments[i]).indexOf(t) >= 0) return true;
+    return false;
+  };
+  var grupos = [], ultimoDe = {};
+  f.res.forEach(function (r) { if (!ultimoDe[r.alunoId] || ultimoDe[r.alunoId].criadoEm < r.criadoEm) ultimoDe[r.alunoId] = r; });
+  if (S.user.perfil === 'ALUNO') {
+    grupos.push(['Relatórios', f.res.filter(function (r) { return tem(r.simulado, r.codigo); }).slice(0, 6).map(function (r) {
+      return { ic: 'relatorio', t: r.simulado, s: 'Nota final ' + num(r.notaFinal) + ' · ' + dataBr(r.criadoEm), ir: ['relatorio', { id: r.id }] };
+    })]);
+    grupos.push(['Simulados', f.sims.filter(function (x) { return !x.resultadoId && tem(x.titulo, x.codigo); }).slice(0, 6).map(function (x) {
+      return { ic: 'avaliacao', t: x.titulo, s: x.status === 'ABERTO' ? 'Aberto: envie a foto do cartão' : 'Ainda não aberto',
+        ir: x.status === 'ABERTO' ? ['enviar', { simuladoId: x.id }] : ['meus'] };
+    })]);
+  } else {
+    var pessoas = S.user.perfil === 'ADM'
+      ? f.us.filter(function (u) { return tem(u.nome, u.matricula, u.email, u.turma); }).map(function (u) {
+          return { ic: u.perfil === 'ALUNO' ? 'alunos' : 'perfil', t: u.nome,
+            s: (PERFIL_TXT[u.perfil] || '') + (u.turma ? ' · Turma ' + u.turma : '') + (ultimoDe[u.id] ? ' · abrir último relatório' : ''),
+            ir: ultimoDe[u.id] ? ['relatorio', { id: ultimoDe[u.id].id }] : ['usuarios'] };
+        })
+      : Object.keys(ultimoDe).map(function (k) { return ultimoDe[k]; }).filter(function (r) { return tem(r.aluno, r.matricula, r.turma); }).map(function (r) {
+          return { ic: 'alunos', t: r.aluno, s: 'Turma ' + r.turma + ' · último relatório', ir: ['relatorio', { id: r.id }] };
+        });
+    grupos.push([S.user.perfil === 'ADM' ? 'Pessoas' : 'Alunos', pessoas.slice(0, 6)]);
+    grupos.push(['Questões', f.qs.filter(function (x) { return tem(x.id, x.disciplina, x.conteudo, semFiguras(x.enunciado)); }).slice(0, 6).map(function (x) {
+      return { ic: 'biblioteca', t: semFiguras(x.enunciado).slice(0, 80) || x.id, s: x.disciplina + (x.conteudo ? ' · ' + x.conteudo : '') + ' · ' + ((STATUS_Q[x.status] || [x.status])[0]), q: x };
+    })]);
+    grupos.push(['Simulados', f.sims.filter(function (x) { return tem(x.titulo, x.codigo); }).slice(0, 6).map(function (x) {
+      return { ic: 'avaliacao', t: x.titulo, s: x.codigo + ' · ' + x.total + ' questões', ir: ['resultados', { simuladoId: x.id }] };
+    })]);
+  }
+  return grupos.filter(function (g) { return g[1].length; });
+}
+
+function ligarBusca() {
+  var box = $('#busca'), inp = $('#busca-in'), res = $('#busca-res'), fontes = null, itens = [], foco = -1, espera;
+  var fechar = function () { box.classList.remove('aberta'); foco = -1; };
+  var escolher = function (it) {
+    fechar(); inp.value = '';
+    if (it.q) verQuestao(it.q, function () { if (S.rota === 'questoes') ir('questoes', S.params); });
+    else ir(it.ir[0], it.ir[1]);
+  };
+  var mostrar = function () {
+    var q = inp.value.trim();
+    if (q.length < 2) { res.innerHTML = '<div class="nada">Digite pelo menos 2 letras.</div>'; itens = []; return; }
+    if (!fontes) { carregando(res, 'Buscando…'); }
+    (fontes || (fontes = fontesBusca())).then(function (f) {
+      if (inp.value.trim() !== q) return;
+      var grupos = resultadosBusca(f, q); itens = []; foco = -1;
+      res.innerHTML = grupos.length ? grupos.map(function (g) {
+        return '<h4>' + esc(g[0]) + '</h4>' + g[1].map(function (it) {
+          itens.push(it);
+          return '<button role="option" data-i="' + (itens.length - 1) + '">' + icone(it.ic) + '<span>' + esc(it.t) + '<small>' + esc(it.s) + '</small></span></button>';
+        }).join('');
+      }).join('') : '<div class="nada">Nada encontrado para "' + esc(q) + '".</div>';
+      $$('button', res).forEach(function (b) { b.onclick = function () { escolher(itens[+b.getAttribute('data-i')]); }; });
+    }).catch(function (e) { fontes = null; res.innerHTML = '<div class="nada">' + esc(msgErro(e)) + '</div>'; });
+  };
+  inp.onfocus = function () { box.classList.add('aberta'); mostrar(); };
+  inp.oninput = function () { box.classList.add('aberta'); clearTimeout(espera); espera = setTimeout(mostrar, 180); };
+  inp.onkeydown = function (e) {
+    var bs = $$('button', res);
+    if (e.key === 'Escape') { fechar(); inp.blur(); }
+    else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && bs.length) {
+      e.preventDefault(); foco = (foco + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length;
+      bs.forEach(function (b, i) { b.classList.toggle('foco', i === foco); }); bs[foco].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && itens.length) { e.preventDefault(); escolher(itens[foco >= 0 ? foco : 0]); }
+  };
+  $('.busca-abrir', box).onclick = function (e) { e.stopPropagation(); box.classList.add('aberta'); inp.focus(); };
+  box.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', fechar);
+  // dados novos depois de qualquer gravação: a próxima busca recarrega
+  box.addEventListener('focusin', function () { if (!Object.keys(GUARDADO).length) fontes = null; });
+}
+
+/** Sino: pendências do perfil. Aluno: estratégias já vistas não contam (guardadas neste aparelho). */
+function atualizarSino() {
+  var box = $('#sino'); if (!box) return;
+  var chaveVistas = 'mira_vistas_' + S.user.id, vistas = {};
+  try { (JSON.parse(localStorage.getItem(chaveVistas) || '[]')).forEach(function (id) { vistas[id] = 1; }); } catch (e) { }
+  call('notificacoes').then(function (itens) {
+    itens = itens.map(function (it) {
+      if (it.ids) { var novas = it.ids.filter(function (id) { return !vistas[id]; }); it.n = novas.length; it.titulo = it.n === 1 ? 'Estratégia nova dos seus professores' : 'Estratégias novas dos seus professores'; }
+      return it;
+    }).filter(function (it) { return it.n > 0; });
+    var total = itens.reduce(function (a, it) { return a + it.n; }, 0);
+    var btn = $('button', box);
+    var b = $('.bolha', box); if (b) b.remove();
+    if (total) btn.insertAdjacentHTML('beforeend', '<span class="bolha">' + (total > 99 ? '99+' : total) + '</span>');
+    btn.setAttribute('aria-label', total ? 'Notificações: ' + total + ' pendente(s)' : 'Notificações');
+    $('.sino-lista', box).innerHTML = '<h4>Notificações</h4>' + (itens.length ? itens.map(function (it, i) {
+      return '<button data-i="' + i + '"><span class="n">' + it.n + '</span><span><b>' + esc(it.titulo) + '</b><span>' + esc(it.texto) + '</span></span></button>';
+    }).join('') : '<div class="nada">Tudo em dia. Nada pedindo a sua atenção agora.</div>');
+    $$('.sino-lista button', box).forEach(function (bt) {
+      bt.onclick = function () {
+        var it = itens[+bt.getAttribute('data-i')];
+        if (it.ids) { try { localStorage.setItem(chaveVistas, JSON.stringify(Object.keys(vistas).concat(it.ids))); } catch (e) { } }
+        box.classList.remove('aberto'); ir(it.rota, it.params);
+      };
+    });
+  }).catch(function () {});
+  if (!box.ligado) {
+    box.ligado = true;
+    $('button', box).onclick = function (e) {
+      e.stopPropagation(); var ab = box.classList.toggle('aberto'); this.setAttribute('aria-expanded', ab ? 'true' : 'false');
+      $('#usuario').classList.remove('aberto');
+    };
+    box.addEventListener('click', function (e) { e.stopPropagation(); });
+    document.addEventListener('click', function () { box.classList.remove('aberto'); });
+  }
 }
 
 /** Senha provisória: o usuário navega normalmente, mas vê a sugestão de criar a própria senha */
@@ -1101,13 +1351,14 @@ function avisoSenha() {
 function ir(rota, params) {
   S.rota = rota; S.params = params || {};
   var menu = MENUS[S.user.perfil];
-  $('#menu').innerHTML = menu.map(function (m) {
+  $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' + menu.map(function (m) {
     var ativo = m[0] === rota || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'painel'))) ||
       (rota === 'enviar' && (m[0] === 'meus' || m[0] === 'simulados'));
     return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ICONE_ROTA[m[0]]) + '<span>' + esc(m[1]) + '</span></button>';
   }).join('');
   $$('#menu button').forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-r')); }; });
   avisoSenha();
+  atualizarSino();
   var main = $('#main');
   window.scrollTo(0, 0);
   Promise.resolve().then(function () { return VIEWS[rota](main, S.params); })
@@ -1125,11 +1376,21 @@ function cabPag(titulo, sub, acoes) {
 var VIEWS = {};
 
 // ---------------------------------------------------------------- painel (ADM)
+/** Cabeçalho acolhedor dos painéis: data por extenso e "Olá, primeiro nome" */
+function cabSaudacao(acoes, sub) {
+  var hoje = new Date(), dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'],
+    meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  var nome = String(S.user.nome || '').trim().split(/\s+/)[0];
+  return '<div class="cab-pag"><div><p class="sobre-tit">' + dias[hoje.getDay()] + ', ' + hoje.getDate() + ' de ' + meses[hoje.getMonth()] + '</p>' +
+    '<h1>Olá, ' + esc(nome) + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (acoes ? '<div class="acoes nao-imprimir">' + acoes + '</div>' : '') + '</div>';
+}
+
 VIEWS.painel = function (m) {
   if (S.user.perfil === 'ALUNO') return VIEWS.painelAluno(m);
+  var adm = S.user.perfil === 'ADM';
   carregando(m);
   return call('painel').then(function (d) {
-    var h = cabPag('Painel', 'Visão geral do MIRA e o que precisa da sua atenção');
+    var h = cabSaudacao(adm ? '<button class="btn pri" id="pn-novo">+ Novo simulado</button>' : '');
     var paraCurar = (d.questoesPorStatus.PENDENTE || 0) + (d.questoesPorStatus.AJUSTE || 0);
     var pend = [];
     if (d.pedidosAcesso) pend.push(['ambar', d.pedidosAcesso, 'Pedidos de acesso', 'Alunos aguardando a sua aprovação', 'ped']);
@@ -1137,16 +1398,20 @@ VIEWS.painel = function (m) {
     if (d.estrategiasPendentes) pend.push(['azul', d.estrategiasPendentes, 'Estratégias de estudo aguardando o OK', 'Sugestões feitas a partir dos relatórios, para os professores conferirem', 'est']);
     if (paraCurar) pend.push(['azul', paraCurar, 'Questões para a curadoria', d.questoesPorStatus.AJUSTE ?
       d.questoesPorStatus.AJUSTE + ' com ajuste pedido pelo professor' : 'Peça a curadoria e importe o resultado', 'q']);
-    h += '<div class="card pendencias"><h2>Pendências</h2>' + (pend.length ? pend.map(function (p) {
-      return '<div class="pend"><span class="n ' + p[0] + '">' + p[1] + '</span><div class="t"><b>' + p[2] + '</b><span>' + p[3] + '</span></div>' +
-        '<button class="btn peq" data-pend="' + p[4] + '">Ver</button></div>';
-    }).join('') : '<div class="pend-ok">Tudo em dia. Nenhuma pendência no momento.</div>') + '</div>';
-    h += '<div class="grade">' +
-      '<div class="kpi"><small>Alunos</small><b>' + d.alunos + '</b></div>' +
-      '<div class="kpi"><small>Professores</small><b>' + d.professores + '</b></div>' +
-      '<div class="kpi"><small>Questões</small><b>' + d.questoes + '</b></div>' +
-      '<div class="kpi"><small>Simulados</small><b>' + d.simulados + '</b></div>' +
-      '<div class="kpi"><small>Cartões corrigidos</small><b>' + d.resultados + '</b></div></div>';
+    // a pendência principal vai no cartão de destaque; as outras, logo abaixo dele
+    h += '<section class="destaque">' + (pend.length
+      ? '<div class="destaque-pend"><span class="grande">' + pend[0][1] + '</span><div class="t"><span class="rot">' + icone('notificacoes') + 'Precisa de você</span>' +
+        '<h2>' + esc(pend[0][2]) + '</h2><p>' + esc(pend[0][3]) + '</p></div>' +
+        '<button class="btn verde" data-pend="' + pend[0][4] + '">Revisar agora</button></div>' +
+        (pend.length > 1 ? '<div class="outras">' + pend.slice(1).map(function (p) {
+          return '<button data-pend="' + p[4] + '"><b>' + p[1] + '</b>' + esc(p[2]) + '</button>';
+        }).join('') + '</div>' : '')
+      : '<div class="destaque-pend"><span class="grande">' + icone('conquista', 'ic') + '</span><div class="t"><span class="rot">' + icone('foco') + 'Pendências</span>' +
+        '<h2>Tudo em dia</h2><p>Nenhuma pendência no momento. Bom momento para montar o próximo simulado.</p></div></div>') + '</section>';
+    h += '<div class="grade">' + [['alunos', 'Alunos', d.alunos], ['perfil', 'Professores', d.professores], ['biblioteca', 'Questões', d.questoes],
+      ['avaliacao', 'Simulados', d.simulados], ['relatorio', 'Cartões corrigidos', d.resultados]].map(function (k) {
+        return '<div class="kpi"><span class="chip">' + icone(k[0]) + '</span><small>' + k[1] + '</small><b>' + k[2] + '</b></div>';
+      }).join('') + '</div>';
 
     h += '<div class="grade-2"><div class="card"><h2>Banco pronto para simulados</h2>' +
       '<p class="mut peq" style="margin-top:0">Questões aprovadas por disciplina, comparadas ao que um simulado completo da EsPCEx exige.</p>';
@@ -1179,6 +1444,7 @@ VIEWS.painel = function (m) {
       };
     });
     $$('.sit').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); ir('questoes', { status: a.getAttribute('data-st') }); }; });
+    if ($('#pn-novo')) $('#pn-novo').onclick = function () { ir('simulados', { novo: 1 }); };
 
   });
 };
@@ -1757,7 +2023,7 @@ function verQuestao(q, aoMudar) {
 }
 
 // ---------------------------------------------------------------- simulados
-VIEWS.simulados = function (m) {
+VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
   m.innerHTML = cabPag('Simulados', 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado',
     adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
@@ -1826,6 +2092,7 @@ VIEWS.simulados = function (m) {
     }).catch(function (e) { l.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
   };
   carregar();
+  if (adm && p && p.novo) formSimulado(carregar);
 };
 
 /** Escolher qual versão do caderno imprimir */
@@ -2192,6 +2459,31 @@ function formatarPlano(t) {
   return h + (lista ? '</ul>' : '');
 }
 
+/** Cartão roxo com a nota no anel (verde da marca) e números ao lado */
+function notaDestaque(nota, rotulo, numeros, extra, titulo) {
+  var pct = Math.max(0, Math.min(100, Number(nota) || 0));
+  return '<section class="destaque">' + (titulo ? '<span class="rot">' + icone('avaliacao') + esc(titulo) + '</span>' : '') +
+    '<div class="nota-destaque"><div class="anel-d" style="background:conic-gradient(var(--verde-marca) ' + pct + '%, rgba(255,255,255,.14) 0)" role="img" aria-label="' +
+    esc(rotulo + ': ' + num(nota)) + '"><div><div><b>' + num(nota) + '</b><small>' + esc(rotulo) + '</small></div></div></div>' +
+    '<div class="lado"><div class="numeros">' + numeros.map(function (n) {
+      return '<div>' + icone(n[0]) + '<b>' + esc(n[1]) + '</b><span>' + esc(n[2]) + '</span></div>';
+    }).join('') + '</div>' + (extra ? '<div class="q-meta">' + extra + '</div>' : '') + '</div></div></section>';
+}
+
+/** "Seu próximo passo": a disciplina com mais espaço para crescer, e onde agir */
+function proximoPasso(porDisciplina, estrategias, aluno) {
+  var alvo = (porDisciplina || []).filter(function (x) { return x.pct < 100; })
+    .sort(function (a, b) { return a.pct - b.pct || b.total - a.total; })[0];
+  if (!alvo) return '<div class="proximo"><span class="chip">' + icone('conquista') + '</span><div class="t"><b>Todas as questões certas</b>' +
+    '<span>Mantenha o ritmo com o próximo simulado.</span></div></div>';
+  var temEst = (estrategias || []).some(function (e) { return e.disciplina === alvo.disciplina; });
+  return '<div class="proximo nao-imprimir"><span class="chip">' + icone('foco') + '</span><div class="t">' +
+    '<b>' + (aluno ? 'Seu próximo passo: ' : 'Próximo passo sugerido: ') + esc(alvo.disciplina) + '</b>' +
+    '<span>' + (aluno ? 'Foi onde você mais pode crescer' : 'É onde há mais espaço para crescer') + ' (' + alvo.acertos + ' de ' + alvo.total + ' acertos).' +
+    (temEst ? (aluno ? ' Seu professor preparou uma estratégia para você.' : ' Já há uma estratégia para esta disciplina.') : '') + '</span></div>' +
+    '<button class="btn pri" data-ir-ancora="' + (temEst ? 'rel-est' : 'rel-questoes') + '">' + (temEst ? 'Ver estratégia' : 'Ver as questões') + '</button></div>';
+}
+
 VIEWS.relatorio = function (m, p) {
   carregando(m, 'Montando relatório…');
   return call('relatorio', { id: p.id }).then(function (d) {
@@ -2201,13 +2493,21 @@ VIEWS.relatorio = function (m, p) {
       esc(s.titulo) + ' · ' + esc(s.concursoNome) + ' ' + esc(s.provaTitulo) + (aluno ? '' : ' · Turma ' + esc(a.turma)) + ' · ' + dataBr(r.criadoEm),
       '<button class="btn" id="voltar">Voltar</button><button class="btn" id="imprimir">Imprimir</button>');
 
-    // nota
-    h += '<div class="card"><div class="nota-grande">' +
-      '<div class="anel" style="background:conic-gradient(' + corPct(det.nota) + ' ' + det.nota + '%, var(--bg) 0)"><div><div><b>' + det.nota + '%</b><small>aproveitamento</small></div></div></div>' +
-      '<div style="flex:1;min-width:240px"><div class="q-meta"><span class="tag verde">' + det.acertos + ' acertos</span>' +
+    // destaque: nota final (EsPCEx) ou aproveitamento, com classificação e mediana
+    var c = d.corte && d.corte.participantes ? d.corte : null;
+    var tagsRes = '<span class="tag verde">' + det.acertos + ' acertos</span>' +
       '<span class="tag verm">' + (det.total - det.acertos - det.brancos - det.duplas) + ' erros</span>' +
-      '<span class="tag ambar">' + det.brancos + ' em branco</span>' + (det.duplas ? '<span class="tag ambar">' + det.duplas + ' rasuradas</span>' : '') + '</div>' +
-      det.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct, x.acertos + '/' + x.total); }).join('') + '</div></div></div>';
+      '<span class="tag ambar">' + det.brancos + ' em branco</span>' + (det.duplas ? '<span class="tag ambar">' + det.duplas + ' rasuradas</span>' : '');
+    var nums = [];
+    if (c) {
+      nums.push(['conquista', c.apto ? c.posicaoAptos + 'º' : '—', c.apto ? 'Classificação (de ' + c.aptos + ')' : 'Fora da classificação']);
+      nums.push(['foco', c.apto ? 'Atingiu' : 'Abaixo', c.apto ? 'a mediana em todas' : 'da mediana em ' + c.abaixo.join(', ')]);
+    }
+    nums.push(['resultados', num(det.nota) + '%', 'Aproveitamento']);
+    h += notaDestaque(c ? c.notaFinal || 0 : det.nota, c ? 'nota final' : 'aproveitamento', nums, tagsRes);
+    h += proximoPasso(det.porDisciplina, d.estrategias, aluno);
+    h += '<div class="card" id="rel-disc"><h2>Por disciplina</h2>' +
+      det.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct, x.acertos + '/' + x.total); }).join('') + '</div>';
 
     // nota final com pesos, mediana e classificação (regras da EsPCEx)
     if (d.corte && d.corte.participantes) h += blocoCorte(d.corte, aluno);
@@ -2239,7 +2539,7 @@ VIEWS.relatorio = function (m, p) {
         }).join('') : '<div class="vazio">Todos os conteúdos acima de 70%.</div>') + '</div></div></div>';
 
     // questão a questão
-    h += '<div class="card"><h2>Questão a questão</h2>' +
+    h += '<div class="card" id="rel-questoes"><h2>Questão a questão</h2>' +
       (det.versao ? '<p class="mut peq" style="margin-top:0">Caderno da <b>versão ' + det.versao + '</b>: os números seguem o seu caderno.</p>' : '') +
       (d.resolucoesLiberadas ? '' : '<div class="aviso azul peq">As resoluções comentadas serão liberadas quando o simulado for encerrado.</div>') +
       '<div class="rolagem"><table class="tab"><tr><th>Nº</th><th>Disciplina</th><th>Conteúdo</th><th>Marcou</th><th>Gabarito</th><th>Situação</th></tr>' +
@@ -2273,6 +2573,9 @@ VIEWS.relatorio = function (m, p) {
     $('#voltar').onclick = function () { ir(aluno ? 'painel' : 'resultados'); };
     ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = function () { window.print(); };
+    $$('[data-ir-ancora]', m).forEach(function (b) {
+      b.onclick = function () { var alvo = $('#' + b.getAttribute('data-ir-ancora')); if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    });
     if ($('#reenviar')) $('#reenviar').onclick = function () {
       ocupado(this, 'Enviando…', function () { return call('reenviarEmail', { id: r.id }); })
         .then(function (st) { toast('E-mail: ' + st); }).catch(function () {});
@@ -2582,7 +2885,7 @@ VIEWS.painelAluno = function (m) {
   carregando(m);
   return Promise.all([call('resultados'), call('listarEstrategias', { status: 'APROVADA' })]).then(function (r) {
     var rs = r[0], es = r[1];
-    var h = cabPag('Painel', 'Seus resultados nos simulados e as estratégias de estudo dos seus professores');
+    var h = cabSaudacao('', 'Seus resultados nos simulados e as estratégias de estudo dos seus professores');
     if (!rs.length) {
       m.innerHTML = h + '<div class="card vazio">' + icone('evolucao', 'ic-vazio') + 'Você ainda não enviou nenhum cartão-resposta.' +
         '<p class="mut peq" style="margin:6px 0 12px">Depois de fazer um simulado, envie a foto do cartão em Meus simulados. O relatório e as estratégias aparecem aqui.</p>' +
@@ -2591,18 +2894,21 @@ VIEWS.painelAluno = function (m) {
       return;
     }
     var media = Math.round(10 * rs.reduce(function (a, x) { return a + x.notaFinal; }, 0) / rs.length) / 10;
-    h += '<div class="grade"><div class="kpi"><small>Simulados feitos</small><b>' + rs.length + '</b></div>' +
-      '<div class="kpi"><small>Última nota final</small><b>' + num(rs[0].notaFinal) + '</b></div>' +
-      '<div class="kpi"><small>Média da nota final</small><b>' + num(media) + '</b></div>' +
-      '<div class="kpi"><small>Mediana no último</small><div style="margin-top:8px">' + tag(STATUS_CORTE, rs[0].apto ? 'TODAS_C' : 'FORA_C') + '</div></div></div>' +
-      '<p class="mut peq" style="margin-top:-6px">Nota final de 0 a 100, com os pesos das disciplinas na EsPCEx. Toque num relatório para ver a mediana de cada disciplina.</p>';
+    var u0 = rs[0];
+    h += notaDestaque(u0.notaFinal, 'nota final', [
+      ['foco', u0.apto ? 'Atingiu' : 'Abaixo', u0.apto ? 'a mediana em todas' : 'da mediana em ' + u0.abaixo.join(', ')],
+      ['evolucao', num(media), 'Média em ' + rs.length + (rs.length > 1 ? ' simulados' : ' simulado')],
+      ['resultados', u0.acertos + '/' + u0.total, 'Acertos']
+    ], '<button class="btn verde peq" id="pa-rel">Ver relatório completo</button>', 'Último simulado: ' + u0.simulado);
     // a estratégia mais recente de cada disciplina
     var vistas = {}, atuais = es.filter(function (e) { if (vistas[e.disciplina]) return false; vistas[e.disciplina] = true; return true; });
+    h += proximoPasso(u0.porDisciplina, atuais.filter(function (e) { return e.resultadoId === u0.id; }), true).replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir-ancora="pa-est"');
+    h += '<p class="mut peq" style="margin:-4px 0 16px">Nota final de 0 a 100, com os pesos das disciplinas na EsPCEx. Toque num relatório para ver a mediana de cada disciplina.</p>';
     h += '<div class="grade-2 graficos"><div class="card graf-card"><h2>Evolução da nota</h2>' +
       '<p class="mut peq" style="margin-top:0">' + (rs.length < 2 ? 'Faça mais simulados para acompanhar a sua evolução.' : 'Nota final (0 a 100) em cada simulado.') + '</p>' +
       '<div id="g-evol"></div></div>' +
       '<div class="card graf-card"><h2>Desempenho por disciplina</h2><div id="g-disc"></div></div></div>';
-    h += '<div class="card"><h2>Estratégias de estudo</h2>' + (atuais.length
+    h += '<div class="card" id="pa-est"><h2>Estratégias de estudo</h2>' + (atuais.length
       ? '<p class="mut peq" style="margin-top:0">A estratégia mais recente de cada disciplina, aprovada pelo seu professor.</p><div class="est-lista">' +
         atuais.map(function (e) { return blocoEstrategia(e, false); }).join('') + '</div>'
       : '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas aparecem aqui.</p>') + '</div>';
@@ -2620,6 +2926,9 @@ VIEWS.painelAluno = function (m) {
     graficoEvolucao($('#g-evol'), rs);
     graficoDisciplinas($('#g-disc'), rs);
     $$('.rel-item', m).forEach(function (d) { d.onclick = function () { ir('relatorio', { id: rs[+d.getAttribute('data-i')].id }); }; });
+    $('#pa-rel').onclick = function () { ir('relatorio', { id: u0.id }); };
+    $$('[data-ir-rel]', m).forEach(function (b) { b.onclick = function () { ir('relatorio', { id: u0.id }); }; });
+    $$('[data-ir-ancora]', m).forEach(function (b) { b.onclick = function () { $('#' + b.getAttribute('data-ir-ancora')).scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
   });
 };
 VIEWS.meusres = VIEWS.painelAluno;
