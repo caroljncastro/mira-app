@@ -1789,7 +1789,10 @@ VIEWS.painel = function (m) {
     if (d.questoesPorStatus.VALIDADA) pend.push(['verde', d.questoesPorStatus.VALIDADA, 'Questões para aprovar', 'Já validadas pelos professores', 'val']);
     if (d.estrategiasPendentes) pend.push(['azul', d.estrategiasPendentes, 'Estratégias de estudo aguardando o OK', 'Sugestões feitas a partir dos relatórios, para os professores conferirem', 'est']);
     var dc = adm ? diasDesdeCopia(d.ultimaCopia) : 0;
-    if (dc >= DIAS_COPIA) pend.push(['ambar', d.ultimaCopia ? dc + 'd' : '!', 'Cópia de segurança da semana',
+    var da = diasDesdeCopia(d.ultimaCopiaAuto), autoOk = !!window.MIRA_SUPABASE && d.ultimaCopiaAuto && da <= DIAS_COPIA_AUTO;
+    if (adm && window.MIRA_SUPABASE && d.ultimaCopiaAuto && !autoOk) pend.push(['ambar', da + 'd', 'Cópia automática atrasada',
+      'A última cópia automática no Drive foi há ' + da + ' dias. Enquanto isso, baixe uma cópia manual.', 'copia']);
+    if (dc >= (autoOk ? DIAS_COPIA_COM_AUTO : DIAS_COPIA)) pend.push(['ambar', d.ultimaCopia ? dc + 'd' : '!', autoOk ? 'Cópia de segurança do mês' : 'Cópia de segurança da semana',
       d.ultimaCopia ? 'A última foi há ' + dc + ' dias. Baixe uma nova e guarde no seu computador.' : 'Você ainda não baixou nenhuma. Baixe e guarde no seu computador.', 'copia']);
     if (paraCurar) pend.push(['azul', paraCurar, 'Questões para a curadoria', d.questoesPorStatus.AJUSTE ?
       d.questoesPorStatus.AJUSTE + ' com ajuste pedido pelo professor' : 'Peça a curadoria e importe o resultado', 'q']);
@@ -4347,6 +4350,7 @@ VIEWS.config = function (m) {
       ocupado(this, 'Salvando…', function () { return call('salvarConfiguracao', d); }).then(function () { toast('Configurações salvas.'); ir('config'); }).catch(function () {});
     };
     $('#c-copia').onclick = function () { baixarCopia(this, function () { ir('config'); }); };
+    if ($('#c-restaurar')) $('#c-restaurar').onclick = abrirRestauracao;
     if (!window.MIRA_SUPABASE && c.supabase) ligarMudanca();
     if ($('#c-cache')) $('#c-cache').onclick = function () {
       ocupado(this, 'Atualizando…', function () { return call('limparCache'); }).then(function () { toast('Pronto: o app já está usando os dados atuais da planilha.'); }).catch(function () {});
@@ -4382,14 +4386,123 @@ function baixarCopia(btn, depois) {
     if (depois) depois(c);
   }).catch(function () {});
 }
+var DIAS_COPIA_AUTO = 8;   // a automática é semanal: depois de 8 dias, está atrasada
+var DIAS_COPIA_COM_AUTO = 30; // com a automática em dia, a manual (fora do Google) basta uma vez por mês
+function dataHoraBr(s) { var p = String(s || '').split(' '); return dataBr(p[0]) + (p[1] ? ' às ' + p[1] : ''); }
 function cartaoCopia(c) {
-  var dc = diasDesdeCopia(c.ultimaCopia);
+  var dc = diasDesdeCopia(c.ultimaCopia), sb = !!window.MIRA_SUPABASE;
+  var da = diasDesdeCopia(c.ultimaCopiaAuto), autoOk = sb && c.ultimaCopiaAuto && da <= DIAS_COPIA_AUTO;
+  var limite = autoOk ? DIAS_COPIA_COM_AUTO : DIAS_COPIA;
   return '<div class="card" id="copia"><h2>Cópia de segurança</h2>' +
-    '<p class="peq">Baixe uma vez por semana e guarde no seu computador ou num pen drive. O arquivo leva usuários, questões, simulados, resultados, estratégias e o histórico. ' +
-    '<b>As senhas não vão na cópia.</b></p>' +
-    '<p class="peq" id="copia-quando">' + tag({ OK: ['Em dia', 'verde'], ATR: ['Atrasada', 'ambar'] }, dc < DIAS_COPIA ? 'OK' : 'ATR') + ' ' + esc(textoUltimaCopia(c.ultimaCopia)) + '</p>' +
-    '<p class="mut peq">O arquivo tem dados pessoais dos alunos: não envie por e-mail nem deixe em computador compartilhado.</p>' +
-    '<button class="btn pri" id="c-copia">Baixar cópia de segurança</button></div>';
+    (sb ? '<p class="peq"><b>Automática:</b> todo domingo de madrugada o MIRA guarda uma cópia na pasta <b>Cópias de segurança</b>, dentro da pasta do MIRA no seu Google Drive. Ficam as 8 últimas.</p>' +
+      '<p class="peq" id="copia-auto">' + tag({ OK: ['Em dia', 'verde'], ATR: ['Atrasada', 'ambar'], NAO: ['Ainda não feita', 'ambar'] }, !c.ultimaCopiaAuto ? 'NAO' : autoOk ? 'OK' : 'ATR') + ' ' +
+      esc(c.ultimaCopiaAuto ? 'Última cópia automática: ' + dataHoraBr(c.ultimaCopiaAuto) + '.' : 'A primeira será feita no próximo domingo.') +
+      (c.pasta ? ' <a href="' + esc(c.pasta) + '" target="_blank" rel="noopener">Abrir a pasta do MIRA</a>' : '') + '</p>' : '') +
+    '<p class="peq"><b>Manual:</b> ' + (autoOk ? 'uma vez por mês, baixe uma cópia e guarde fora do Google (no computador ou num pen drive).' : 'baixe uma vez por semana e guarde no seu computador ou num pen drive.') +
+    ' O arquivo leva usuários, questões, simulados, resultados, estratégias e o histórico. <b>As senhas não vão na cópia.</b></p>' +
+    '<p class="peq" id="copia-quando">' + tag({ OK: ['Em dia', 'verde'], ATR: ['Atrasada', 'ambar'] }, dc < limite ? 'OK' : 'ATR') + ' ' + esc(textoUltimaCopia(c.ultimaCopia)) + '</p>' +
+    '<p class="mut peq">As cópias têm dados pessoais dos alunos: não envie por e-mail nem deixe em computador compartilhado.</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="c-copia">Baixar cópia de segurança</button>' +
+    (sb ? '<button class="btn" id="c-restaurar">Restaurar de uma cópia</button>' : '') + '</div></div>';
+}
+
+/** Restaurar: 1) escolher o arquivo; 2) ver o que muda; 3) baixar a cópia de agora e digitar RESTAURAR */
+function abrirRestauracao() {
+  var md = modal(topoModal('Restaurar de uma cópia') +
+    '<p class="peq">Restaurar deixa o MIRA como ele estava no dia da cópia. <b>O que foi feito depois da cópia se perde</b> ' +
+    '(as contas criadas depois continuam). Nada muda até você confirmar no último passo.</p>' +
+    '<label class="btn" style="cursor:pointer;display:inline-flex"><input type="file" id="r-arq" accept=".json,application/json" style="display:none">Escolher o arquivo da cópia</label>' +
+    '<div id="r-corpo"></div>', true);
+  var corpo = $('#r-corpo', md.el), copia = null, aba = 'TUDO', baixou = false;
+  var erro = function (t) { corpo.innerHTML = '<div class="aviso verm" style="margin-top:12px">' + esc(t) + '</div>'; };
+  var previa = function () {
+    corpo.innerHTML = '<p class="mut peq" style="margin-top:12px">Conferindo a cópia…</p>';
+    call('previaRestauracao', { copia: copia, aba: aba }).then(mostrar).catch(function (e) { erro(String((e && e.message) || e)); });
+  };
+  $('#r-arq', md.el).onchange = function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      try { copia = JSON.parse(String(leitor.result || '')); } catch (e) { copia = null; }
+      if (!copia || copia.app !== 'MIRA') { erro('Este arquivo não é uma cópia de segurança do MIRA.'); return; }
+      aba = 'TUDO';
+      previa();
+    };
+    leitor.onerror = function () { erro('Não consegui ler o arquivo.'); };
+    leitor.readAsText(f);
+  };
+  function mostrar(p) {
+    var opcoes = [['TUDO', 'Tudo']].concat(Object.keys(p.contagem).filter(function (n) { return n !== 'Log'; }).map(function (n) {
+      var parte = { Usuarios: 'Usuários', Solicitacoes: 'Pedidos de acesso', Questoes: 'Questões', Simulados: 'Simulados', Resultados: 'Resultados (cartões)', Estrategias: 'Estratégias e missões' }[n] || n;
+      return [n, 'Só ' + parte.toLowerCase() + ' (' + p.contagem[n] + ')'];
+    }));
+    var avisos = p.avisos.concat([
+      'As fotos (cartões, figuras e fotos de perfil) não vão na cópia. Se alguma foi apagada depois dela, ela volta sem a imagem.',
+      'O histórico de ações não é restaurado: ele continua como está.'
+    ]);
+    corpo.innerHTML = '<p style="margin-top:14px"><b>Cópia de ' + esc(dataHoraBr(p.geradoEm)) + '</b>' + (p.geradoPor ? ', feita por ' + esc(p.geradoPor) : '') + '.</p>' +
+      '<label class="campo"><span>O que restaurar</span><select id="r-aba">' + opcoes.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + (o[0] === p.aba ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+      }).join('') + '</select></label>' +
+      '<div class="rolagem"><table class="tab"><tr><th>Parte</th><th class="num">Voltam</th><th class="num">Mudam</th><th class="num">Saem</th></tr>' +
+      p.partes.map(function (x) {
+        return '<tr><td>' + esc(x.nome) + (x.mantidos ? '<div class="mut peq">' + x.mantidos + (x.mantidos > 1 ? ' contas criadas depois continuam' : ' conta criada depois continua') + '</div>' : '') + '</td>' +
+          '<td class="num">' + x.voltam + '</td><td class="num">' + x.alterados + '</td><td class="num">' + x.apagados + '</td></tr>';
+      }).join('') + '</table></div>' +
+      '<p class="mut peq">Voltam: estão na cópia e não existem mais. Mudam: existem, mas foram alterados depois da cópia. Saem: foram criados depois da cópia.</p>' +
+      (p.semSenha ? '<p class="peq"><b>' + p.semSenha + (p.semSenha > 1 ? ' contas voltam sem senha' : ' conta volta sem senha') + '.</b> No fim, você envia uma senha provisória por e-mail.</p>' : '') +
+      '<h3 style="margin-top:14px">Antes de continuar</h3><ul class="peq" style="padding-left:20px">' + avisos.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' +
+      (p.podeRestaurar
+        ? '<h3 style="margin-top:14px">Confirmar</h3>' +
+          '<p class="peq">1. Baixe a cópia de agora. Ela é o seu "desfazer", caso precise voltar atrás.</p>' +
+          '<p><button class="btn" id="r-antes">Baixar a cópia de agora</button> <span id="r-antes-ok"></span></p>' +
+          '<label class="campo"><span>2. Digite RESTAURAR</span><input type="text" id="r-palavra" autocomplete="off" disabled></label>' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn fechar">Cancelar</button><button class="btn perigo" id="r-ok" disabled>Restaurar</button></div>'
+        : '<div class="aviso ambar">A restauração só funciona no endereço novo do MIRA.</div>');
+    $$('.fechar', corpo).forEach(function (b) { b.onclick = md.fechar; });
+    $('#r-aba', corpo).onchange = function () { aba = this.value; previa(); };
+    if (!p.podeRestaurar) return;
+    var palavra = $('#r-palavra', corpo), ok = $('#r-ok', corpo);
+    var liberar = function () { ok.disabled = !(baixou && palavra.value.trim().toUpperCase() === 'RESTAURAR'); };
+    var marcarBaixou = function () {
+      baixou = true; palavra.disabled = false;
+      $('#r-antes-ok', corpo).innerHTML = tag({ OK: ['Baixada', 'verde'] }, 'OK');
+      liberar(); palavra.focus();
+    };
+    if (baixou) marcarBaixou();
+    $('#r-antes', corpo).onclick = function () { baixarCopia(this, marcarBaixou); };
+    palavra.oninput = liberar;
+    ok.onclick = function () {
+      var d = { copia: copia, aba: aba, confirmacao: palavra.value };
+      ocupado(ok, 'Restaurando…', function () { return call('restaurarCopia', d); }).then(feito).catch(function () {});
+    };
+  }
+  function feito(r) {
+    corpo.innerHTML = '<div class="aviso verde" style="margin-top:12px"><b>Pronto.</b> O MIRA voltou à cópia de ' + esc(dataHoraBr(r.geradoEm)) + '. As outras pessoas precisam entrar de novo.</div>' +
+      '<div class="rolagem"><table class="tab"><tr><th>Parte</th><th class="num">Voltaram</th><th class="num">Mudaram</th><th class="num">Saíram</th></tr>' +
+      r.partes.map(function (x) { return '<tr><td>' + esc(x.nome) + '</td><td class="num">' + x.voltam + '</td><td class="num">' + x.alterados + '</td><td class="num">' + x.apagados + '</td></tr>'; }).join('') +
+      '</table></div>' +
+      (r.semSenha.length
+        ? '<h3 style="margin-top:14px">Contas sem senha</h3><ul class="peq" style="padding-left:20px">' +
+          r.semSenha.map(function (u) { return '<li>' + esc(u.nome) + ' <span class="mut">(' + esc(u.login) + ')</span></li>'; }).join('') + '</ul>' +
+          '<div id="r-senhas"><button class="btn pri" id="r-enviar">Enviar senha provisória a todos</button></div>'
+        : '<div style="display:flex;justify-content:flex-end"><button class="btn pri fechar">Fechar</button></div>');
+    $$('.fechar', corpo).forEach(function (b) { b.onclick = function () { md.fechar(); ir('config'); }; });
+    $('.topo-j .fechar', md.el).onclick = function () { md.fechar(); ir('config'); };
+    if (!r.semSenha.length) return;
+    $('#r-enviar', corpo).onclick = function () {
+      var ids = r.semSenha.map(function (u) { return u.id; });
+      ocupado(this, 'Enviando…', function () { return call('senhasRestaurados', { ids: ids }); }).then(function (s) {
+        var semEmail = s.feitos.filter(function (f) { return !f.emailEnviado; });
+        $('#r-senhas', corpo).innerHTML = '<p class="peq">' + (s.feitos.length - semEmail.length) + ' senhas enviadas por e-mail (pode cair no spam).</p>' +
+          (semEmail.length ? '<p class="peq">Estas não foram por e-mail. Entregue pessoalmente; elas não serão exibidas de novo:</p>' +
+            '<div class="rolagem"><table class="tab"><tr><th>Nome</th><th>Login</th><th>Senha</th></tr>' + semEmail.map(function (f) {
+              return '<tr><td>' + esc(f.nome) + '</td><td>' + esc(f.login) + '</td><td style="font-family:monospace">' + esc(f.senha) + '</td></tr>';
+            }).join('') + '</table></div>' : '');
+      }).catch(function () {});
+    };
+  }
 }
 
 /** Configurações (no Google): copiar os dados para o Supabase e concluir a mudança */
