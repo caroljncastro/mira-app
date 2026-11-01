@@ -541,6 +541,39 @@
   .mis-h-txt { flex: 1; min-width: 0; font-size: 14px; line-height: 1.4; color: var(--n-700); }
   .mis-h-txt small { display: block; font-size: 12px; font-weight: 600; color: var(--marca-600); }
   .mis-h-desf { flex: none; border: 0; background: transparent; color: var(--marca-700); font: inherit; font-size: 13px; font-weight: 700; padding: 12px 6px; cursor: pointer; }
+  .mis-hoje { align-self: flex-start; font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: #fff; color: var(--marca-700); margin-bottom: 3px; }
+  .mis-como { display: inline-block; margin-left: 6px; font-size: 11.5px; font-weight: 700; padding: 0 7px; border-radius: 99px; vertical-align: 1px; background: var(--n-100); color: var(--n-700); }
+  .mis-como.c-facil { background: var(--ok-bg); color: var(--ok); }
+  .mis-como.c-dificil { background: var(--alerta-bg); color: var(--alerta); }
+  .est-dificil { display: block; margin-top: 4px; color: var(--alerta); }
+  .est-dificil b { color: var(--n-900); font-weight: 600; }
+  /* Início: missão do dia e fechar o ciclo */
+  .dia-faixa { cursor: default; min-height: 0; }
+  .dia-faixa:hover { filter: none; }
+  .dia-faixa:active { transform: none; }
+  .dia-acoes { display: flex; gap: 10px; margin: 12px 0 14px; flex-wrap: wrap; }
+  .dia-acoes .btn .ic { width: 18px; height: 18px; }
+  .dia-opcoes { display: grid; gap: 8px; margin-bottom: 12px; }
+  .dia-op { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 1px solid var(--n-200); border-radius: 14px; background: #fff; font: inherit;
+    font-size: 14.5px; line-height: 1.4; color: var(--n-900); cursor: pointer; min-height: 44px; }
+  .dia-op:hover { border-color: var(--marca-600); background: var(--marca-50); }
+  .dia-op:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; }
+  .dia-op small { display: block; font-size: 12px; font-weight: 600; color: var(--marca-600); }
+  .dia-ok { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--marca-50); margin-bottom: 10px; }
+  .dia-ok .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
+  .dia-ok b { display: block; color: var(--marca-700); }
+  .dia-ok span { font-size: 13.5px; color: var(--n-500); }
+  .ini-ver { margin-top: auto; align-self: flex-start; }
+  .ciclo { margin-top: 16px; }
+  .ciclo-lista { list-style: none; margin: 4px 0 0; padding: 0; }
+  .ciclo-lista li { padding: 10px 0; }
+  .ciclo-lista li + li { border-top: 1px solid var(--n-100); }
+  .ciclo-cab { display: flex; align-items: baseline; gap: 10px; }
+  .ciclo-cab b { font-size: 15.5px; }
+  .ciclo-num { margin-left: auto; font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; color: var(--n-700); }
+  .ciclo-num.sobe { color: var(--ok); }
+  .ciclo-num.cai { color: var(--alerta); }
+  .ciclo-lista p { margin: 2px 0 0; font-size: 14px; color: var(--n-500); line-height: 1.45; }
   .mis-quando { flex: none; font-size: 12px; color: var(--n-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); margin-bottom: 14px; }
   .mis-vazio .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
@@ -680,12 +713,17 @@
   .janela .topo-j .fechar { margin-left: auto; }
   .janela iframe { width: 100%; height: 70vh; border: 1px solid var(--n-200); border-radius: var(--r-ctl); background: #fff; }
   #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; }
-  #toast div { background: var(--n-900); color: #fff; padding: 11px 16px; border-radius: var(--r-ctl); box-shadow: var(--sombra-flut);
+  #toast > div { background: var(--n-900); color: #fff; padding: 11px 16px; border-radius: var(--r-ctl); box-shadow: var(--sombra-flut);
     max-width: min(90vw, 520px); font-size: 14px; }
-  #toast div.erro { background: var(--erro); }
-  #toast div.com-acao { display: flex; align-items: center; gap: 14px; }
-  #toast div.com-acao span { flex: 1; }
-  #toast div.com-acao button { flex: none; border: 0; background: transparent; color: var(--verde-marca); font: inherit; font-weight: 700; padding: 6px 4px; cursor: pointer; }
+  #toast > div.erro { background: var(--erro); }
+  #toast .t-linha { display: flex; align-items: center; gap: 14px; }
+  #toast .t-linha span { flex: 1; }
+  #toast .t-pergunta { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .15); flex-wrap: wrap; }
+  #toast .t-pergunta span { flex: 1 0 auto; font-size: 13.5px; opacity: .85; }
+  #toast .t-pergunta button { border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #fff; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 6px 12px; min-height: 36px; border-radius: 99px; cursor: pointer; }
+  #toast .t-pergunta button:hover { background: rgba(255, 255, 255, .12); }
+  #toast .t-linha button { flex: none; border: 0; background: transparent; color: var(--verde-marca); font: inherit; font-weight: 700; padding: 6px 4px; cursor: pointer; }
   .carregando { display: flex; align-items: center; gap: 10px; color: var(--n-500); padding: 20px 4px; }
   .giro { width: 18px; height: 18px; border: 2.5px solid var(--n-200); border-top-color: var(--marca-600); border-radius: 50%;
     animation: giro .8s linear infinite; flex: none; }
@@ -1214,19 +1252,36 @@ function formulasNoImpresso(f) {
   } catch (e) { }
 }
 
-/** Aviso rápido. acao (opcional): { rotulo, fn } vira um botão no aviso (ex.: Desfazer), que fica 6 segundos. */
-function toast(msg, erro, acao) {
+/**
+ * Aviso rápido. acao (opcional): { rotulo, fn } vira um botão no aviso (ex.: Desfazer).
+ * pergunta (opcional): { texto, opcoes: [{ rotulo, fn }] } — uma linha de botões (ex.: "Como foi?").
+ */
+function toast(msg, erro, acao, pergunta) {
   var d = document.createElement('div');
   if (erro) d.className = 'erro';
-  var t = document.createElement('span'); t.textContent = msg; d.appendChild(t);
+  var linha = document.createElement('div'); linha.className = 't-linha';
+  var t = document.createElement('span'); t.textContent = msg; linha.appendChild(t);
   if (acao) {
     d.className += ' com-acao';
     var b = document.createElement('button'); b.type = 'button'; b.textContent = acao.rotulo;
     b.onclick = function () { d.remove(); acao.fn(); };
-    d.appendChild(b);
+    linha.appendChild(b);
+  }
+  d.appendChild(linha);
+  if (pergunta) {
+    $$('#toast > div.com-pergunta').forEach(function (x) { x.remove(); }); // só uma pergunta por vez
+    d.className += ' com-pergunta';
+    var q = document.createElement('div'); q.className = 't-pergunta';
+    var qt = document.createElement('span'); qt.textContent = pergunta.texto; q.appendChild(qt);
+    pergunta.opcoes.forEach(function (o) {
+      var ob = document.createElement('button'); ob.type = 'button'; ob.textContent = o.rotulo;
+      ob.onclick = function () { d.remove(); o.fn(); };
+      q.appendChild(ob);
+    });
+    d.appendChild(q);
   }
   $('#toast').appendChild(d);
-  setTimeout(function () { d.remove(); }, erro ? 7000 : acao ? 6000 : 4000);
+  setTimeout(function () { d.remove(); }, erro ? 7000 : pergunta ? 9000 : acao ? 6000 : 4000);
 }
 function msgErro(e) { return String((e && e.message) || e).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, ''); }
 
@@ -1659,7 +1714,7 @@ function ir(rota, params) {
   atualizarSino();
   var main = $('#main');
   window.scrollTo(0, 0);
-  Promise.resolve().then(function () { return VIEWS[rota](main, S.params); })
+  return Promise.resolve().then(function () { return VIEWS[rota](main, S.params); })
     .catch(function (e) { main.innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
 }
 
@@ -3052,7 +3107,11 @@ function blocoEstrategia(e, interno, selecionavel) {
     : '<div class="plano est-corpo">' + formatarPlano(e.texto) + '</div>' +
       '<div class="est-pe mut peq">' + (e.status === 'APROVADA' ? 'Aprovada por ' + esc(e.professorNome || 'professor(a)') + (e.decididoEm ? ' em ' + dataBr(e.decididoEm) : '') : '') +
       (!interno && e.simulado ? (e.status === 'APROVADA' ? ' · ' : '') + esc(e.simulado) : '') +
-      (interno && e.missoes && e.missoes.length ? ' · Missões cumpridas pelo aluno: <b>' + e.missoes.filter(function (x) { return x.feitaEm; }).length + ' de ' + e.missoes.length + '</b>' : '') +
+      (interno && e.missoes && e.missoes.length ? ' · Missões cumpridas pelo aluno: <b>' + e.missoes.filter(function (x) { return x.feitaEm; }).length + ' de ' + e.missoes.length + '</b>' +
+        (function () {
+          var dif = e.missoes.filter(function (x) { return x.comoFoi === 'DIFICIL'; });
+          return dif.length ? '<span class="est-dificil">Achou difícil: ' + dif.map(function (x) { return '<b>' + esc(x.texto) + '</b>'; }).join('; ') + '</span>' : '';
+        })() : '') +
       (interno && e.podeAprovar && e.status === 'APROVADA' ? ' <a href="#" class="est-editar">Editar</a>' : '') +
       (interno && e.resultadoId && S.rota !== 'relatorio' ? ' <a href="#" data-rel="' + esc(e.resultadoId) + '">Ver relatório</a>' : '') + '</div>';
   return h + '</div>';
@@ -3168,8 +3227,9 @@ function listaMissoes(atuais) {
         (completa ? '' : '<span class="mis-seta" aria-hidden="true"></span>') + '</button>' +
         (aberta ? '<div class="mis-faixas">' + faltam.map(function (x) {
           var c = cor++ % 3;
-          return '<button type="button" class="mis-faixa c' + c + '" data-chave="' + esc(x.chave) + '" aria-label="Cumprir missão: ' + esc(x.texto) + '">' +
-            '<span class="mis-f-txt">' + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + '<span>' + esc(x.texto) + '</span></span>' +
+          var hoje = ehMissaoDoDia(e, x);
+          return '<button type="button" class="mis-faixa c' + c + '" data-chave="' + esc(x.chave) + '" aria-label="Cumprir missão: ' + esc(x.texto) + (hoje ? ' (missão do dia)' : '') + '">' +
+            '<span class="mis-f-txt">' + (hoje ? '<em class="mis-hoje">Missão do dia</em>' : '') + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + '<span>' + esc(x.texto) + '</span></span>' +
             '<span class="mis-f-ok" aria-hidden="true"></span><span class="mis-f-pts">+' + PONTOS_MISSAO + '</span></button>';
         }).join('') + (e.professorNome ? '<p class="mis-pe">Preparadas por ' + esc(e.professorNome) + (e.simulado ? ' · ' + esc(e.simulado) : '') + '</p>' : '') + '</div>' : '') +
         '</section>';
@@ -3193,7 +3253,8 @@ function historicoMissoes(todas) {
       h += '<h3 class="mis-h-dia">' + (d === hoje ? 'Hoje' : d === ontem ? 'Ontem' : dataBr(d)) + '</h3><ul class="mis-h-lista">';
     }
     h += '<li data-id="' + esc(it.e.id) + '"><span class="mis-h-ok" aria-hidden="true"></span><span class="mis-h-txt"><small>' + esc(it.e.disciplina) +
-      (it.x.rotulo ? ' · ' + esc(it.x.rotulo) : '') + '</small>' + esc(it.x.texto) + '</span>' +
+      (it.x.rotulo ? ' · ' + esc(it.x.rotulo) : '') + '</small>' + esc(it.x.texto) +
+      (it.x.comoFoi ? ' <span class="mis-como c-' + it.x.comoFoi.toLowerCase() + '">' + COMO_FOI[it.x.comoFoi] + '</span>' : '') + '</span>' +
       '<button type="button" class="mis-h-desf" data-chave="' + esc(it.x.chave) + '" aria-label="Desfazer: ' + esc(it.x.texto) + '">Desfazer</button></li>';
   });
   return '<details class="card mis-hist"><summary><h2>Histórico de missões</h2><span class="mut peq">' + itens.length +
@@ -3295,6 +3356,7 @@ function ligarEdital(raiz, rs) {
 function marcarMissaoAluno(e, mi, feita, aoErrar) {
   var antes = mi.feitaEm, vez = mi._vez = (mi._vez || 0) + 1; // só a última resposta vale (cumprir e desfazer rápido)
   mi.feitaEm = feita ? (mi.feitaEm || hojeIso(0) + ' ' + new Date(Date.now() - 3 * 36e5).toISOString().slice(11, 16)) : '';
+  if (!feita) mi.comoFoi = '';
   return call('marcarMissao', { id: e.id, chave: mi.chave, feita: feita }).then(function (r) {
     if (mi._vez === vez) mi.feitaEm = r.feitas[mi.chave] || '';
   }).catch(function (err) { if (mi._vez !== vez) return; mi.feitaEm = antes; if (aoErrar) aoErrar(); toast(msgErro(err), true); });
@@ -3318,6 +3380,17 @@ function ligarMissoes(raiz, todas) {
   });
 }
 
+var COMO_FOI = { FACIL: 'Fácil', OK: 'Ok', DIFICIL: 'Difícil' };
+/** "Como foi?" depois de cumprir: o aluno responde com um toque; o professor vê. Responder é opcional. */
+function perguntaComoFoi(a, depois) {
+  return { texto: 'Como foi?', opcoes: ['FACIL', 'OK', 'DIFICIL'].map(function (k) {
+    return { rotulo: COMO_FOI[k], fn: function () {
+      a.mi.comoFoi = k; if (depois) depois();
+      toast(k === 'DIFICIL' ? 'Anotado. Seu professor vai ver que foi difícil.' : 'Anotado. Obrigado!');
+      call('avaliarMissao', { id: a.e.id, chave: a.mi.chave, como: k }).catch(function (err) { a.mi.comoFoi = ''; toast(msgErro(err), true); });
+    } };
+  }) };
+}
 /** Tela Missões: abre/fecha disciplinas, toque na faixa cumpre (com Desfazer), histórico desfaz */
 function ligarTelaMissoes(m, es, rs) {
   var atuais = estrategiasAtuais(es);
@@ -3341,7 +3414,8 @@ function ligarTelaMissoes(m, es, rs) {
         : completa ? 'Todas as missões de ' + a.e.disciplina + ' cumpridas! +' + (PONTOS_MISSAO + BONUS_ESTRATEGIA) + ' pontos'
           : depois.metaOk && !antes.metaOk ? 'Meta da semana batida! Missão cumprida, +' + PONTOS_MISSAO + ' pontos'
             : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos', false,
-        { rotulo: 'Desfazer', fn: function () { marcarMissaoAluno(a.e, a.mi, false, desenhar); desenhar(); } });
+        { rotulo: 'Desfazer', fn: function () { marcarMissaoAluno(a.e, a.mi, false, desenhar); desenhar(); } },
+        perguntaComoFoi(a, desenhar));
     };
     if (botao && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { botao.classList.add('saindo'); setTimeout(feito, 380); }
     else feito();
@@ -3654,6 +3728,51 @@ function ligarIr(m) {
   $$('[data-ir]', m).forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-ir')); }; });
 }
 
+// ---------------------------------------------------------------- missão do dia (escolha do aluno, guardada neste aparelho)
+function chaveDia() { return 'mira_dia_' + S.user.id; }
+function lerMissaoDoDia() {
+  try { var v = JSON.parse(localStorage.getItem(chaveDia()) || 'null'); return v && v.dia === hojeIso(0) ? v : null; } catch (e) { return null; }
+}
+function escolherMissaoDoDia(e, x) {
+  try { if (e) localStorage.setItem(chaveDia(), JSON.stringify({ dia: hojeIso(0), id: e.id, chave: x.chave })); else localStorage.removeItem(chaveDia()); } catch (er) { }
+}
+function ehMissaoDoDia(e, x) { var v = lerMissaoDoDia(); return !!(v && v.id === e.id && v.chave === x.chave); }
+
+/**
+ * Fechar o ciclo: para cada disciplina do último simulado, as missões cumpridas da estratégia do simulado anterior
+ * e como a disciplina foi de um simulado para o outro. rs: do mais novo para o mais antigo.
+ */
+function cicloMissoes(rs, es) {
+  if (rs.length < 2) return [];
+  var u0 = rs[0], out = [];
+  (u0.porDisciplina || []).forEach(function (d) {
+    var ant = null;
+    for (var i = 1; i < rs.length && !ant; i++) {
+      var x = (rs[i].porDisciplina || []).filter(function (y) { return y.disciplina === d.disciplina; })[0];
+      if (x) ant = { r: rs[i], d: x };
+    }
+    if (!ant) return;
+    var est = es.filter(function (e) { return e.resultadoId === ant.r.id && e.disciplina === d.disciplina; })[0];
+    if (!est || !(est.missoes || []).length) return;
+    out.push({ disciplina: d.disciplina, feitas: est.missoes.filter(function (m) { return m.feitaEm; }).length, total: est.missoes.length,
+      antes: Math.round(ant.d.pct), depois: Math.round(d.pct), simAnterior: ant.r.simulado });
+  });
+  return out;
+}
+function cardCiclo(itens) {
+  if (!itens.length) return '';
+  var funcionou = itens.some(function (c) { return c.feitas && c.depois > c.antes; });
+  return '<div class="card ciclo"><div class="ini-cab"><h2>' + icone('evolucao') + (funcionou ? 'Suas missões fizeram efeito' : 'Das missões ao simulado') + '</h2>' +
+    '<span class="mut peq">desde ' + esc(itens[0].simAnterior) + '</span></div><ul class="ciclo-lista">' + itens.map(function (c) {
+      var sobe = c.depois > c.antes, igual = c.depois === c.antes;
+      var frase = c.feitas
+        ? 'Você cumpriu ' + c.feitas + ' de ' + c.total + (c.total === 1 ? ' missão' : ' missões') + (sobe ? ' e subiu.' : igual ? ' e manteve o resultado.' : '. Desta vez caiu; as novas missões focam no que faltou.')
+        : (c.total === 1 ? 'A missão ficou' : 'As ' + c.total + ' missões ficaram') + ' sem cumprir.' + (sobe ? '' : ' Cumprir as próximas ajuda a subir.');
+      return '<li><div class="ciclo-cab"><b>' + esc(c.disciplina) + '</b><span class="ciclo-num' + (sobe ? ' sobe' : igual ? '' : ' cai') + '">' + c.antes + '% → ' + c.depois + '%</span></div>' +
+        '<p>' + frase + '</p></li>';
+    }).join('') + '</ul></div>';
+}
+
 /** Início: só o resumo (último simulado, próximas missões e edital); cada bloco leva à sua tela */
 VIEWS.painelAluno = function (m) {
   carregando(m);
@@ -3677,17 +3796,31 @@ VIEWS.painelAluno = function (m) {
     h += proximoPasso(u0.porDisciplina, atuais.filter(function (e) { return e.resultadoId === u0.id; }), true)
       .replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir="missoes"');
 
-    // missões: placar curto e as próximas três
+    // missões: a missão do dia (o aluno escolhe uma para hoje)
     var p = placarMissoes(es, rs), pend = [];
-    atuais.forEach(function (e) { (e.missoes || []).forEach(function (x) { if (!x.feitaEm) pend.push({ d: e.disciplina, t: x.texto }); }); });
-    var cardMis = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('tarefas') + 'Missões</h2>' +
-      (atuais.length ? '<span class="mut peq">Nível ' + p.nivel + ' · ' + p.pontos + ' pontos</span>' : '') + '</div>' +
-      (pend.length ? '<ul class="ini-lista">' + pend.slice(0, 3).map(function (x) {
-        return '<li><small>' + esc(x.d) + '</small><span>' + esc(x.t) + '</span></li>';
-      }).join('') + '</ul>' + (pend.length > 3 ? '<p class="mut peq ini-mais">E mais ' + (pend.length - 3) + (pend.length - 3 === 1 ? ' missão' : ' missões') + ' para cumprir.</p>' : '')
-        : '<p class="mut peq ini-txt">' + (atuais.length ? 'Todas as missões cumpridas! As próximas chegam com o próximo simulado.'
-          : 'Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões.') + '</p>') +
-      '<button class="btn" data-ir="missoes">' + (pend.length ? 'Ver todas as missões' : 'Abrir Missões') + '</button></div>';
+    atuais.forEach(function (e) { (e.missoes || []).forEach(function (x) { if (!x.feitaEm) pend.push({ e: e, x: x }); }); });
+    var md = lerMissaoDoDia(), escolhida = null;
+    if (md) es.forEach(function (e) { if (e.id === md.id) (e.missoes || []).forEach(function (x) { if (x.chave === md.chave) escolhida = { e: e, x: x }; }); });
+    var trocando = !!S.params.trocarDia;
+    var cardMis = '<div class="card ini-card" id="ini-mis"><div class="ini-cab"><h2>' + icone('tarefas') + 'Missão do dia</h2>' +
+      (atuais.length ? '<span class="mut peq">Nível ' + p.nivel + ' · ' + p.pontos + ' pontos</span>' : '') + '</div>';
+    if (escolhida && escolhida.x.feitaEm && !trocando) {
+      cardMis += '<div class="dia-ok">' + icone('conquista') + '<div><b>Missão do dia cumprida!</b><span>' + esc(escolhida.x.texto) + '</span></div></div>' +
+        '<p class="mut peq ini-txt">Meta da semana: ' + p.semana + ' de ' + META_SEMANA + ' dias' + (p.metaOk ? ' · batida!' : '') + '.</p>';
+    } else if (escolhida && !trocando) {
+      cardMis += '<div class="mis-faixa c0 dia-faixa"><span class="mis-f-txt"><small>' + esc(escolhida.e.disciplina) + (escolhida.x.rotulo ? ' · ' + esc(escolhida.x.rotulo) : '') + '</small>' +
+        '<span>' + esc(escolhida.x.texto) + '</span></span></div>' +
+        '<div class="dia-acoes"><button class="btn verde" id="dia-cumpri">' + icone('tarefas') + 'Cumpri</button><button class="btn" id="dia-trocar">Trocar</button></div>';
+    } else if (pend.length) {
+      cardMis += '<p class="mut peq ini-txt">Escolha uma missão para hoje. Ela fica aqui em destaque até você cumprir.</p><div class="dia-opcoes">' +
+        pend.slice(0, 4).map(function (it, i) {
+          return '<button type="button" class="dia-op" data-i="' + i + '"><small>' + esc(it.e.disciplina) + (it.x.rotulo ? ' · ' + esc(it.x.rotulo) : '') + '</small>' + esc(it.x.texto) + '</button>';
+        }).join('') + '</div>' + (pend.length > 4 ? '<p class="mut peq ini-mais">Outras ' + (pend.length - 4) + ' na tela Missões.</p>' : '');
+    } else {
+      cardMis += '<p class="mut peq ini-txt">' + (atuais.length ? 'Todas as missões cumpridas! As próximas chegam com o próximo simulado.'
+        : 'Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões.') + '</p>';
+    }
+    cardMis += '<button class="btn ini-ver" data-ir="missoes">Ver todas as missões</button></div>';
 
     // edital: quanto já estudou e o que já domina
     var st = estadoEdital(rs), pct = st.temas ? Math.round(100 * st.estudados / st.temas) : 0;
@@ -3699,8 +3832,21 @@ VIEWS.painelAluno = function (m) {
       '<div><b>' + st.dominando + '</b><span>dominando</span></div></div>' +
       '<button class="btn" data-ir="edital">Abrir o edital</button></div>';
     h += '<div class="grade-2 ini-cards">' + cardMis + cardEd + '</div>';
+    h += cardCiclo(cicloMissoes(rs, es));
     m.innerHTML = h;
     ligarIr(m);
+    var deNovo = function (params) { var y = window.scrollY; ir('painel', params).then(function () { window.scrollTo(0, y); }); };
+    $$('.dia-op', m).forEach(function (b) {
+      b.onclick = function () { var it = pend[+b.getAttribute('data-i')]; escolherMissaoDoDia(it.e, it.x); toast('Missão do dia escolhida. Bom estudo!'); deNovo(); };
+    });
+    if ($('#dia-trocar', m)) $('#dia-trocar', m).onclick = function () { deNovo({ trocarDia: 1 }); };
+    if ($('#dia-cumpri', m)) $('#dia-cumpri', m).onclick = function () {
+      var a = { e: escolhida.e, mi: escolhida.x };
+      this.disabled = true;
+      marcarMissaoAluno(a.e, a.mi, true).then(deNovo);
+      toast('Missão do dia cumprida! +' + PONTOS_MISSAO + ' pontos', false,
+        { rotulo: 'Desfazer', fn: function () { marcarMissaoAluno(a.e, a.mi, false).then(deNovo); } }, perguntaComoFoi(a));
+    };
     $('#pa-rel').onclick = function () { ir('relatorio', { id: u0.id }); };
     $$('[data-ir-rel]', m).forEach(function (b) { b.onclick = function () { ir('relatorio', { id: u0.id }); }; });
   });
