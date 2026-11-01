@@ -1035,7 +1035,7 @@ var STATUS_Q = {
   APROVADA: ['Aprovada', 'verde'], DEVOLVIDA: ['Devolvida', 'verm'],
   CURADA: ['Curada', 'azul'], REVISAR: ['Revisar', 'verm']
 };
-var STATUS_S = { RASCUNHO: ['Rascunho', ''], ABERTO: ['Aberto', 'verde'], ENCERRADO: ['Encerrado', 'azul'] };
+var STATUS_S = { RASCUNHO: ['Rascunho', ''], ABERTO: ['Aberto', 'verde'], ENCERRADO: ['Encerrado', 'azul'], ARQUIVADO: ['Arquivado', ''] };
 function tag(mapa, s) { var x = mapa[s] || [s, '']; return '<span class="tag st ' + x[1] + '">' + esc(x[0]) + '</span>'; }
 
 function conc(k) { return S.conc[k || 'ESPCEX']; }
@@ -2027,16 +2027,50 @@ function verQuestao(q, aoMudar) {
 }
 
 // ---------------------------------------------------------------- simulados
+/** Exclusão definitiva: pede o código do simulado para não apagar por engano */
+function excluirSimulado(s, depois) {
+  var md = modal(topoModal('Excluir simulado') +
+    '<p style="margin-top:0">Vai apagar <b>' + esc(s.titulo) + '</b> (' + esc(s.codigo) + ')' +
+    (s.cartoes ? ', com <b>' + s.cartoes + ' cartão(ões) corrigido(s)</b>, as fotos e as estratégias desses cartões' : '') +
+    '. Isso não tem volta.</p>' +
+    '<p class="mut peq">Se quiser só tirar da lista, mude a situação para <b>Arquivado</b>: nada se perde.</p>' +
+    '<label class="peq" for="ex-cod" style="display:block">Digite o código <b>' + esc(s.codigo) + '</b> para confirmar</label>' +
+    '<input id="ex-cod" autocomplete="off" autocapitalize="characters" spellcheck="false" style="display:block;width:100%;margin:6px 0 14px">' +
+    '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap">' +
+    '<button class="btn fechar" style="flex:none">Cancelar</button>' +
+    '<button class="btn perigo" id="ex-ok" style="flex:none" disabled>Excluir de vez</button></div>');
+  var campo = $('#ex-cod', md.el), ok = $('#ex-ok', md.el);
+  campo.oninput = function () { ok.disabled = campo.value.trim().toUpperCase() !== s.codigo; };
+  campo.focus();
+  ok.onclick = function () {
+    ocupado(ok, 'Excluindo…', function () { return call('excluirSimulado', { id: s.id, confirmacao: campo.value.trim().toUpperCase() }); })
+      .then(function () { md.fechar(); toast('Simulado ' + s.codigo + ' excluído.'); depois(); })
+      .catch(function (e) { toast(msgErro(e), true); });
+  };
+}
+
 VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
   m.innerHTML = cabPag('Simulados', 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado',
     adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
   if (adm) $('#novo').onclick = function () { formSimulado(carregar); };
+  var verArquivados = false;
   var carregar = function () {
     var l = $('#lista'); carregando(l);
-    call('listarSimulados').then(function (ss) {
-      if (!ss.length) { l.innerHTML = '<div class="card vazio">' + icone('avaliacao', 'ic-vazio') + 'Nenhum simulado criado ainda.' + (adm ? ' Aprove questões no banco e clique em "Novo simulado".' : '') + '</div>'; return; }
-      l.innerHTML = ss.map(function (s, i) {
+    call('listarSimulados').then(function (todos) {
+      if (!todos.length) { l.innerHTML = '<div class="card vazio">' + icone('avaliacao', 'ic-vazio') + 'Nenhum simulado criado ainda.' + (adm ? ' Aprove questões no banco e clique em "Novo simulado".' : '') + '</div>'; return; }
+      // arquivados ficam fora da lista principal (só aparecem quando a pessoa pede)
+      var ativos = todos.filter(function (s) { return s.status !== 'ARQUIVADO'; });
+      var arquivados = todos.filter(function (s) { return s.status === 'ARQUIVADO'; });
+      var ss = ativos.concat(verArquivados ? arquivados : []);
+      l.innerHTML = (ativos.length ? '' : '<div class="card vazio">' + icone('avaliacao', 'ic-vazio') + 'Nenhum simulado ativo. Os simulados arquivados estão logo abaixo.</div>') +
+        ss.map(function (s, i) {
+        return (i === ativos.length ? '<h2 style="margin:24px 0 12px;font-size:17px">Arquivados</h2>' : '') + cartaoSim(s, i);
+      }).join('') +
+        (arquivados.length ? '<div style="text-align:center;margin:8px 0 4px"><button class="btn peq" id="ver-arq">' +
+          (verArquivados ? 'Esconder arquivados' : 'Ver arquivados (' + arquivados.length + ')') + '</button></div>' : '');
+      if ($('#ver-arq', l)) $('#ver-arq', l).onclick = function () { verArquivados = !verArquivados; carregar(); };
+      function cartaoSim(s, i) {
         return '<div class="card"><div class="q-meta">' + tag(STATUS_S, s.status) +
           '<span class="meta">' + esc(s.concursoNome) + ' · ' + esc(s.provaTitulo) + ' · ' + s.total + ' questões · ' +
           (s.turmas ? 'Turmas ' + esc(s.turmas) : 'Todas as turmas') + (s.dataAplicacao ? ' · ' + dataBr(s.dataAplicacao) : '') + '</span>' +
@@ -2056,8 +2090,10 @@ VIEWS.simulados = function (m, p) {
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
             '<select data-a="status" data-i="' + i + '" style="width:auto;margin-left:auto;padding:5px 8px">' +
             Object.keys(STATUS_S).map(function (k) { return '<option value="' + k + '"' + (k === s.status ? ' selected' : '') + '>' + STATUS_S[k][0] + '</option>'; }).join('') +
-            '</select>' : '') + '</div></div>';
-      }).join('');
+            '</select>' : '') + '</div>' +
+          (adm ? '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn peq perigo" data-a="excluir" data-i="' + i + '">Excluir simulado</button></div>' : '') +
+          '</div>';
+      }
       $$('[data-a]', l).forEach(function (b) {
         var s = ss[+b.getAttribute('data-i')], a = b.getAttribute('data-a');
         if (a === 'versoes') {
@@ -2078,13 +2114,15 @@ VIEWS.simulados = function (m, p) {
           b.onchange = function () {
             call('statusSimulado', { id: s.id, status: b.value }).then(function () {
               toast(b.value === 'ABERTO' ? 'Simulado aberto: os alunos já podem enviar o cartão.' :
-                b.value === 'ENCERRADO' ? 'Simulado encerrado: resoluções liberadas aos alunos.' : 'Simulado voltou a rascunho.');
+                b.value === 'ENCERRADO' ? 'Simulado encerrado: resoluções liberadas aos alunos.' :
+                  b.value === 'ARQUIVADO' ? 'Simulado arquivado. Ele continua em "Ver arquivados", no fim da lista.' : 'Simulado voltou a rascunho.');
               carregar();
             }).catch(function (e) { toast(msgErro(e), true); });
           };
           return;
         }
         b.onclick = function () {
+          if (a === 'excluir') return excluirSimulado(s, carregar);
           if (a === 'res') return ir('resultados', { simuladoId: s.id });
           if (a === 'mapa') return ir('turmas', { simuladoId: s.id });
           if (a === 'lancar') return escolherAluno(s);
