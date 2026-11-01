@@ -3,9 +3,13 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>MIRA</title>
   <link rel="icon" type="image/png" href="favicon-64.png">
+  <!-- fórmulas em LaTeX nas questões e resoluções (KaTeX) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js" onload="window.formulasProntas && formulasProntas()"></script>
   <style>
   /* =====================================================================
      MIRA · sistema de design (regras completas em docs/design-system.md)
@@ -60,6 +64,7 @@
     font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
   /* nada pode empurrar a página para o lado (rolagem lateral no celular) */
   html, body { max-width: 100%; overflow-x: hidden; overflow-x: clip; overflow-wrap: break-word; }
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   img, video, canvas { max-width: 100%; }
   button, input, select, textarea { font: inherit; color: inherit; }
   a { color: var(--marca-600); text-underline-offset: 2px; }
@@ -184,6 +189,9 @@
     nav.menu button.ativo { background: rgba(255, 255, 255, .16); color: #fff; box-shadow: none; }
     nav.menu button.ativo::before { left: 30%; right: 30%; top: auto; bottom: 2px; width: auto; height: 3px; border-radius: 3px; }
     main { padding: 18px 16px 120px; }
+    #toast { bottom: 104px; width: calc(100% - 32px); max-width: 420px; }
+    /* 16px nos campos: o iPhone não dá zoom ao tocar num campo */
+    input, select, textarea, .diag .d-exp textarea, .diag .d-exp input { font-size: 16px; }
     #aviso-senha { padding: 0 16px; }
     #aviso-senha .aviso { margin: 16px 0 -4px; }
     h1 { font-size: 26px; }
@@ -215,6 +223,15 @@
   .btn.verde { background: var(--verde-marca); border-color: var(--verde-marca); color: var(--n-900); }
   .btn.verde:hover { background: #8BBE48; }
   .btn.pri:hover { background: var(--marca-900); border-color: var(--marca-900); }
+  .previa { border: 1px dashed var(--n-300); border-radius: var(--r-ctl); padding: 12px 14px; background: var(--n-50); font-size: 14.5px; line-height: 1.55; }
+  .previa-enun { white-space: pre-wrap; margin-bottom: 8px; }
+  .katex { font-size: 1.08em; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+  .origem-ops { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+  .origem-op { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--n-300); border-radius: var(--r-ctl);
+    background: #fff; font-size: 14px; cursor: pointer; }
+  .origem-op:has(input:checked) { border-color: var(--marca-600); background: var(--marca-50); color: var(--marca-700); font-weight: 600; }
+  .origem-op input { margin: 0; accent-color: var(--marca-700); }
   .btn.perigo { color: var(--erro); border-color: #E7B4B6; }
   .btn.perigo:hover { background: var(--erro-bg); }
   .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
@@ -415,6 +432,62 @@
   .plano ul { margin: 4px 0; padding-left: 20px; }
 
   /* estratégias de estudo */
+  /* ---------- missões (estratégias do aluno) ---------- */
+  .mis-titulo { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .mis-titulo h2 { margin: 0; }
+  .mis-placar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+  .mis-nivel { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--grad-destaque); color: #fff; }
+  .mis-nivel > div { flex: 1; min-width: 0; }
+  .mis-nivel b { font-size: 16px; }
+  .mis-selo { flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+    background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 3px var(--verde-marca); line-height: 1; }
+  .mis-selo b { font-size: 24px; }
+  .mis-selo small { font-size: 10.5px; opacity: .85; margin-top: 2px; }
+  .mis-xp { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .18); margin: 8px 0 6px; overflow: hidden; }
+  .mis-xp i { display: block; height: 100%; border-radius: 99px; background: var(--grad-mira); transition: width .4s ease; }
+  .mis-falta { font-size: 12.5px; opacity: .9; }
+  .mis-num { display: flex; flex-direction: column; justify-content: center; padding: 12px 14px; border: 1px solid var(--n-200); border-radius: var(--r-card); background: #fff; }
+  .mis-num .ic { width: 20px; height: 20px; color: var(--marca-600); }
+  .mis-num b { font-size: 26px; line-height: 1.1; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .mis-num span { font-size: 12.5px; color: var(--n-500); }
+  .mis-conq { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+  .conq { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+    border: 1px dashed var(--n-300); color: var(--n-400); background: var(--n-50); }
+  .conq .ic { width: 16px; height: 16px; }
+  .conq.ok { border: 1px solid transparent; background: var(--marca-100); color: var(--marca-700); }
+  .conq.ok .ic { color: var(--marca-700); }
+  .mis-regras { margin: 6px 0 14px; }
+  .mis-grupos { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); align-items: start; }
+  .mis-grupo { border: 1px solid var(--n-200); border-radius: var(--r-card); padding: 16px 16px 12px; background: #fff; }
+  .mis-grupo.completa { border-color: var(--marca-100); background: var(--marca-50); }
+  .mis-cab { display: flex; align-items: center; gap: 8px; }
+  .mis-cab h3 { margin: 0; font-size: 17px; font-weight: 600; }
+  .mis-cont { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--n-500); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mis-grupo.completa .mis-cont { color: var(--marca-700); }
+  .mis-cont .ic { width: 16px; height: 16px; }
+  .mis-mini { height: 6px; border-radius: 99px; background: var(--n-100); margin: 10px 0; overflow: hidden; }
+  .mis-mini i { display: block; height: 100%; border-radius: 99px; background: var(--grad-mira); transition: width .4s ease; }
+  .mis-ctx { margin: 0 0 8px; font-size: 13.5px; color: var(--n-500); }
+  .mis-lista { list-style: none; margin: 0; padding: 0; }
+  .mis-lista li + li { border-top: 1px solid var(--n-100); }
+  .mis { display: flex; align-items: flex-start; gap: 10px; padding: 10px 2px; cursor: pointer; font-size: 14.5px; line-height: 1.45; }
+  .mis input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .mis-caixa { flex: none; width: 22px; height: 22px; margin-top: 1px; border-radius: 7px; border: 2px solid var(--n-300); background: #fff;
+    display: grid; place-items: center; transition: background .15s, border-color .15s; }
+  .mis-caixa::after { content: ""; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) translate(-1px, -1px); opacity: 0; }
+  .mis input:checked + .mis-caixa { background: var(--marca-700); border-color: var(--marca-700); }
+  .mis input:checked + .mis-caixa::after { opacity: 1; }
+  .mis input:focus-visible + .mis-caixa { outline: 2px solid var(--marca-600); outline-offset: 2px; }
+  .mis-txt { flex: 1; min-width: 0; }
+  .mis.feita .mis-txt { color: var(--n-500); text-decoration: line-through; text-decoration-color: var(--n-300); }
+  .mis-pts { flex: none; font-size: 12px; font-weight: 700; color: var(--marca-600); background: var(--marca-50); border-radius: 99px; padding: 2px 8px; margin-top: 1px; }
+  .mis.feita .mis-pts { color: var(--n-400); background: var(--n-50); }
+  .mis-fecho { margin: 8px 0 0; font-size: 13.5px; color: var(--n-700); font-weight: 600; }
+  .mis-pe { margin-top: 8px; font-size: 12.5px; color: var(--n-400); }
+  @media (max-width: 820px) {
+    .mis-placar { grid-template-columns: 1fr 1fr; }
+    .mis-nivel { grid-column: 1 / -1; }
+  }
   .est-lista { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
   .est-lista.larga { grid-template-columns: 1fr; gap: 12px; }
   .est-lista.larga > .card { margin: 0; }
@@ -937,6 +1010,88 @@ function esc(s) {
 }
 function guardar(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
 function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+// sem zoom de pinça no iPhone (o app já se ajusta à tela)
+['gesturestart', 'gesturechange'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false }); });
+
+// ---------------------------------------------------------------- fórmulas (LaTeX com KaTeX)
+// Fórmulas entre $...$, $$...$$, \(...\) ou \[...\] viram fórmulas formatadas em qualquer tela.
+// Potências escritas sem LaTeX (10^2, m/s^2, x^-1) também viram expoente. "R$" nunca abre fórmula.
+var KATEX_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css';
+var TAGS_SEM_FORMULA = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, OPTION: 1, PRE: 1, CODE: 1, INPUT: 1, SELECT: 1, SVG: 1, svg: 1 };
+var RE_TRECHO_MATH = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/;
+var RE_POTENCIA = /([A-Za-z0-9)\]]+)\^\(?\{?([+\-−]?[A-Za-z0-9.,]+)\}?\)?/g;
+function potenciasEmLatex(t) {
+  return t.split(RE_TRECHO_MATH).map(function (parte, i) {
+    return i % 2 ? parte : parte.replace(RE_POTENCIA, function (m, base, exp) { return '\\(' + base + '^{' + exp.replace('−', '-') + '}\\)'; });
+  }).join('');
+}
+function prepararFormulas(raiz) {
+  var doc = raiz.ownerDocument || document, nos = [];
+  var w = doc.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      for (var p = n.parentNode; p && p !== raiz.parentNode; p = p.parentNode) {
+        if (p.nodeType !== 1) continue;
+        if (TAGS_SEM_FORMULA[p.tagName] || p.isContentEditable || (p.classList && (p.classList.contains('katex') || p.classList.contains('sem-formula')))) return NodeFilter.FILTER_REJECT;
+      }
+      return /[$^\\]/.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }
+  });
+  while (w.nextNode()) nos.push(w.currentNode);
+  nos.forEach(function (n) {
+    var t = n.nodeValue;
+    if (/R\$/.test(t)) {
+      // "R$" vai num elemento à parte: o cifrão do dinheiro não forma par com o de uma fórmula
+      var frag = doc.createDocumentFragment();
+      t.split(/(R\$)/).forEach(function (p) {
+        if (!p) return;
+        if (p === 'R$') { var sp = doc.createElement('span'); sp.className = 'sem-formula'; sp.textContent = p; frag.appendChild(sp); }
+        else frag.appendChild(doc.createTextNode(potenciasEmLatex(p)));
+      });
+      n.parentNode.replaceChild(frag, n);
+    } else if (/\^/.test(t)) {
+      var novo = potenciasEmLatex(t);
+      if (novo !== t) n.nodeValue = novo;
+    }
+  });
+}
+function formulas(raiz) {
+  if (!raiz || !window.renderMathInElement) return;
+  prepararFormulas(raiz);
+  try {
+    renderMathInElement(raiz, {
+      delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false }, { left: '$', right: '$', display: false }],
+      ignoredClasses: ['sem-formula', 'katex'], throwOnError: false, strict: false
+    });
+  } catch (e) { /* fórmula com erro fica como texto */ }
+}
+(function vigiarFormulas() {
+  var pendente = false, rodando = false;
+  var obs = new MutationObserver(function () {
+    if (rodando || pendente) return;
+    pendente = true;
+    requestAnimationFrame(function () {
+      pendente = false; rodando = true;
+      try { formulas(document.getElementById('app')); } finally { obs.takeRecords(); rodando = false; }
+      $$('.fundo').forEach(function (f) { rodando = true; try { formulas(f); } finally { obs.takeRecords(); rodando = false; } });
+    });
+  });
+  var ligar = function () { obs.observe(document.body, { childList: true, subtree: true, characterData: true }); };
+  window.formulasProntas = function () { formulas(document.getElementById('app')); $$('.fundo').forEach(formulas); };
+  if (document.body) ligar(); else document.addEventListener('DOMContentLoaded', ligar);
+})();
+/** Fórmulas dentro de um impresso (iframe): leva o estilo do KaTeX junto */
+function formulasNoImpresso(f) {
+  try {
+    var d = f.contentDocument;
+    if (!d || !d.body) return;
+    if (!d.getElementById('katex-css')) {
+      var l = d.createElement('link'); l.id = 'katex-css'; l.rel = 'stylesheet'; l.href = KATEX_CSS; d.head.appendChild(l);
+    }
+    formulas(d.body);
+  } catch (e) { }
+}
 
 function toast(msg, erro) {
   var d = document.createElement('div');
@@ -1520,7 +1675,8 @@ VIEWS.questoes = function (m, p) {
           '<div class="q-meta">' + tag(STATUS_Q, q.status) +
           ((q.gabaritoFinal || q.gabaritoProfessor) ? '<span class="tag gab">Gabarito ' + esc(q.gabaritoFinal || q.gabaritoProfessor) + '</span>' : '') +
           '<span class="meta">' + esc(q.disciplina) + (q.conteudo ? ' · ' + esc(q.conteudo) : '') +
-          (q.curadoria && q.curadoria.dificuldade ? ' · ' + esc(q.curadoria.dificuldade) : '') + (q.imagemId ? ' · com figura' : '') + '</span>' +
+          (q.curadoria && q.curadoria.dificuldade ? ' · ' + esc(q.curadoria.dificuldade) : '') + (q.imagemId ? ' · com figura' : '') +
+          (q.origem ? ' · ' + esc(rotuloOrigem(q.origem)) : '') + '</span>' +
           '<span class="dir">' + (adm ? esc(q.autorNome) + ' · ' : '') + dataBr(q.atualizadoEm) + '</span></div>' +
           '<div class="q-trecho">' + esc(semFiguras(q.enunciado)) + '</div></div>';
       }).join('') + '</div>';
@@ -1616,6 +1772,57 @@ function separarAlternativas_(texto, letras, minimo, primeira, aceitaMeio) {
   return { antes: texto.slice(0, achados[0].index).replace(/\s+$/, ''), alts: alts };
 }
 
+// ---------------------------------------------------------------- origem da questão
+var PROVAS_SUGERIDAS = ['EsPCEx', 'AFA', 'EFOMM', 'Escola Naval', 'EEAR', 'ESA', 'IME', 'ITA', 'ENEM', 'Fuvest', 'Unicamp', 'UnB', 'PAS-UnB'];
+/** "Autoral" · "EsPCEx 2024" · "Livro: ..." · "Outra: ..." → { tipo, prova, ano, texto } */
+function partesOrigem(txt) {
+  txt = String(txt || '').trim();
+  if (!txt) return { tipo: '' };
+  if (txt === 'Autoral') return { tipo: 'AUTORAL' };
+  if (/^Livro: /.test(txt)) return { tipo: 'LIVRO', texto: txt.slice(7) };
+  if (/^Outra: /.test(txt)) return { tipo: 'OUTRA', texto: txt.slice(7) };
+  var m = txt.match(/^(.*?)\s+((?:19|20)\d{2})$/);
+  return { tipo: 'PROVA', prova: m ? m[1] : txt, ano: m ? m[2] : '' };
+}
+function campoOrigem(txt) {
+  var o = partesOrigem(txt);
+  var op = function (v, rot) { return '<label class="origem-op"><input type="radio" name="q-orig" value="' + v + '"' + (o.tipo === v ? ' checked' : '') + '> ' + rot + '</label>'; };
+  return '<div class="campo"><span class="mut peq" style="font-weight:600">Origem da questão *</span>' +
+    '<div class="origem-ops">' + op('AUTORAL', 'Autoral (criada por mim)') + op('PROVA', 'De prova ou vestibular') +
+    op('LIVRO', 'De livro ou apostila') + op('OUTRA', 'Outra') + '</div>' +
+    '<div class="linha" id="q-orig-prova"' + (o.tipo === 'PROVA' ? '' : ' hidden') + '>' +
+    '<label class="campo"><span>Prova ou vestibular</span><input type="text" id="q-orig-nome" list="q-orig-lista" placeholder="Ex.: EsPCEx" value="' + esc(o.prova || '') + '"></label>' +
+    '<label class="campo" style="max-width:140px"><span>Ano</span><input type="text" id="q-orig-ano" inputmode="numeric" maxlength="4" placeholder="Ex.: 2024" value="' + esc(o.ano || '') + '"></label></div>' +
+    '<datalist id="q-orig-lista">' + PROVAS_SUGERIDAS.map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>' +
+    '<label class="campo" id="q-orig-outro"' + (o.tipo === 'LIVRO' || o.tipo === 'OUTRA' ? '' : ' hidden') + '><span id="q-orig-outro-rot">' +
+    (o.tipo === 'OUTRA' ? 'De onde é a questão?' : 'Livro ou apostila (título e autor)') + '</span>' +
+    '<input type="text" id="q-orig-texto" value="' + esc(o.texto || '') + '"></label></div>';
+}
+function ligarOrigem(el) {
+  $$('input[name=q-orig]', el).forEach(function (r) {
+    r.onchange = function () {
+      $('#q-orig-prova', el).hidden = r.value !== 'PROVA';
+      $('#q-orig-outro', el).hidden = r.value !== 'LIVRO' && r.value !== 'OUTRA';
+      $('#q-orig-outro-rot', el).textContent = r.value === 'OUTRA' ? 'De onde é a questão?' : 'Livro ou apostila (título e autor)';
+    };
+  });
+}
+function lerOrigem(el) {
+  var r = $('input[name=q-orig]:checked', el);
+  if (!r) { toast('Informe a origem da questão: autoral ou de qual prova ela é.', true); return null; }
+  var o = { tipo: r.value };
+  if (r.value === 'PROVA') {
+    o.prova = $('#q-orig-nome', el).value.trim(); o.ano = $('#q-orig-ano', el).value.trim();
+    if (!o.prova) { toast('Informe de qual prova ou vestibular é a questão.', true); return null; }
+  }
+  if (r.value === 'LIVRO' || r.value === 'OUTRA') {
+    o.texto = $('#q-orig-texto', el).value.trim();
+    if (!o.texto) { toast(r.value === 'LIVRO' ? 'Informe o livro ou a apostila.' : 'Descreva de onde é a questão.', true); return null; }
+  }
+  return o;
+}
+function rotuloOrigem(txt) { return !txt ? '' : txt === 'Autoral' ? 'Questão autoral' : txt; }
+
 // ---------------------------------------------------------------- formulário da questão
 function formQuestao(q) {
   var c = conc('ESPCEX');
@@ -1633,9 +1840,12 @@ function formQuestao(q) {
     discs.map(function (d) { return '<option' + (d === q.disciplina ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') + '</select></label></div>' +
     '<div class="linha"><label class="campo"><span>Conteúdo do edital</span><input type="text" id="q-cont" placeholder="Ex.: Cinemática – MRUV" value="' + esc(q.conteudo) + '"></label>' +
     '<label class="campo"><span>Habilidade (opcional)</span><input type="text" id="q-hab" placeholder="Ex.: interpretar gráficos" value="' + esc(q.habilidade) + '"></label></div>' +
+    campoOrigem(q.origem) +
     '<label class="campo"><span>Enunciado *</span><textarea id="q-enun" rows="8" required>' + esc(q.enunciado) + '</textarea></label>' +
     '<div class="dica peq"><b>Dicas:</b> para pôr uma figura no meio do texto, clique no ponto do enunciado e cole a imagem com <b>Ctrl+V</b> ' +
-    '(ou use "Adicionar figura" e depois "Inserir no texto"). Se colar a questão inteira, com as alternativas, o MIRA separa as alternativas sozinho.</div>' +
+    '(ou use "Adicionar figura" e depois "Inserir no texto"). Se colar a questão inteira, com as alternativas, o MIRA separa as alternativas sozinho.<br>' +
+    '<b>Fórmulas:</b> escreva entre cifrões, como <code>$10^{2}$</code>, <code>$\\frac{\\Delta s}{\\Delta t}$</code> ou <code>$\\sqrt{2}$</code>. ' +
+    'Potências simples (10^2) já aparecem como expoente. Confira na prévia, embaixo das alternativas.</div>' +
     '<div class="campo"><span class="mut peq" style="font-weight:600">Figuras</span>' +
     '<div id="q-figs" class="figs"></div>' +
     '<label class="btn peq" style="cursor:pointer;display:inline-flex;margin-top:6px"><input type="file" id="q-img" accept="image/*" multiple style="display:none">+ Adicionar figura</label></div>' +
@@ -1647,11 +1857,22 @@ function formQuestao(q) {
         '<textarea id="q-alt-' + l + '" class="q-alt" data-l="' + l + '" rows="1" style="min-height:40px" required>' + esc(alt[l]) + '</textarea>' +
         '<span class="alt-ok">✔ correta</span></div>';
     }).join('') + '</div>' +
+    '<div class="campo"><span class="mut peq" style="font-weight:600">Prévia (como o aluno vê)</span><div id="q-previa" class="previa"></div></div>' +
     '<div class="aviso azul peq">Depois de salva, a questão passa pela curadoria: resolução, conferência do gabarito e o erro de raciocínio por trás de cada alternativa incorreta. Capriche nas alternativas erradas: elas é que revelam as dificuldades dos alunos.</div>' +
     '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn fechar">Cancelar</button>' +
     '<button class="btn pri" id="q-salvar">Salvar questão</button></div></form>', true);
 
   var enun = $('#q-enun', md.el);
+  ligarOrigem(md.el);
+  var tPrevia = null;
+  var previa = function () {
+    var el = $('#q-previa', md.el);
+    if (!el) return;
+    el.innerHTML = '<div class="previa-enun">' + esc(semFiguras(enun.value) || 'O enunciado aparece aqui.') + '</div>' +
+      c.alternativas.map(function (l) { var v = $('#q-alt-' + l, md.el).value; return v ? '<div>(' + l + ') ' + esc(v) + '</div>' : ''; }).join('');
+  };
+  md.el.addEventListener('input', function () { clearTimeout(tPrevia); tPrevia = setTimeout(previa, 350); });
+  setTimeout(previa, 0);
   var figuras = []; // { id?, url, base64?, mime? }
   var cursor = null;
   var lembrarCursor = function () { cursor = { ini: enun.selectionStart, fim: enun.selectionEnd }; };
@@ -1777,9 +1998,12 @@ function formQuestao(q) {
       if (n > figuras.length && faltando.indexOf(n) < 0) faltando.push(n);
     });
     if (faltando.length) { toast('O texto marca a Figura ' + faltando.join(', ') + ', mas ela não foi adicionada.', true); return; }
+    var origem = lerOrigem(md.el);
+    if (!origem) return;
     var alts = {};
     c.alternativas.forEach(function (l) { alts[l] = $('#q-alt-' + l, md.el).value; });
     var dados = {
+      origem: origem,
       id: q.id, concurso: 'ESPCEX', disciplina: $('#q-disc', md.el).value, conteudo: $('#q-cont', md.el).value,
       habilidade: $('#q-hab', md.el).value, enunciado: enun.value, alternativas: alts,
       gabaritoProfessor: g.value,
@@ -1860,6 +2084,7 @@ function verQuestao(q, aoMudar) {
     (q.conteudo ? '<span class="tag">' + esc(q.conteudo) + '</span>' : '') +
     (q.habilidade ? '<span class="tag">' + esc(q.habilidade) + '</span>' : '') +
     (cur && cur.dificuldade ? '<span class="tag">' + esc(cur.dificuldade) + '</span>' : '') +
+    (q.origem ? '<span class="tag">' + esc(rotuloOrigem(q.origem)) + '</span>' : '') +
     '<span class="mut peq" style="margin-left:auto">' + esc(q.autorNome) + '</span></div>' +
     (gabVersao || q.gabaritoProfessor ? '<div class="gab-badge">Gabarito: <b>' + esc(gabVersao || q.gabaritoProfessor) + '</b>' +
       (ad ? ' <span>(na versão adaptada)</span>' : !q.gabaritoFinal ? ' <span>(indicado pelo professor)</span>' : '') + '</div>' : '');
@@ -2219,6 +2444,7 @@ function verImpresso(s, tipo, alunos, versao) {
   call('impresso', { id: s.id, tipo: tipo, alunos: alunos || null, versao: versao || 1 }).then(function (r) {
     var f = document.createElement('iframe');
     $('#area', md.el).innerHTML = ''; $('#area', md.el).appendChild(f);
+    f.onload = function () { formulasNoImpresso(f); };
     f.srcdoc = r.html;
     $('#imp', md.el).onclick = function () { f.contentWindow.focus(); f.contentWindow.print(); };
   }).catch(function (e) { $('#area', md.el).innerHTML = '<div class="aviso verm">' + esc(msgErro(e)) + '</div>'; });
@@ -2522,8 +2748,8 @@ function proximoPasso(porDisciplina, estrategias, aluno) {
   return '<div class="proximo nao-imprimir"><span class="chip">' + icone('foco') + '</span><div class="t">' +
     '<b>' + (aluno ? 'Seu próximo passo: ' : 'Próximo passo sugerido: ') + esc(alvo.disciplina) + '</b>' +
     '<span>' + (aluno ? 'Foi onde você mais pode crescer' : 'É onde há mais espaço para crescer') + ' (' + alvo.acertos + ' de ' + alvo.total + ' acertos).' +
-    (temEst ? (aluno ? ' Seu professor preparou uma estratégia para você.' : ' Já há uma estratégia para esta disciplina.') : '') + '</span></div>' +
-    '<button class="btn pri" data-ir-ancora="' + (temEst ? 'rel-est' : 'rel-questoes') + '">' + (temEst ? 'Ver estratégia' : 'Ver as questões') + '</button></div>';
+    (temEst ? (aluno ? ' Seu professor preparou missões para você.' : ' Já há uma estratégia para esta disciplina.') : '') + '</span></div>' +
+    '<button class="btn pri" data-ir-ancora="' + (temEst ? 'rel-est' : 'rel-questoes') + '">' + (temEst ? (aluno ? 'Ver missões' : 'Ver estratégia') : 'Ver as questões') + '</button></div>';
 }
 
 VIEWS.relatorio = function (m, p) {
@@ -2555,7 +2781,10 @@ VIEWS.relatorio = function (m, p) {
     if (d.corte && d.corte.participantes) h += blocoCorte(d.corte, aluno);
 
     // estratégias de estudo (o aluno só vê as aprovadas pelo professor)
-    h += '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
+    h += aluno && d.estrategias.length ? '<div class="card" id="rel-est"><h2>Suas missões deste simulado</h2>' +
+        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam no Painel.</p>' +
+        '<div class="mis-grupos">' + d.estrategias.map(grupoMissoes).join('') + '</div></div>'
+      : '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
       ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Sugeridas a partir deste relatório. O aluno só vê depois do OK do professor da disciplina.</p>') +
         '<div class="est-lista">' + d.estrategias.map(function (e) { return blocoEstrategia(e, !aluno); }).join('') + '</div>'
       : '<p class="mut" style="margin:0">' + (aluno ? (d.estrategiasPendentes
@@ -2613,7 +2842,8 @@ VIEWS.relatorio = function (m, p) {
     }
     m.innerHTML = h;
     $('#voltar').onclick = function () { ir(aluno ? 'painel' : 'resultados'); };
-    ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
+    if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
+    else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = function () { window.print(); };
     $$('[data-ir-ancora]', m).forEach(function (b) {
       b.onclick = function () { var alvo = $('#' + b.getAttribute('data-ir-ancora')); if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -2647,9 +2877,117 @@ function blocoEstrategia(e, interno, selecionavel) {
     : '<div class="plano est-corpo">' + formatarPlano(e.texto) + '</div>' +
       '<div class="est-pe mut peq">' + (e.status === 'APROVADA' ? 'Aprovada por ' + esc(e.professorNome || 'professor(a)') + (e.decididoEm ? ' em ' + dataBr(e.decididoEm) : '') : '') +
       (!interno && e.simulado ? (e.status === 'APROVADA' ? ' · ' : '') + esc(e.simulado) : '') +
+      (interno && e.missoes && e.missoes.length ? ' · Missões cumpridas pelo aluno: <b>' + e.missoes.filter(function (x) { return x.feitaEm; }).length + ' de ' + e.missoes.length + '</b>' : '') +
       (interno && e.podeAprovar && e.status === 'APROVADA' ? ' <a href="#" class="est-editar">Editar</a>' : '') +
       (interno && e.resultadoId && S.rota !== 'relatorio' ? ' <a href="#" data-rel="' + esc(e.resultadoId) + '">Ver relatório</a>' : '') + '</div>';
   return h + '</div>';
+}
+
+// ---------------------------------------------------------------- missões (estratégias aprovadas, para o aluno)
+var PONTOS_MISSAO = 10, BONUS_ESTRATEGIA = 25, PONTOS_NIVEL = 100;
+var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
+
+function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
+function hojeIso(desloc) {
+  var d = new Date(Date.now() - (desloc || 0) * 864e5 - 3 * 36e5); // horário de Brasília
+  return d.toISOString().slice(0, 10);
+}
+/** Pontos, nível, sequência de dias e conquistas, a partir de todas as estratégias aprovadas do aluno */
+function placarMissoes(todas, atuais) {
+  var feitas = 0, total = 0, completas = 0, dias = {};
+  todas.forEach(function (e) {
+    var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; });
+    feitas += f.length; total += ms.length;
+    if (ms.length && f.length === ms.length) completas++;
+    f.forEach(function (x) { dias[diaDe(x.feitaEm)] = 1; });
+  });
+  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA;
+  var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
+  // sequência: dias seguidos com missão, terminando hoje (ou ontem, se hoje ainda não teve)
+  var seq = 0, i = dias[hojeIso(0)] ? 0 : 1;
+  while (dias[hojeIso(i)]) { seq++; i++; }
+  var lista = Object.keys(dias).sort(), maior = 0, corr = 0, ant = null;
+  lista.forEach(function (d) {
+    corr = ant && (new Date(d) - new Date(ant)) === 864e5 ? corr + 1 : 1; ant = d; if (corr > maior) maior = corr;
+  });
+  var atuaisMs = [].concat.apply([], (atuais || []).map(function (e) { return e.missoes || []; }));
+  var emDia = atuaisMs.length && atuaisMs.every(function (x) { return x.feitaEm; });
+  return {
+    pontos: pontos, nivel: nivel, nomeNivel: NIVEIS[Math.min(nivel, NIVEIS.length) - 1],
+    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas, sequencia: seq,
+    conquistas: [
+      ['foco', 'Primeira missão', 'Cumpra sua primeira missão', feitas >= 1],
+      ['tarefas', '10 missões', 'Cumpra 10 missões', feitas >= 10],
+      ['conquista', 'Disciplina completa', 'Cumpra todas as missões de uma disciplina', completas >= 1],
+      ['tempo', '3 dias seguidos', 'Cumpra missões em 3 dias seguidos', maior >= 3],
+      ['calendario', 'Semana no foco', 'Cumpra missões em 7 dias seguidos', maior >= 7],
+      ['evolucao', 'Tudo em dia', 'Cumpra todas as missões atuais', !!emDia]
+    ]
+  };
+}
+function grupoMissoes(e) {
+  var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; }).length, pct = ms.length ? Math.round(100 * f / ms.length) : 0;
+  var completa = ms.length && f === ms.length;
+  return '<div class="mis-grupo' + (completa ? ' completa' : '') + '" data-id="' + esc(e.id) + '">' +
+    '<div class="mis-cab"><h3>' + esc(e.disciplina) + '</h3><span class="mis-cont">' + (completa ? icone('conquista') + 'Completa' : f + ' de ' + ms.length) + '</span></div>' +
+    '<div class="mis-mini" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Missões de ' + esc(e.disciplina) + '"><i style="width:' + pct + '%"></i></div>' +
+    (e.contexto && e.contexto.length ? '<p class="mis-ctx">' + esc(e.contexto.join(' ')) + '</p>' : '') +
+    '<ul class="mis-lista">' + ms.map(function (x) {
+      return '<li><label class="mis' + (x.feitaEm ? ' feita' : '') + '"><input type="checkbox" data-chave="' + esc(x.chave) + '"' + (x.feitaEm ? ' checked' : '') + '>' +
+        '<span class="mis-caixa" aria-hidden="true"></span><span class="mis-txt">' + esc(x.texto) + '</span>' +
+        '<span class="mis-pts">+' + PONTOS_MISSAO + '</span></label></li>';
+    }).join('') + '</ul>' +
+    (e.fecho ? '<p class="mis-fecho">' + esc(e.fecho) + '</p>' : '') +
+    '<div class="mis-pe">' + (e.professorNome ? 'Preparada por ' + esc(e.professorNome) : '') + (e.simulado ? (e.professorNome ? ' · ' : '') + esc(e.simulado) : '') + '</div></div>';
+}
+function painelMissoes(todas, atuais) {
+  if (!atuais.length) return '<h2>Suas missões</h2><p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui. ' +
+    'Cada missão cumprida vale pontos e conquistas.</p>';
+  var p = placarMissoes(todas, atuais);
+  return '<div class="mis-titulo"><h2>Suas missões</h2><span class="mut peq">Marque cada missão quando cumprir</span></div>' +
+    '<div class="mis-placar">' +
+    '<div class="mis-nivel"><span class="mis-selo"><b>' + p.nivel + '</b><small>nível</small></span><div><b>' + esc(p.nomeNivel) + '</b>' +
+    '<div class="mis-xp" role="progressbar" aria-valuenow="' + p.noNivel + '" aria-valuemin="0" aria-valuemax="' + PONTOS_NIVEL + '" aria-label="Pontos no nível"><i style="width:' + p.noNivel + '%"></i></div>' +
+    '<span class="mis-falta">' + p.pontos + ' pontos · faltam ' + (PONTOS_NIVEL - p.noNivel) + ' para o nível ' + (p.nivel + 1) + '</span></div></div>' +
+    '<div class="mis-num">' + icone('tempo') + '<b>' + p.sequencia + '</b><span>' + (p.sequencia === 1 ? 'dia seguido' : 'dias seguidos') + '</span></div>' +
+    '<div class="mis-num">' + icone('tarefas') + '<b>' + p.feitas + '</b><span>' + (p.feitas === 1 ? 'missão cumprida' : 'missões cumpridas') + '</span></div></div>' +
+    '<div class="mis-conq" aria-label="Conquistas">' + p.conquistas.map(function (c) {
+      return '<span class="conq' + (c[3] ? ' ok' : '') + '" title="' + esc(c[2]) + '">' + icone(c[0]) + '<span>' + esc(c[1]) + '</span></span>';
+    }).join('') + '</div>' +
+    '<p class="mis-regras mut peq">Cada missão vale ' + PONTOS_MISSAO + ' pontos. Cumpriu todas de uma disciplina? Ganha mais ' + BONUS_ESTRATEGIA + '. A cada ' + PONTOS_NIVEL + ' pontos, você sobe de nível.</p>' +
+    '<div class="mis-grupos">' + atuais.map(grupoMissoes).join('') + '</div>';
+}
+/** Liga as caixinhas. todas = todas as estratégias aprovadas (para o placar); atuais = as que aparecem (painel). */
+function ligarMissoes(raiz, todas, atuais) {
+  if (!raiz) return;
+  var noPainel = !!atuais;
+  $$('.mis input[type=checkbox]', raiz).forEach(function (cx) {
+    cx.onchange = function () {
+      var grupo = cx.closest('.mis-grupo'), id = grupo.getAttribute('data-id'), chave = cx.getAttribute('data-chave');
+      var e = todas.filter(function (x) { return x.id === id; })[0];
+      var mi = e && (e.missoes || []).filter(function (x) { return x.chave === chave; })[0];
+      if (!mi) return;
+      var antes = placarMissoes(todas, atuais), feitaAntes = mi.feitaEm;
+      mi.feitaEm = cx.checked ? (mi.feitaEm || hojeIso(0) + ' 00:00') : '';
+      var depois = placarMissoes(todas, atuais);
+      var desenhar = function () {
+        if (noPainel) { raiz.innerHTML = painelMissoes(todas, atuais); ligarMissoes(raiz, todas, atuais); }
+        else { grupo.outerHTML = grupoMissoes(e); ligarMissoes(raiz, todas); }
+      };
+      desenhar();
+      if (cx.checked) {
+        var ms = e.missoes, completa = ms.every(function (x) { return x.feitaEm; });
+        toast(depois.nivel > antes.nivel ? 'Você subiu para o nível ' + depois.nivel + ': ' + depois.nomeNivel + '!'
+          : completa ? 'Todas as missões de ' + e.disciplina + ' cumpridas! +' + (PONTOS_MISSAO + BONUS_ESTRATEGIA) + ' pontos'
+            : 'Missão cumprida! +' + PONTOS_MISSAO + ' pontos');
+      }
+      call('marcarMissao', { id: id, chave: chave, feita: cx.checked }).then(function (r) {
+        mi.feitaEm = r.feitas[chave] || '';
+      }).catch(function (err) {
+        mi.feitaEm = feitaAntes; desenhar(); toast(msgErro(err), true);
+      });
+    };
+  });
 }
 
 /** Liga os botões de OK/edição dentro de raiz. aoMudar() recarrega a tela. */
@@ -2927,7 +3265,7 @@ VIEWS.painelAluno = function (m) {
   carregando(m);
   return Promise.all([call('resultados'), call('listarEstrategias', { status: 'APROVADA' })]).then(function (r) {
     var rs = r[0], es = r[1];
-    var h = cabSaudacao('', 'Seus resultados nos simulados e as estratégias de estudo dos seus professores');
+    var h = cabSaudacao('', 'Seus resultados, suas missões de estudo e suas conquistas');
     if (!rs.length) {
       m.innerHTML = h + '<div class="card vazio">' + icone('evolucao', 'ic-vazio') + 'Você ainda não enviou nenhum cartão-resposta.' +
         '<p class="mut peq" style="margin:6px 0 12px">Depois de fazer um simulado, envie a foto do cartão em Meus simulados. O relatório e as estratégias aparecem aqui.</p>' +
@@ -2946,14 +3284,11 @@ VIEWS.painelAluno = function (m) {
     var vistas = {}, atuais = es.filter(function (e) { if (vistas[e.disciplina]) return false; vistas[e.disciplina] = true; return true; });
     h += proximoPasso(u0.porDisciplina, atuais.filter(function (e) { return e.resultadoId === u0.id; }), true).replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir-ancora="pa-est"');
     h += '<p class="mut peq" style="margin:-4px 0 16px">Nota final de 0 a 100, com os pesos das disciplinas na EsPCEx. Toque num relatório para ver a mediana de cada disciplina.</p>';
+    h += '<div class="card missoes" id="pa-est">' + painelMissoes(es, atuais) + '</div>';
     h += '<div class="grade-2 graficos"><div class="card graf-card"><h2>Evolução da nota</h2>' +
       '<p class="mut peq" style="margin-top:0">' + (rs.length < 2 ? 'Faça mais simulados para acompanhar a sua evolução.' : 'Nota final (0 a 100) em cada simulado.') + '</p>' +
       '<div id="g-evol"></div></div>' +
       '<div class="card graf-card"><h2>Desempenho por disciplina</h2><div id="g-disc"></div></div></div>';
-    h += '<div class="card" id="pa-est"><h2>Estratégias de estudo</h2>' + (atuais.length
-      ? '<p class="mut peq" style="margin-top:0">A estratégia mais recente de cada disciplina, aprovada pelo seu professor.</p><div class="est-lista">' +
-        atuais.map(function (e) { return blocoEstrategia(e, false); }).join('') + '</div>'
-      : '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas aparecem aqui.</p>') + '</div>';
     h += '<div class="card"><h2>Relatórios dos simulados</h2>' + rs.map(function (x, i) {
       return '<div class="clic rel-item" data-i="' + i + '">' + barra(x.simulado, x.notaFinal, num(x.notaFinal), 'var(--marca-600)') +
         '<div class="mut peq">Nota final · ' + x.acertos + '/' + x.total + ' acertos · ' + dataBr(x.criadoEm) + ' · ' +
@@ -2965,6 +3300,7 @@ VIEWS.painelAluno = function (m) {
           '<td class="peq">' + (x.porDisciplina || []).map(function (d) { return esc(d.disciplina) + ' ' + d.acertos + '/' + d.total; }).join(' · ') + '</td></tr>';
       }).join('') + '</table></div></details>';
     m.innerHTML = h;
+    ligarMissoes($('#pa-est'), es, atuais);
     graficoEvolucao($('#g-evol'), rs);
     graficoDisciplinas($('#g-disc'), rs);
     $$('.rel-item', m).forEach(function (d) { d.onclick = function () { ir('relatorio', { id: rs[+d.getAttribute('data-i')].id }); }; });
