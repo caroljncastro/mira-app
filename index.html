@@ -22,8 +22,13 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--marca-900); color: #fff;
     font: 400 15px/1.5 Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
-  #app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding-top: env(safe-area-inset-top); background: var(--marca-900); display: none; }
-  #app iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  /* O app ocupa só a área que o iPhone realmente desenha. A faixa da hora/bateria fica roxa;
+     se sobrar uma faixa embaixo (iPhone com o app na tela inicial), ela fica da cor do fundo do app. */
+  #app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding-top: env(safe-area-inset-top); background: #F7F5FA; display: none; }
+  #app::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--marca-900); }
+  html.com-app, html.com-app body { background: #F7F5FA; }
+  /* width 1px + min-width 100%: impede o iPhone de alargar o iframe até o tamanho do conteúdo */
+  #app iframe { width: 1px; min-width: 100%; height: 100%; border: 0; display: block; background: #fff; }
   body.abrindo #app { display: block; }
   body.abrindo #instalar { display: none; }
   #instalar { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -57,7 +62,6 @@
      Soma essa área; se sobrar, o excesso só fica fora da tela. */
   @media (display-mode: standalone) {
     #abertura { height: calc(100vh + env(safe-area-inset-top)); }
-    body.abrindo #app { height: calc(100vh + env(safe-area-inset-top)); }
   }
   #abertura video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
   .ab-btn { position: absolute; top: calc(14px + env(safe-area-inset-top)); height: 36px; padding: 0 14px; border-radius: 999px;
@@ -124,6 +128,7 @@
     f.setAttribute('allow', 'camera; clipboard-read; clipboard-write; fullscreen');
     document.getElementById('app').appendChild(f);
     document.body.classList.add('abrindo');
+    document.documentElement.classList.add('com-app');
     vinheta(comToque === true);
   }
 
@@ -171,7 +176,7 @@
     var topo = 0;
     try { var t = document.createElement('div'); t.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top)'; document.body.appendChild(t); topo = t.offsetHeight; t.remove(); } catch (e) { }
     var h = emPe ? Math.max(window.innerHeight + topo, screen.height, screen.width) : window.innerHeight;
-    ['abertura', 'app'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.height = h + 'px'; });
+    var ab = document.getElementById('abertura'); if (ab) ab.style.height = h + 'px'; // só a vinheta; o app fica na área visível
     document.documentElement.style.overflow = 'hidden';
   }
   alturaReal();
