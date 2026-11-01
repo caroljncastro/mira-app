@@ -117,11 +117,11 @@
 </div>
 
 <script>
+  var COM_VINHETA = false;
   var APP_URL = 'app.html'; // MIRA no Supabase (o endereço antigo do Google agora só leva até aqui)
   /** comToque: aberto por um toque no botão (aí o navegador deixa tocar com som) */
   function abrir(comToque) {
     if (document.body.classList.contains('abrindo')) return;
-    // o app carrega por trás enquanto a vinheta toca
     var f = document.createElement('iframe');
     f.src = APP_URL;
     f.title = 'MIRA';
@@ -129,7 +129,9 @@
     document.getElementById('app').appendChild(f);
     document.body.classList.add('abrindo');
     document.documentElement.classList.add('com-app');
-    vinheta(comToque === true);
+    // vinheta desligada (01/11/2026): a atual tem o logo antigo. Para religar, mude COM_VINHETA para true.
+    if (COM_VINHETA) vinheta(comToque === true);
+    else { var ab = document.getElementById('abertura'); if (ab) ab.remove(); }
   }
 
   function vinheta(comSom) {
