@@ -2952,9 +2952,9 @@ function cardEnvios(alvo, adm, recarregar) {
     var novos = es.filter(function (e) { return e.status === 'RECEBIDO'; }).length;
     alvo.innerHTML = '<details class="card envios"' + (novos ? ' open' : '') + '><summary><h2>' + (adm ? 'Arquivos dos professores' : 'Seus arquivos enviados') + '</h2>' +
       '<span class="mut peq">' + (novos ? novos + (novos === 1 ? ' esperando transcrição' : ' esperando transcrição') : es.length + ' enviado(s)') + '</span></summary>' +
-      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos dos professores”.</p>' : '') +
+      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos dos professores” e mande o código do envio.</p>' : '') +
       '<ul class="env-lista">' + es.map(function (e) {
-        return '<li><div><b>' + esc(e.arquivo) + '</b><small>' + (adm ? esc(e.autorNome) + ' · ' : '') + esc(e.disciplina) + ' · ' + esc(e.origem) + ' · ' + dataBr(e.criadoEm) +
+        return '<li><div><b>' + esc(e.arquivo) + '</b><small>' + (adm ? esc(e.autorNome) + ' · código ' + esc(e.id) + ' · ' : '') + esc(e.disciplina) + ' · ' + esc(e.origem) + ' · ' + dataBr(e.criadoEm) +
           (e.status === 'TRANSCRITO' && e.quantidade ? ' · ' + e.quantidade + (e.quantidade === 1 ? ' questão' : ' questões') : '') + '</small>' +
           (e.mensagem ? '<small>' + (e.status === 'PROBLEMA' ? '<b>Coordenação:</b> ' : '') + esc(e.mensagem) + '</small>' : '') + '</div>' +
           tag(STATUS_ENV, e.status) +
