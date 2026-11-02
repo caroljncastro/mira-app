@@ -27,9 +27,10 @@
     --verde-marca: #9ACC57;
     --grad-mira: linear-gradient(90deg, #63C4AF, #9ACC57);
     --grad-menu: linear-gradient(180deg, #51237E 0%, #3B1A5C 100%);
-    /* menu lateral por tipo de conta: aluno roxo (acima); professor petróleo (da família do turquesa); coordenação grafite (do cinza da marca) */
-    --menu-prof-700: #1E5B57; --menu-prof-900: #12403D;
-    --menu-adm-700: #3A3342;  --menu-adm-900: #221D28;
+    /* cor de cada tipo de conta (menu e fundo da página), das cores da marca:
+       aluno roxo (acima); professor turquesa (#63C4AF); coordenação verde (#9ACC57) */
+    --menu-prof-700: #1E5B57; --menu-prof-900: #12403D; --fundo-prof: #DDF1EC; --topo-prof: rgba(221, 241, 236, .92); --borda-prof: #BFE4DA;
+    --menu-adm-700: #3F5F1E;  --menu-adm-900: #2A4212; --fundo-adm: #E8F2D9;  --topo-adm: rgba(232, 242, 217, .92);  --borda-adm: #CFE4B2;
     --grad-menu-prof: linear-gradient(180deg, var(--menu-prof-700) 0%, var(--menu-prof-900) 100%);
     --grad-menu-adm: linear-gradient(180deg, var(--menu-adm-700) 0%, var(--menu-adm-900) 100%);
     --grad-destaque: radial-gradient(130% 120% at 0% 0%, #6A3A9E 0%, #51237E 42%, #2E1248 100%);
@@ -100,6 +101,15 @@
   body[data-perfil="PROFESSOR"] nav.menu button.ativo { color: var(--menu-prof-700); }
   body[data-perfil="ADM"] nav.menu { background: var(--grad-menu-adm); }
   body[data-perfil="ADM"] nav.menu button.ativo { color: var(--menu-adm-700); }
+  html:has(body[data-perfil="PROFESSOR"]), body[data-perfil="PROFESSOR"] { background: var(--fundo-prof); }
+  body[data-perfil="PROFESSOR"] .topo { background: var(--topo-prof); border-bottom-color: var(--borda-prof); }
+  html:has(body[data-perfil="ADM"]), body[data-perfil="ADM"] { background: var(--fundo-adm); }
+  body[data-perfil="ADM"] .topo { background: var(--topo-adm); border-bottom-color: var(--borda-adm); }
+  /* cartão de destaque do Início na cor da conta (é o que mais aparece no celular) */
+  body[data-perfil="PROFESSOR"] .destaque { background: radial-gradient(130% 120% at 0% 0%, #2B7A73 0%, var(--menu-prof-700) 42%, var(--menu-prof-900) 100%); }
+  body[data-perfil="PROFESSOR"] .destaque .anel-d > div { background: var(--menu-prof-900); }
+  body[data-perfil="ADM"] .destaque { background: radial-gradient(130% 120% at 0% 0%, #557A2B 0%, var(--menu-adm-700) 42%, var(--menu-adm-900) 100%); }
+  body[data-perfil="ADM"] .destaque .anel-d > div { background: var(--menu-adm-900); }
   .menu-perfil { display: inline-flex; align-self: flex-start; margin: -14px 10px 22px; padding: 3px 10px; border-radius: 999px;
     background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
   .conteudo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
