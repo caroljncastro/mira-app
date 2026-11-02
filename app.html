@@ -1350,6 +1350,8 @@ var LEITURAS = { me: 45, concursos: 86400, listarSimulados: 45, listarUsuarios: 
 var GUARDADO = {};
 function limparGuardado() { GUARDADO = {}; }
 function call(acao, dados) {
+  // "Ver como": a coordenação vê o app como um professor ou aluno (o servidor só deixa ler)
+  if (S.verComo) { var d2 = {}; Object.keys(dados || {}).forEach(function (k) { d2[k] = dados[k]; }); d2._verComo = S.verComo.id; dados = d2; }
   var seg = LEITURAS[acao];
   if (!seg) { limparGuardado(); return chamar(acao, dados).then(function (r) { limparGuardado(); return r; }); }
   var k = acao + '|' + JSON.stringify(dados || {}), g = GUARDADO[k];
@@ -1547,7 +1549,7 @@ function telaLogin(msg, aba) {
 
 function sair(expirou) {
   if (S.token && !expirou) callFn('logout', S.token).catch(function () {});
-  S.token = null; S.user = null; guardar('mira_token', null);
+  S.token = null; S.user = null; S.verComo = null; guardar('mira_token', null);
   document.body.removeAttribute('data-perfil');
   limparGuardado();
   telaLogin(expirou ? 'Sua sessão expirou. Entre novamente.' : null);
@@ -1596,7 +1598,9 @@ function iniciar() {
       '<div class="sino-lista" role="menu"></div></div>' +
       '<div class="usuario" id="usuario"><button aria-haspopup="true" aria-expanded="false">' + avatar(S.user) +
       '<span class="nome">' + esc(S.user.nome) + '<small>' + PERFIL_TXT[S.user.perfil] + '</small></span><span class="seta"></span></button>' +
-      '<div class="usuario-menu" role="menu"><button data-u="conta">Minha conta</button><hr><button data-u="sair" class="perigo">Sair</button></div></div></div></header>' +
+      '<div class="usuario-menu" role="menu">' + (S.verComo ? '<button data-u="voltar">Voltar à coordenação</button>'
+        : '<button data-u="conta">Minha conta</button>' + (S.user.perfil === 'ADM' ? '<button data-u="vercomo">Ver como professor ou aluno</button>' : '')) +
+      '<hr><button data-u="sair" class="perigo">Sair</button></div></div></div></header>' +
       '<div id="aviso-senha"></div><main id="main"></main></div></div>';
     ligarBusca();
     atualizarSino();
@@ -1608,7 +1612,11 @@ function iniciar() {
     };
     document.addEventListener('click', function () { um.classList.remove('aberto'); });
     $$('[data-u]', um).forEach(function (b) {
-      b.onclick = function () { um.classList.remove('aberto'); if (b.getAttribute('data-u') === 'sair') sair(false); else ir('conta'); };
+      b.onclick = function () {
+        um.classList.remove('aberto');
+        var o = b.getAttribute('data-u');
+        if (o === 'sair') sair(false); else if (o === 'vercomo') escolherVerComo(); else if (o === 'voltar') sairVerComo(); else ir('conta');
+      };
     });
     avisoSenha();
     ir(MENUS[S.user.perfil][0][0]);
@@ -1752,8 +1760,55 @@ function atualizarSino() {
 }
 
 /** Senha provisória: o usuário navega normalmente, mas vê a sugestão de criar a própria senha */
+// ---------------------------------------------------------------- ver como (coordenação)
+/** A coordenação escolhe um professor ou aluno e vê o MIRA como ele vê, sem gravar nada */
+function escolherVerComo() {
+  var md = modal(topoModal('Ver como') + '<p class="peq" style="margin-top:0">Veja o MIRA exatamente como um professor ou aluno vê. ' +
+    'Nada é gravado enquanto você estiver nesse modo.</p><div id="vc-corpo"><div class="carregando"><div class="giro"></div>Carregando…</div></div>');
+  call('listarUsuarios').then(function (us) {
+    var ativos = us.filter(function (u) { return u.ativo !== 'NAO' && (u.perfil === 'PROFESSOR' || u.perfil === 'ALUNO'); })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt'); });
+    var opcoes = function (perfil) {
+      return ativos.filter(function (u) { return u.perfil === perfil; }).map(function (u) {
+        return '<option value="' + esc(u.id) + '">' + esc(u.nome) + (u.turma ? ' · ' + esc(u.turma) : u.disciplinas ? ' · ' + esc(u.disciplinas) : '') + '</option>';
+      }).join('');
+    };
+    var op = function (perfil, rotulo) {
+      var lista = opcoes(perfil);
+      return '<div class="linha" style="align-items:flex-end"><label class="campo"><span>' + rotulo + '</span>' +
+        (lista ? '<select data-vc="' + perfil + '">' + lista + '</select>' : '<input type="text" disabled placeholder="Nenhum cadastrado">') + '</label>' +
+        '<button class="btn" style="flex:none;margin-bottom:14px" data-vc-ir="' + perfil + '"' + (lista ? '' : ' disabled') + '>Ver como</button></div>';
+    };
+    $('#vc-corpo', md.el).innerHTML = op('PROFESSOR', 'Professor') + op('ALUNO', 'Aluno');
+    $$('[data-vc-ir]', md.el).forEach(function (b) {
+      b.onclick = function () {
+        var sel = $('[data-vc="' + b.getAttribute('data-vc-ir') + '"]', md.el);
+        var u = ativos.filter(function (x) { return x.id === sel.value; })[0];
+        md.fechar(); entrarVerComo(u);
+      };
+    });
+  }).catch(function (e) { $('#vc-corpo', md.el).innerHTML = caixaErro(e); });
+}
+function entrarVerComo(u) {
+  S.verComo = { id: u.id, nome: u.nome, perfil: u.perfil };
+  limparGuardado();
+  iniciar().then(function () { toast('Vendo como ' + u.nome + '. Nada é gravado neste modo.'); });
+}
+function sairVerComo() {
+  S.verComo = null;
+  limparGuardado();
+  iniciar();
+}
+
 function avisoSenha() {
   var box = $('#aviso-senha'); if (!box) return;
+  if (S.verComo) {
+    box.innerHTML = '<div class="aviso azul aviso-senha nao-imprimir"><div><b>Vendo como ' + esc(S.verComo.nome) + '</b> (' +
+      (S.verComo.perfil === 'ALUNO' ? 'aluno' : 'professor') + '). Nada é gravado neste modo.</div>' +
+      '<div class="acoes"><button class="btn peq" id="vc-voltar">Voltar à coordenação</button></div></div>';
+    $('#vc-voltar').onclick = sairVerComo;
+    return;
+  }
   var adiado = false;
   try { adiado = sessionStorage.getItem('mira_senha_depois') === S.user.id; } catch (e) { }
   if (!S.user.trocarSenha || adiado || S.rota === 'conta') { box.innerHTML = ''; return; }
@@ -2917,9 +2972,13 @@ function verQuestao(q, aoMudar) {
       '<div class="linha"><label class="campo"><span>Gabarito final</span><select id="v-gab">' +
       c.alternativas.map(function (l) { return '<option' + (l === gabVersao ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
       '<label class="campo" style="flex:3"><span>Observação ao professor (para devolução)</span><input type="text" id="v-obs" value="' + esc(q.observacaoAdm) + '"></label></div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="v-curar">' + (cur ? 'Refazer curadoria automática' : 'Fazer curadoria automática') + '</button>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="v-edit">Editar questão</button>' +
+      '<button class="btn" id="v-curar">' + (cur ? 'Refazer curadoria automática' : 'Fazer curadoria automática') + '</button>' +
       '<button class="btn perigo" id="v-dev">Devolver ao professor</button>' +
       '<button class="btn ok" id="v-apr" style="margin-left:auto">Aprovar para simulados</button></div></div>';
+    if (cur) h += '<p class="mut peq" style="text-align:right;margin:6px 0 0">Ao editar, a coordenação mantém a curadoria e a situação da questão.</p>';
+  } else if (q.emSimulado && q.status !== 'DEVOLVIDA') {
+    h += '<p class="mut peq" style="text-align:right;margin-top:12px">Esta questão já está num simulado. Para mudar, peça à coordenação que a devolva a você.</p>';
   } else if (q.status !== 'APROVADA') {
     h += '<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="v-edit">Editar a questão eu mesmo(a)</button></div>' +
       (cur ? '<p class="mut peq" style="text-align:right">Editar reinicia a curadoria desta questão.</p>' : '');
