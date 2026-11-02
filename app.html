@@ -361,6 +361,26 @@
 
   /* questões */
   .q-lista { background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); overflow: hidden; margin-bottom: 16px; }
+  .cal-lista { list-style: none; margin: 0 0 12px; padding: 0; }
+  .cal-lista li { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--n-200); }
+  .cal-lista li:last-child { border-bottom: 0; }
+  .cal-data { min-width: 52px; text-align: center; }
+  .cal-data b { display: block; font-size: 17px; }
+  .cal-data span { font-size: 12px; color: var(--n-500); text-transform: uppercase; }
+  .cal-info { flex: 1; min-width: 0; }
+  .cal-info b, .cal-info small { display: block; }
+  .cal-info small { color: var(--n-500); font-size: 13px; }
+  .cal-prox .cal-data b, .cal-prox .cal-info b { color: var(--marca-600); }
+  .cal-quando { white-space: nowrap; }
+  .cal-passadas summary { cursor: pointer; margin-bottom: 6px; }
+  .cal-ed { display: grid; grid-template-columns: 150px 1fr 140px 120px auto; gap: 8px; align-items: end; border-bottom: 1px solid var(--n-200); padding-bottom: 8px; margin-bottom: 8px; }
+  .cal-ed .campo { margin: 0; }
+  .cal-ed .ce-rem { margin-bottom: 4px; }
+  @media (max-width: 700px) { .cal-ed { grid-template-columns: 1fr 1fr; } .cal-ed .ce-rem { grid-column: span 2; justify-self: start; } }
+  .prox-sim { display: flex; align-items: center; gap: 12px; }
+  .prox-sim > .ic { width: 28px; height: 28px; color: var(--marca-600); flex: none; }
+  .prox-sim b, .prox-sim span { display: block; }
+  .prox-sim span { color: var(--n-500); font-size: 14px; }
   .grupo-q { margin-bottom: 10px; }
   .grupo-q > summary { cursor: pointer; padding: 10px 4px; font-size: 15px; }
   .grupo-q > summary .tag { margin-left: 6px; vertical-align: middle; }
@@ -3417,10 +3437,84 @@ function excluirSimulado(s, depois) {
   };
 }
 
+// ---------------------------------------------------------------- calendário de simulados
+var DIAS_CAL = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+/** Dias entre hoje e a data (AAAA-MM-DD), pelo calendário (sem horas) */
+function diasAte(iso, hoje) {
+  var a = new Date((hoje || new Date().toISOString().slice(0, 10)) + 'T12:00:00'), b = new Date(iso + 'T12:00:00');
+  return Math.round((b - a) / 86400000);
+}
+function quandoTxt(n) { return n === 0 ? 'hoje' : n === 1 ? 'amanhã' : n > 1 ? 'em ' + n + ' dias' : 'há ' + (-n) + (n === -1 ? ' dia' : ' dias'); }
+function diaSemana(iso) { return DIAS_CAL[new Date(iso + 'T12:00:00').getDay()]; }
+function rotuloDiaProva(d) { return d === '1' ? '1º dia' : d === '2' ? '2º dia' : 'os dois dias'; }
+
+/** Cartão do calendário (Simulados): a próxima data em destaque, as futuras em lista e as passadas recolhidas */
+function cardCalendario(alvo, adm) {
+  if (!alvo) return;
+  call('calendario').then(function (c) {
+    var futuras = c.datas.filter(function (x) { return x.data >= c.hoje; }), passadas = c.datas.filter(function (x) { return x.data < c.hoje; });
+    var linha = function (x, prox) {
+      var n = diasAte(x.data, c.hoje);
+      return '<li' + (prox ? ' class="cal-prox"' : '') + '><div class="cal-data"><b>' + x.data.slice(8, 10) + '/' + x.data.slice(5, 7) + '</b><span>' + diaSemana(x.data) + '</span></div>' +
+        '<div class="cal-info"><b>' + esc(x.titulo) + '</b><small>' + rotuloDiaProva(x.dia) + (x.turmas ? ' · turmas ' + esc(x.turmas) : '') + '</small></div>' +
+        '<span class="mut peq cal-quando">' + quandoTxt(n) + '</span></li>';
+    };
+    alvo.innerHTML = '<div class="card cal-card"><div class="ini-cab"><h2>' + icone('calendario') + 'Calendário de simulados</h2>' +
+      (c.proximo ? '<span class="mut peq">Próximo ' + quandoTxt(diasAte(c.proximo.data, c.hoje)) + '</span>' : '') + '</div>' +
+      (c.datas.length ? (futuras.length ? '<ul class="cal-lista">' + futuras.map(function (x, i) { return linha(x, i === 0); }).join('') + '</ul>'
+        : '<p class="mut peq" style="margin:0 0 10px">Nenhuma data futura no calendário.</p>') +
+        (passadas.length ? '<details class="cal-passadas"><summary class="mut peq">Datas que já passaram (' + passadas.length + ')</summary><ul class="cal-lista">' +
+          passadas.slice().reverse().map(function (x) { return linha(x, false); }).join('') + '</ul></details>' : '')
+        : '<p class="mut peq" style="margin:0 0 10px">' + (adm ? 'Cadastre as datas dos simulados do ano. O MIRA usa a próxima data para organizar o estudo dos alunos.' : 'A coordenação ainda não cadastrou as datas dos simulados.') + '</p>') +
+      (adm ? '<button class="btn" id="cal-editar">' + (c.datas.length ? 'Editar calendário' : 'Cadastrar datas') + '</button>' : '') + '</div>';
+    if ($('#cal-editar', alvo)) $('#cal-editar', alvo).onclick = function () { formCalendario(c.datas, function () { cardCalendario(alvo, adm); }); };
+  }).catch(function () { alvo.innerHTML = ''; });
+}
+
+/** Coordenação: edita todas as datas do ano de uma vez */
+function formCalendario(datas, depois) {
+  var linhaHtml = function (x) {
+    x = x || {};
+    return '<div class="cal-ed">' +
+      '<label class="campo"><span>Data</span><input type="date" class="ce-data" value="' + esc(x.data || '') + '" required></label>' +
+      '<label class="campo"><span>Nome</span><input type="text" class="ce-tit" maxlength="80" placeholder="Ex.: Simulado 3" value="' + esc(x.titulo || '') + '"></label>' +
+      '<label class="campo"><span>Prova</span><select class="ce-dia">' + [['', 'Os dois dias'], ['1', '1º dia'], ['2', '2º dia']].map(function (o) {
+        return '<option value="' + o[0] + '"' + (String(x.dia || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
+      '<label class="campo"><span>Turmas</span><input type="text" class="ce-tur" placeholder="Todas" value="' + esc(x.turmas || '') + '"></label>' +
+      '<button type="button" class="btn peq perigo ce-rem" aria-label="Remover esta data">Remover</button>' +
+      '<input type="hidden" class="ce-id" value="' + esc(x.id || '') + '"></div>';
+  };
+  var md = modal(topoModal('Calendário de simulados') +
+    '<p class="mut peq" style="margin-top:0">Cadastre as datas de todos os simulados do ano. Deixe "Turmas" em branco quando o simulado for para todas. ' +
+    'O MIRA usa a próxima data para liberar o teste final das listas de estudo de cada aluno.</p>' +
+    '<form id="fcal"><div id="ce-linhas">' + (datas.length ? datas.map(linhaHtml).join('') : linhaHtml({ titulo: 'Simulado 1' })) + '</div>' +
+    '<button type="button" class="btn peq" id="ce-mais">+ Adicionar data</button>' +
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" class="btn fechar">Cancelar</button>' +
+    '<button class="btn pri" id="ce-salvar">Salvar calendário</button></div></form>', true);
+  var caixa = $('#ce-linhas', md.el);
+  var ligar = function () { $$('.ce-rem', caixa).forEach(function (b) { b.onclick = function () { b.closest('.cal-ed').remove(); }; }); };
+  ligar();
+  $('#ce-mais', md.el).onclick = function () {
+    var n = $$('.cal-ed', caixa).length + 1;
+    caixa.insertAdjacentHTML('beforeend', linhaHtml({ titulo: 'Simulado ' + n }));
+    ligar();
+    $$('.ce-data', caixa).slice(-1)[0].focus();
+  };
+  $('#fcal', md.el).onsubmit = function (e) {
+    e.preventDefault();
+    var lista = $$('.cal-ed', caixa).map(function (l) {
+      return { id: $('.ce-id', l).value, data: $('.ce-data', l).value, titulo: $('.ce-tit', l).value, dia: $('.ce-dia', l).value, turmas: $('.ce-tur', l).value };
+    });
+    ocupado($('#ce-salvar', md.el), 'Salvando…', function () { return call('salvarCalendario', { datas: lista }); })
+      .then(function (r) { md.fechar(); toast('Calendário salvo: ' + r.datas.length + (r.datas.length === 1 ? ' data.' : ' datas.')); if (depois) depois(); }).catch(function () {});
+  };
+}
+
 VIEWS.simulados = function (m, p) {
   var adm = S.user.perfil === 'ADM';
   m.innerHTML = cabPag('Simulados', adm ? 'Provas no padrão EsPCEx, com caderno, cartão-resposta e gabarito comentado' : 'Simulados das suas turmas: caderno de prova e gabarito comentado',
-    adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="lista"></div>';
+    adm ? '<button class="btn pri" id="novo">+ Novo simulado</button>' : '') + '<div id="cal"></div><div id="lista"></div>';
+  cardCalendario($('#cal'), adm);
   if (adm) $('#novo').onclick = function () { formSimulado(carregar); };
   var verArquivados = false;
   var carregar = function () {
@@ -3876,7 +3970,8 @@ function escolherAluno(s) {
 
 // ---------------------------------------------------------------- aluno: simulados
 VIEWS.meus = function (m) {
-  m.innerHTML = cabPag('Simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="lista"></div><div id="evolucao"></div>';
+  m.innerHTML = cabPag('Simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="lista"></div><div id="cal"></div><div id="evolucao"></div>';
+  cardCalendario($('#cal'), false);
   var l = $('#lista'); carregando(l);
   return Promise.all([call('listarSimulados'), call('resultados')]).then(function (rr) {
     var ss = rr[0], rs = rr[1], notaDe = {};
@@ -5340,7 +5435,14 @@ VIEWS.painelAluno = function (m) {
       '<button class="btn" data-ir="edital">Abrir o edital</button></div>';
     h += '<div class="grade-2 ini-cards">' + cardMis + cardEd + '</div>';
     h += cardCiclo(cicloMissoes(rs, es));
+    h += '<div id="ini-cal"></div>';
     m.innerHTML = h;
+    call('calendario').then(function (c) {
+      var alvo = $('#ini-cal'); if (!alvo || !c.proximo) return;
+      var x = c.proximo, n = diasAte(x.data, c.hoje);
+      alvo.innerHTML = '<div class="card prox-sim">' + icone('calendario') + '<div><b>Próximo simulado ' + quandoTxt(n) + '</b>' +
+        '<span>' + esc(x.titulo) + ' · ' + diaSemana(x.data) + ', ' + dataBr(x.data).slice(0, 5) + ' · ' + rotuloDiaProva(x.dia) + '</span></div></div>';
+    }).catch(function () {});
     ligarIr(m);
     var deNovo = function (params) { var y = window.scrollY; ir('painel', params).then(function () { window.scrollTo(0, y); }); };
     $$('.dia-op', m).forEach(function (b) {
