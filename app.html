@@ -634,6 +634,21 @@
   .s-rep input { margin-top: 3px; }
   .s-temas ul { margin: 4px 0 0; padding-left: 18px; }
   .mis-quando { flex: none; font-size: 12px; color: var(--n-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  /* Sua semana: tempo de estudo e missões que cabem nele */
+  .semana-cx { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--n-200); border-radius: var(--r-ctl); margin-bottom: 14px; }
+  .semana-cx b { display: block; font-size: 15px; }
+  .semana-cx span { display: block; font-size: 13.5px; color: var(--n-500); }
+  .semana-cx .mis-mini { margin-top: 8px; }
+  .semana-cx .btn { flex: none; }
+  .mis-faixa .mis-f-min { display: block; font-style: normal; font-size: 12px; font-weight: 400; opacity: .85; margin-top: 2px; text-transform: none; letter-spacing: 0; }
+  .mis-prox { margin-top: 14px; border-top: 1px solid var(--n-200); padding-top: 10px; }
+  .mis-prox summary { cursor: pointer; font-weight: 600; color: var(--marca-700); }
+  .mis-prox ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .mis-prox li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--n-200); font-size: 14px; }
+  .mis-prox li small { grid-column: 1 / -1; font-size: 12px; color: var(--n-500); }
+  .mis-prox li em { font-style: normal; font-size: 12.5px; color: var(--n-500); white-space: nowrap; }
+  #mis-mais { margin-top: 10px; }
+  @media (max-width: 520px) { .semana-cx { flex-direction: column; align-items: stretch; } }
   .mis-vazio { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--r-card); background: var(--marca-50); margin-bottom: 14px; }
   .mis-vazio .ic { width: 28px; height: 28px; color: var(--marca-700); flex: none; }
   .mis-vazio b { display: block; color: var(--marca-700); }
@@ -3919,12 +3934,16 @@ function cardComoFoi(d) {
     '</div>';
 }
 /** Professor e coordenação: o que o aluno disse, questão a questão */
+function rotinaTxt(r) {
+  return r ? '<p class="mut peq" style="margin:0 0 8px">Tempo de estudo declarado: <b>' + String(r.horas).replace('.', ',') + ' h por semana</b> (' +
+    r.dias.map(function (x) { return ['', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'][x]; }).join(', ') + '). As missões dele seguem esse tempo.</p>' : '';
+}
 function cardComoFoiProfessor(d) {
   var p = d.pesquisa;
-  if (!p) return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2><p class="mut" style="margin:0">O aluno ainda não respondeu a pesquisa (ela é opcional).</p></div>';
+  if (!p) return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2>' + rotinaTxt(d.aluno.rotina) + '<p class="mut" style="margin:0">O aluno ainda não respondeu a pesquisa (ela é opcional).</p></div>';
   var conferir = p.itens.filter(function (x) { return x.conferir; }).length;
   var sit = { errada: 'Errou', branco: 'Em branco', dupla: 'Rasurada', certa: 'Acertou' };
-  return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2>' +
+  return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2>' + rotinaTxt(d.aluno.rotina) +
     '<p class="mut peq" style="margin-top:0">O que o aluno disse sobre cada questão, em ' + dataBr(p.em) + '.' +
     (conferir ? ' <b>Conferir</b> = ele disse que foi tempo, atenção ou pegadinha, mas o mesmo erro de conceito se repete: provavelmente é conteúdo.' : '') + '</p>' +
     resumoMotivos(p.itens) +
@@ -4426,31 +4445,121 @@ function placarHtml(p) {
     ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + '. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
 }
 
+// ---------------------------------------------------------------- tempo de estudo (Sua semana)
+var DIAS_SEMANA = ['', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+function fmtMin(m) { m = Math.round(m || 0); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : ''); }
+function chaveMais() { return 'mira_mais_' + S.user.id + '_' + semanaDe(hojeIso(0)); }
+function lerMais() { try { return Number(localStorage.getItem(chaveMais())) || 0; } catch (e) { return 0; } }
+function somarMais(n) { try { localStorage.setItem(chaveMais(), String(lerMais() + n)); } catch (e) { } }
+/**
+ * Fila da semana: as missões que cabem no tempo de estudo do aluno, em ordem de prioridade
+ * (revisões espaçadas que chegaram, estratégia de prova e o resto alternando as disciplinas, da mais fraca para a mais forte).
+ * Sem tempo cadastrado, todas as prontas entram. As agendadas para depois ficam em "Próximas".
+ * { itens: [{ e, x }], fila: { 'id|chave': true }, prox: [{ e, x }], usado, orcamento, minutosFila, semRotina, esgotou }
+ */
+function filaDaSemana(atuais) {
+  var hoje = hojeIso(0), semana = semanaDe(hoje), r = S.user.rotina, pend = [], usado = 0;
+  atuais.forEach(function (e) {
+    (e.missoes || []).forEach(function (x) {
+      if (x.feitaEm) { if (semanaDe(diaDe(x.feitaEm)) === semana) usado += x.minutos || 10; return; }
+      pend.push({ e: e, x: x });
+    });
+  });
+  var futuras = pend.filter(function (it) { return it.x.liberaEm && it.x.liberaEm > hoje; });
+  var prontas = pend.filter(function (it) { return !(it.x.liberaEm && it.x.liberaEm > hoje); });
+  var rev = prontas.filter(function (it) { return it.x.liberaEm; });
+  var prova = prontas.filter(function (it) { return !it.x.liberaEm && it.x.prova; });
+  var resto = prontas.filter(function (it) { return !it.x.liberaEm && !it.x.prova; });
+  var ordemE = atuais.slice().sort(function (a, b) { return ((a.desempenho || {}).pct || 0) - ((b.desempenho || {}).pct || 0); }).map(function (e) { return e.id; });
+  var porE = {}, rr = [], andou = true;
+  resto.forEach(function (it) { (porE[it.e.id] = porE[it.e.id] || []).push(it); });
+  while (andou) { andou = false; ordemE.forEach(function (id) { if (porE[id] && porE[id].length) { rr.push(porE[id].shift()); andou = true; } }); }
+  var ordem = rev.concat(prova, rr), fila = {}, itens = [], prox = [], soma = 0;
+  var orc = r ? Math.round(Number(r.horas) * 60) : 0, resta = Math.max(0, orc - usado), extra = lerMais();
+  ordem.forEach(function (it) {
+    var cabe = !r || soma < resta;
+    if (!cabe && extra > 0) { extra--; cabe = true; }
+    if (cabe) { fila[it.e.id + '|' + it.x.chave] = true; itens.push(it); soma += it.x.minutos || 10; } else prox.push(it);
+  });
+  return { itens: itens, fila: fila, prox: prox.concat(futuras), maisPossivel: prox.length > 0, usado: usado, orcamento: orc,
+    minutosFila: soma, semRotina: !r, esgotou: !!r && resta === 0 };
+}
+/** Caixa "Sua semana": o tempo do aluno, quanto já fez e quanto falta */
+function semanaHtml(f) {
+  var r = S.user.rotina;
+  if (!r) return '<div class="semana-cx"><div style="flex:1"><b>Quanto tempo você tem para estudar?</b><span>Diga suas horas por semana: o MIRA mostra só as missões que cabem nelas.</span></div>' +
+    '<button class="btn peq" id="rot-def">Definir meu tempo</button></div>';
+  var pct = f.orcamento ? Math.min(100, Math.round(100 * f.usado / f.orcamento)) : 0;
+  return '<div class="semana-cx"><div style="flex:1"><b>Sua semana: ' + String(r.horas).replace('.', ',') + ' h · ' + r.dias.map(function (d) { return DIAS_SEMANA[d]; }).join(', ') + '</b>' +
+    '<span>' + (f.esgotou ? 'Você já usou o tempo desta semana. Ótimo trabalho!' : 'Para esta semana: ' + f.itens.length + (f.itens.length === 1 ? ' missão' : ' missões') + ', cerca de ' + fmtMin(f.minutosFila) + '.') +
+    ' Feito: ' + fmtMin(f.usado) + ' de ' + fmtMin(f.orcamento) + '.</span>' +
+    '<span class="mis-mini" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Tempo da semana"><i style="width:' + pct + '%"></i></span></div>' +
+    '<button class="btn peq" id="rot-def">Mudar</button></div>';
+}
+/** Próximas missões (recolhidas) e o botão "Quero mais" */
+function proximasHtml(f) {
+  if (!f.prox.length) return '';
+  var hoje = hojeIso(0);
+  return '<details class="mis-prox"><summary>Próximas missões (' + f.prox.length + ')</summary><ul>' + f.prox.map(function (it) {
+      var depois = it.x.liberaEm && it.x.liberaEm > hoje;
+      return '<li><small>' + esc(it.e.disciplina) + '</small><span>' + esc(it.x.texto) + '</span><em>' + (depois ? 'a partir de ' + dataBr(it.x.liberaEm) : fmtMin(it.x.minutos)) + '</em></li>';
+    }).join('') + '</ul></details>' +
+    (f.maisPossivel ? '<button class="btn peq" id="mis-mais">Quero mais missões</button>' : '');
+}
+/** Tempo de estudo: horas por semana e dias */
+function formRotina(depois) {
+  var r = S.user.rotina || { horas: 5, dias: [1, 2, 3, 4, 5] };
+  var md = modal(topoModal('Seu tempo de estudo') +
+    '<p class="peq" style="margin-top:0">Quantas horas por semana você consegue estudar? O MIRA mostra só as missões que cabem nesse tempo. ' +
+    'As outras ficam guardadas em "Próximas", e você pode pedir mais quando quiser.</p>' +
+    '<label class="campo" style="max-width:220px"><span>Horas por semana</span><input type="number" id="rot-h" min="1" max="60" step="0.5" value="' + r.horas + '"></label>' +
+    '<div class="campo"><span class="mut peq" style="font-weight:600">Dias em que estuda</span><div class="origem-ops">' +
+    [1, 2, 3, 4, 5, 6, 7].map(function (d) {
+      return '<label class="origem-op"><input type="checkbox" value="' + d + '"' + (r.dias.indexOf(d) >= 0 ? ' checked' : '') + '> ' + DIAS_SEMANA[d] + '</label>';
+    }).join('') + '</div></div>' +
+    '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:8px"><button class="btn fechar" style="flex:none">Cancelar</button>' +
+    '<button class="btn pri" id="rot-ok" style="flex:none">Salvar meu tempo</button></div>');
+  $('#rot-ok', md.el).onclick = function () {
+    var dias = $$('.origem-op input:checked', md.el).map(function (x) { return Number(x.value); });
+    ocupado(this, 'Salvando…', function () { return call('salvarRotina', { horas: Number($('#rot-h', md.el).value), dias: dias }); }).then(function (res) {
+      S.user.rotina = res.rotina; md.fechar(); toast('Tempo salvo. Suas missões já seguem o seu ritmo.'); if (depois) depois();
+    }).catch(function () {});
+  };
+}
+
 var MIS_ABERTA = null; // disciplina aberta na tela Missões (uma por vez)
-/** Disciplinas recolhidas, cada uma com as missões que faltam em faixas coloridas (toque = cumprida) */
-function listaMissoes(atuais) {
-  var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
+/** Disciplinas recolhidas, cada uma com as missões da semana em faixas coloridas (toque = cumprida) */
+function listaMissoes(atuais, f) {
+  f = f || filaDaSemana(atuais);
+  var naFila = function (e, x) { return !x.feitaEm && f.fila[e.id + '|' + x.chave]; };
+  var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return naFila(e, x); }); });
   if (!atuais.length) return '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui.</p>';
   if (MIS_ABERTA === null || !pend.some(function (e) { return e.disciplina === MIS_ABERTA; })) MIS_ABERTA = pend.length ? pend[0].disciplina : '';
+  var temPend = atuais.some(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
   var cor = 0;
   return (pend.length ? '<p class="mut peq mis-dica">Toque numa disciplina para ver as missões. Cumpriu? Toque na missão.</p>'
-      : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>As próximas chegam com o próximo simulado. O sino avisa.</span></div></div>') +
+      : !temPend ? '<div class="mis-vazio">' + icone('conquista') + '<div><b>Todas as missões cumpridas!</b><span>As próximas chegam com o próximo simulado. O sino avisa.</span></div></div>'
+        : '<div class="mis-vazio">' + icone('conquista') + '<div><b>Missões da semana cumpridas!</b><span>As outras estão em Próximas. Quer adiantar? Toque em Quero mais missões.</span></div></div>') +
     '<div class="mis-discs">' + atuais.map(function (e) {
-      var ms = e.missoes || [], faltam = ms.filter(function (x) { return !x.feitaEm; }), f = ms.length - faltam.length;
-      var pct = ms.length ? Math.round(100 * f / ms.length) : 0, completa = !faltam.length, aberta = !completa && MIS_ABERTA === e.disciplina;
+      var ms = e.missoes || [], faltam = ms.filter(function (x) { return naFila(e, x); }), f2 = ms.filter(function (x) { return x.feitaEm; }).length;
+      var depois = ms.length - f2 - faltam.length;
+      var pct = ms.length ? Math.round(100 * f2 / ms.length) : 0, completa = f2 === ms.length, semAgora = !completa && !faltam.length;
+      var aberta = faltam.length && MIS_ABERTA === e.disciplina;
       return '<section class="mis-disc' + (completa ? ' completa' : '') + '" data-id="' + esc(e.id) + '">' +
-        '<button type="button" class="mis-disc-cab" data-disc="' + esc(e.disciplina) + '" aria-expanded="' + (aberta ? 'true' : 'false') + '"' + (completa ? ' disabled' : '') + '>' +
+        '<button type="button" class="mis-disc-cab" data-disc="' + esc(e.disciplina) + '" aria-expanded="' + (aberta ? 'true' : 'false') + '"' + (faltam.length ? '' : ' disabled') + '>' +
         '<span class="mis-disc-txt"><span class="mis-disc-lin"><b>' + esc(e.disciplina) + '</b><span class="mis-cont">' +
-        (completa ? icone('conquista') + 'Completa' : f + ' de ' + ms.length) + '</span></span>' +
+        (completa ? icone('conquista') + 'Completa' : semAgora ? depois + ' em Próximas' : f2 + ' de ' + ms.length) + '</span></span>' +
         '<span class="mis-mini"><i style="width:' + pct + '%"></i></span></span>' +
-        (completa ? '' : '<span class="mis-seta" aria-hidden="true"></span>') + '</button>' +
+        (faltam.length ? '<span class="mis-seta" aria-hidden="true"></span>' : '') + '</button>' +
         (aberta ? '<div class="mis-faixas">' + faltam.map(function (x) {
           var c = cor++ % 3;
           var hoje = ehMissaoDoDia(e, x);
           return '<button type="button" class="mis-faixa c' + c + '" data-chave="' + esc(x.chave) + '" aria-label="Cumprir missão: ' + esc(x.texto) + (hoje ? ' (missão do dia)' : '') + '">' +
-            '<span class="mis-f-txt">' + (hoje ? '<em class="mis-hoje">Missão do dia</em>' : '') + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + '<span>' + esc(x.texto) + '</span></span>' +
+            '<span class="mis-f-txt">' + (hoje ? '<em class="mis-hoje">Missão do dia</em>' : '') + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + '<span>' + esc(x.texto) + '</span>' +
+            '<i class="mis-f-min">cerca de ' + fmtMin(x.minutos) + '</i></span>' +
             '<span class="mis-f-ok" aria-hidden="true"></span><span class="mis-f-pts">+' + PONTOS_MISSAO + '</span></button>';
-        }).join('') + (e.professorNome ? '<p class="mis-pe">Preparadas por ' + esc(e.professorNome) + (e.simulado ? ' · ' + esc(e.simulado) : '') + '</p>' : '') + '</div>' : '') +
+        }).join('') + (depois ? '<p class="mis-pe">Mais ' + depois + ' desta disciplina em Próximas.</p>' : '') +
+          (e.professorNome ? '<p class="mis-pe">Preparadas por ' + esc(e.professorNome) + (e.simulado ? ' · ' + esc(e.simulado) : '') + '</p>' : '') + '</div>' : '') +
         '</section>';
     }).join('') + '</div>';
 }
@@ -4616,7 +4725,8 @@ function ligarTelaMissoes(m, es, rs) {
   var desenhar = function () {
     var y = window.scrollY, histAberto = !!$('.mis-hist[open]', m);
     $('#mis-placar', m).innerHTML = placarHtml(placarMissoes(es, rs));
-    $('#mis-lista', m).innerHTML = listaMissoes(atuais);
+    var f = filaDaSemana(atuais);
+    $('#mis-lista', m).innerHTML = semanaHtml(f) + listaMissoes(atuais, f) + proximasHtml(f);
     $('#mis-hist', m).innerHTML = historicoMissoes(es);
     if (histAberto && $('.mis-hist', m)) $('.mis-hist', m).open = true;
     window.scrollTo(0, y);
@@ -4640,6 +4750,8 @@ function ligarTelaMissoes(m, es, rs) {
     else feito();
   };
   var ligar = function () {
+    if ($('#rot-def', m)) $('#rot-def', m).onclick = function () { formRotina(desenhar); };
+    if ($('#mis-mais', m)) $('#mis-mais', m).onclick = function () { somarMais(3); desenhar(); toast('Mais missões nesta semana. Bom estudo!'); };
     $$('.mis-disc-cab', m).forEach(function (b) {
       b.onclick = function () {
         var d = b.getAttribute('data-disc');
@@ -4879,8 +4991,7 @@ VIEWS.painelAluno = function (m) {
       .replace('data-ir-ancora="rel-questoes"', 'data-ir-rel="1"').replace('data-ir-ancora="rel-est"', 'data-ir="missoes"');
 
     // missões: a missão do dia (o aluno escolhe uma para hoje)
-    var p = placarMissoes(es, rs), pend = [];
-    atuais.forEach(function (e) { (e.missoes || []).forEach(function (x) { if (!x.feitaEm) pend.push({ e: e, x: x }); }); });
+    var p = placarMissoes(es, rs), pend = filaDaSemana(atuais).itens; // só as que cabem no tempo da semana
     var md = lerMissaoDoDia(), escolhida = null;
     if (md) es.forEach(function (e) { if (e.id === md.id) (e.missoes || []).forEach(function (x) { if (x.chave === md.chave) escolhida = { e: e, x: x }; }); });
     var trocando = !!S.params.trocarDia;
