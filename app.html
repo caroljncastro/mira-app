@@ -282,6 +282,11 @@
   .envios summary h2 { margin: 0; }
   .env-lista { list-style: none; margin: 10px 0 0; padding: 0; }
   .env-lista li { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--n-200); flex-wrap: wrap; }
+  .historico { margin-top: 12px; }
+  .historico summary { cursor: pointer; list-style: none; }
+  .lista-hist { list-style: none; margin: 8px 0 0; padding: 0; }
+  .lista-hist li { padding: 8px 0; border-bottom: 1px solid var(--n-200); font-size: 14px; }
+  .lista-hist li:last-child { border-bottom: 0; }
   .env-lista li > div { flex: 1; min-width: 200px; }
   .env-lista small { display: block; font-size: 12.5px; color: var(--n-500); margin-top: 2px; }
   /* escolha do tema de redação do simulado */
@@ -2583,6 +2588,9 @@ function formQuestao(q) {
         '<span class="alt-ok">✔ correta</span></div>';
     }).join('') + '</div>' +
     '<div class="campo"><span class="mut peq" style="font-weight:600">Prévia (como o aluno vê)</span><div id="q-previa" class="previa"></div></div>' +
+    (q.curadoria && q.curadoria.gabarito ? '<label class="campo"><span>O que você alterou depois da curadoria? *</span>' +
+      '<textarea id="q-alteracao" rows="2" maxlength="500" placeholder="Ex.: troquei a figura por uma mais nítida e corrigi o gabarito para D."></textarea>' +
+      '<small class="mut peq">Fica gravado no histórico da questão, para o professor, a coordenação e a curadoria.</small></label>' : '') +
     (q.id ? '<div class="aviso azul peq">Se você só trocar a figura, ajustar a formatação do texto ou corrigir o gabarito para o da curadoria, a curadoria continua valendo. Se mudar o conteúdo, a questão passa de novo pela curadoria.</div>'
       : '<div class="aviso azul peq">Depois de salva, a questão passa pela curadoria: resolução, conferência do gabarito e o erro de raciocínio por trás de cada alternativa incorreta. Capriche nas alternativas erradas: elas é que revelam as dificuldades dos alunos.' +
         ' Enquanto você escreve, o MIRA guarda um rascunho neste aparelho: se a janela fechar, é só clicar em Nova questão para continuar.</div>') +
@@ -2774,6 +2782,8 @@ function formQuestao(q) {
       if (n > figuras.length && faltando.indexOf(n) < 0) faltando.push(n);
     });
     if (faltando.length) { toast('O texto marca a Figura ' + faltando.join(', ') + ', mas ela não foi adicionada.', true); return; }
+    var campoAlt = $('#q-alteracao', md.el);
+    if (campoAlt && !campoAlt.value.trim()) { toast('Escreva o que você alterou depois da curadoria.', true); campoAlt.focus(); return; }
     var origem = lerOrigem(md.el);
     if (!origem) return;
     var alts = {};
@@ -2783,6 +2793,7 @@ function formQuestao(q) {
       id: q.id, concurso: 'ESPCEX', disciplina: $('#q-disc', md.el).value, conteudo: $('#q-cont', md.el).value,
       habilidade: $('#q-hab', md.el).value, enunciado: enun.value, alternativas: alts,
       gabaritoProfessor: g.value,
+      alteracao: campoAlt ? campoAlt.value.trim() : '',
       figuras: figuras.map(function (f) { return f.id ? { id: f.id } : { base64: f.base64, mime: f.mime }; })
     };
     ocupado($('#q-salvar', md.el), 'Salvando…', function () { return call('salvarQuestao', dados); })
@@ -3114,7 +3125,8 @@ function verQuestao(q, aoMudar) {
   var adm = S.user.perfil === 'ADM';
   var autor = S.user.id === q.autorId;
   var c = conc(q.concurso);
-  var cur = q.curadoria;
+  var hist = (q.curadoria && q.curadoria.historico) || [];
+  var cur = q.curadoria && q.curadoria.distratores ? q.curadoria : null;
   var ad = cur && cur.adaptacao && !cur.adaptacao.aplicada ? cur.adaptacao : null; // adaptação proposta, ainda não aplicada
   var adFeita = cur && cur.adaptacao && cur.adaptacao.aplicada ? cur.adaptacao : null;
   var gabVersao = ad ? ad.gabarito : (q.gabaritoFinal || (cur && cur.gabarito) || '');
@@ -3137,6 +3149,10 @@ function verQuestao(q, aoMudar) {
     (adm ? '. Falta a aprovação da coordenação para entrar nos simulados.' : '. Aguardando a aprovação da coordenação.') + '</div>';
   if (analisar && autor) h += '<div class="aviso azul"><b>Sua análise é necessária.</b> Leia a curadoria abaixo e, no fim da página, ' +
     'clique em <b>De acordo</b> ou escreva o que deve ser alterado.</div>';
+  if (hist.length) h += '<details class="card historico"' + (q.status === 'PENDENTE' || q.status === 'ANALISE_PROF' ? ' open' : '') + '><summary><h3 style="display:inline">Alterações depois da curadoria</h3> <span class="mut peq">' + hist.length + '</span></summary><ul class="lista-hist">' +
+    hist.slice().reverse().map(function (x) {
+      return '<li><b>' + esc(x.por) + '</b> <span class="mut peq">' + dataBr(x.em) + (x.curadoria === 'mantida' ? ' · curadoria mantida' : ' · voltou para a curadoria') + '</span><br>' + esc(x.texto) + '</li>';
+    }).join('') + '</ul></details>';
   if (cur && cur.pedidoAtendido) h += '<div class="aviso azul peq"><b>Esta curadoria respondeu ao pedido:</b> "' + esc(cur.pedidoAtendido.comentario) + '"</div>';
 
   if (!cur) {
