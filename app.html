@@ -1654,7 +1654,7 @@ function resultadosBusca(f, q) {
         });
     grupos.push([S.user.perfil === 'ADM' ? 'Pessoas' : 'Alunos', pessoas.slice(0, 6)]);
     grupos.push(['Questões', f.qs.filter(function (x) { return tem(x.id, x.disciplina, x.conteudo, semFiguras(x.enunciado)); }).slice(0, 6).map(function (x) {
-      return { ic: 'biblioteca', t: semFiguras(x.enunciado).slice(0, 80) || x.id, s: x.disciplina + (x.conteudo ? ' · ' + x.conteudo : '') + ' · ' + ((STATUS_Q[x.status] || [x.status])[0]), q: x };
+      return { ic: 'biblioteca', t: semFiguras(perguntaDe(x.enunciado)).slice(0, 80) || x.id, s: x.disciplina + (x.conteudo ? ' · ' + x.conteudo : '') + ' · ' + ((STATUS_Q[x.status] || [x.status])[0]), q: x };
     })]);
     grupos.push(['Simulados', f.sims.filter(function (x) { return tem(x.titulo, x.codigo); }).slice(0, 6).map(function (x) {
       return { ic: 'avaliacao', t: x.titulo, s: x.codigo + ' · ' + x.total + ' questões', ir: ['resultados', { simuladoId: x.id }] };
@@ -2194,7 +2194,8 @@ VIEWS.questoes = function (m, p) {
   var discs = disciplinasDe('ESPCEX');
   m.innerHTML = cabPag(adm ? 'Banco de questões' : 'Minhas questões',
     adm ? 'Questões enviadas pelos professores, curadoria, análise do professor e aprovação' : 'Cadastre questões no padrão da banca. A curadoria analisa cada uma, você confere o relatório e a coordenação aprova.',
-    (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' : '') +
+    (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
+      '<button class="btn" id="impq">Importar questões</button>' : '') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
@@ -2228,6 +2229,7 @@ VIEWS.questoes = function (m, p) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
     $('#fml').onclick = function () { formulasLatex(); };
+    $('#impq').onclick = function () { importarQuestoes(); };
   }
   var APROVAVEIS = ['ANALISE_PROF', 'VALIDADA'];
   var marcadas = {}, ultimas = [];
@@ -2272,7 +2274,7 @@ VIEWS.questoes = function (m, p) {
           (q.curadoria && q.curadoria.dificuldade ? ' · ' + esc(q.curadoria.dificuldade) : '') + (q.imagemId ? ' · com figura' : '') +
           (q.origem ? ' · ' + esc(rotuloOrigem(q.origem)) : '') + '</span>' +
           '<span class="dir">' + (adm ? esc(q.autorNome) + ' · ' : '') + dataBr(q.atualizadoEm) + '</span></div>' +
-          '<div class="q-trecho">' + esc(semFiguras(q.enunciado)) + '</div></div>';
+          '<div class="q-trecho">' + esc(semFiguras(perguntaDe(q.enunciado))) + '</div></div>';
       }).join('') + '</div>';
       $$('.q-item', l).forEach(function (c) {
         c.onclick = function (e) {
@@ -2312,7 +2314,7 @@ VIEWS.questoes = function (m, p) {
 /** Enunciado com as figuras no lugar de [FIGURA n]; as não marcadas vão para o fim.
  *  urls: lista na ordem das figuras (null = ainda carregando); total: quantas figuras a questão tem. */
 function enunciadoHtml(texto, urls, total, classe) {
-  texto = String(texto || '').replace(/\[FIGURA\]/gi, '[FIGURA 1]');
+  texto = String(texto || '').replace(/\[TEXTO\]\s*/, '').replace(/\s*\[\/TEXTO\]\s*/, '\n\n').replace(/\[FIGURA\]/gi, '[FIGURA 1]');
   urls = urls || [];
   total = Math.max(total || 0, urls.length);
   var usadas = {}, h = '';
@@ -2322,14 +2324,18 @@ function enunciadoHtml(texto, urls, total, classe) {
       : '<div class="fig-ph">Figura ' + (n + 1) + (n < total ? ' (carregando…)' : ' (não encontrada)') + '</div>';
   };
   String(texto).split(/\[FIGURA\s+(\d+)\]/i).forEach(function (p, i) {
-    if (i % 2 === 0) { p = p.replace(/^\n+|\n+$/g, ''); if (p.trim()) h += '<div class="' + (classe || 'enun') + '">' + esc(p) + '</div>'; }
+    if (i % 2 === 0) { p = p.replace(/^\n+|\n+$/g, ''); if (p.trim()) h += '<div class="' + (classe || 'enun') + '">' + esc(p).replace(/__([^_\n][^\n]*?)__/g, '<u>$1</u>') + '</div>'; }
     else h += fig(Number(p) - 1);
   });
   for (var n = 0; n < total; n++) if (!usadas[n]) h += fig(n);
   return h;
 }
 /** Texto sem as marcações de figura (para listas e relatórios sem imagem) */
-function semFiguras(t) { return String(t || '').replace(/\[FIGURA\s*(\d*)\]/gi, function (m, n) { return '(figura ' + (n || 1) + ')'; }); }
+function semFiguras(t) { return semMarcasTexto(t).replace(/\[FIGURA\s*(\d*)\]/gi, function (m, n) { return '(figura ' + (n || 1) + ')'; }); }
+/** Sem as marcações do texto compartilhado ([TEXTO] … [/TEXTO]) nem do sublinhado (__trecho__) */
+function semMarcasTexto(t) { return String(t || '').replace(/\[\/?TEXTO\]\s*/g, '').replace(/__([^_\n][^\n]*?)__/g, '$1'); }
+/** Só a pergunta (sem o texto compartilhado), para listas e buscas */
+function perguntaDe(t) { t = String(t || ''); var f = t.indexOf('[/TEXTO]'); return t.indexOf('[TEXTO]') === 0 && f > 0 ? t.slice(f + 8).replace(/^\s+/, '') : t; }
 
 // ---------------------------------------------------------------- colar alternativas
 /** Procura as marcações (A) … (E) num texto colado.
@@ -2733,6 +2739,68 @@ function importarCuradoria() {
   };
 }
 
+/**
+ * Coordenação: importa as questões de um arquivo preparado pelo Claude (ex.: uma prova da EsPCEx),
+ * uma por vez, com as figuras. Formato: { formato: "mira-questoes-1", titulo, origem: { tipo, prova, ano }, questoes: [...] }
+ */
+function importarQuestoes() {
+  var md = modal(topoModal('Importar questões') +
+    '<p class="peq" style="margin-top:0">Escolha o arquivo de questões preparado pelo Claude (termina em <b>.json</b>). ' +
+    'Cada questão entra com a curadoria pronta e vai para a análise do professor, como qualquer curadoria. ' +
+    'Importar o mesmo arquivo de novo atualiza as questões que ainda não foram aprovadas.</p>' +
+    '<label class="campo"><span>Arquivo</span><input type="file" id="iq-arq" accept=".json,application/json"></label>' +
+    '<div id="iq-res"></div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Fechar</button>' +
+    '<button class="btn pri" id="iq-ok" disabled>Importar</button></div>', true);
+  var arq = null;
+  $('#iq-arq', md.el).onchange = function (e) {
+    var f = e.target.files[0]; arq = null; $('#iq-ok', md.el).disabled = true;
+    if (!f) return;
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      try {
+        var j = JSON.parse(leitor.result);
+        if (!j || j.formato !== 'mira-questoes-1' || !Array.isArray(j.questoes) || !j.questoes.length) throw new Error('formato');
+        arq = j;
+        var porDisc = {};
+        j.questoes.forEach(function (q) { porDisc[q.disciplina] = (porDisc[q.disciplina] || 0) + 1; });
+        $('#iq-res', md.el).innerHTML = '<div class="aviso azul peq"><b>' + esc(j.titulo || 'Questões') + '</b>: ' + j.questoes.length + ' questões (' +
+          Object.keys(porDisc).map(function (d) { return esc(d) + ' ' + porDisc[d]; }).join(', ') + ').</div>';
+        $('#iq-ok', md.el).disabled = false;
+      } catch (er) { $('#iq-res', md.el).innerHTML = '<div class="aviso verm peq">Este arquivo não é um arquivo de questões do MIRA.</div>'; }
+    };
+    leitor.readAsText(f);
+  };
+  $('#iq-ok', md.el).onclick = function () {
+    if (!arq) return;
+    var btn = this, res = $('#iq-res', md.el), feitas = 0, novas = 0, atualizadas = 0, ignoradas = 0, erros = [], alertas = 0;
+    btn.disabled = true; $('#iq-arq', md.el).disabled = true;
+    var passo = function (i) {
+      if (i >= arq.questoes.length) {
+        res.innerHTML = '<div class="aviso verde peq">' + (novas ? novas + ' questão(ões) nova(s). ' : '') + (atualizadas ? atualizadas + ' atualizada(s). ' : '') +
+          (ignoradas ? ignoradas + ' já aprovada(s) ficaram como estavam. ' : '') + 'Elas estão em <b>Análise do professor</b>.</div>' +
+          (alertas ? '<div class="aviso ambar peq">' + alertas + ' questão(ões) com alertas da curadoria: vale abrir e ler antes de aprovar.</div>' : '') +
+          (erros.length ? '<div class="aviso verm peq">' + erros.map(esc).join('<br>') + '</div>' : '');
+        btn.disabled = false; btn.textContent = 'Importar';
+        if (VIEWS.questoes.recarregar) VIEWS.questoes.recarregar();
+        return;
+      }
+      var x = arq.questoes[i], figuras = x.figuras || [], q = {};
+      Object.keys(x).forEach(function (k) { if (k !== 'figuras') q[k] = x[k]; });
+      if (!q.origem) q.origem = arq.origem;
+      btn.textContent = 'Importando ' + (i + 1) + ' de ' + arq.questoes.length + '…';
+      call('importarQuestao', { questao: q, figuras: figuras }).then(function (r) {
+        feitas++;
+        if (r.ignorada) ignoradas++; else if (r.atualizada) atualizadas++; else novas++;
+        if (r.alertas && r.alertas.length) alertas++;
+      }).catch(function (e) {
+        erros.push(x.disciplina + ' ' + (x.numero || i + 1) + ': ' + msgErro(e));
+      }).then(function () { passo(i + 1); });
+    };
+    passo(0);
+  };
+}
+
 function verQuestao(q, aoMudar) {
   var adm = S.user.perfil === 'ADM';
   var autor = S.user.id === q.autorId;
@@ -2986,6 +3054,8 @@ VIEWS.simulados = function (m, p) {
           '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
           (adm ? '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
           '<button class="btn peq" data-a="gabarito" data-i="' + i + '">Gabarito comentado</button>' +
+          (adm && s.temRedacao ? '<button class="btn peq" data-a="redacao" data-i="' + i + '">' + (s.redacaoTema ? 'Redação' : 'Cadastrar redação') + '</button>' : '') +
+          (s.redacaoTema ? '<button class="btn peq" data-a="folha" data-i="' + i + '">Folha de redação</button>' : '') +
           (adm ? '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
             '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' : '') +
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
@@ -3031,6 +3101,8 @@ VIEWS.simulados = function (m, p) {
           if (a === 'lancar') return escolherAluno(s);
           if (a === 'ajustar') return ajustarGabarito(s, carregar);
           if (a === 'analise') return analiseParaClaude(s);
+          if (a === 'redacao') return formRedacao(s, carregar);
+          if (a === 'folha') return verImpresso(s, 'redacao');
           if (a === 'cartao' && adm) return escolherCartoes(s);
           if (a === 'caderno' && s.versoes > 1) return escolherVersao(s);
           verImpresso(s, a);
@@ -3186,13 +3258,14 @@ function escolherCartoes(s) {
 }
 
 function verImpresso(s, tipo, alunos, versao) {
-  var nomes = { caderno: 'Caderno de prova' + (versao ? ' · Versão ' + versao : ''), cartao: alunos && alunos.length ? 'Cartões-resposta (' + alunos.length + ' alunos)' : 'Cartão-resposta', gabarito: 'Gabarito comentado' };
+  var nomes = { caderno: 'Caderno de prova' + (versao ? ' · Versão ' + versao : ''), cartao: alunos && alunos.length ? 'Cartões-resposta (' + alunos.length + ' alunos)' : 'Cartão-resposta', gabarito: 'Gabarito comentado', redacao: 'Folha de redação' };
   var md = modal(topoModal(nomes[tipo] + ' · ' + s.codigo) +
     '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn pri" id="imp">Imprimir</button>' +
     (tipo === 'cartao' ? '<span class="aviso azul peq" style="margin:0">Imprima em A4, escala 100%. Para PDF, escolha "Salvar como PDF" na janela de impressão.</span>'
       : window.MIRA_SUPABASE ? '<span class="aviso azul peq" style="margin:0">Para PDF, use "Imprimir" e escolha "Salvar como PDF".</span>'
         : '<button class="btn" id="pdf">Salvar PDF no Drive</button>') +
     (tipo === 'gabarito' ? '<span class="aviso ambar peq" style="margin:0">Uso exclusivo do professor. Não distribua aos alunos antes do encerramento.</span>' : '') +
+    (tipo === 'redacao' ? '<span class="aviso azul peq" style="margin:0">Imprima uma folha por aluno. O rascunho e a proposta já estão no caderno de prova.</span>' : '') +
     '</div><div id="area"><div class="carregando"><div class="giro"></div>Montando impresso…</div></div>', true);
   call('impresso', { id: s.id, tipo: tipo, alunos: alunos || null, versao: versao || 1 }).then(function (r) {
     var f = document.createElement('iframe');
@@ -3220,7 +3293,9 @@ function formSimulado(aoCriar) {
     '<label class="campo"><span>Data de aplicação</span><input type="date" id="s-data"></label></div>' +
     '<div class="campo"><span class="mut peq" style="font-weight:600">Montagem</span>' +
     '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="auto" checked> Automática: sorteia questões aprovadas, priorizando as nunca usadas</label>' +
-    '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="manual"> Manual: eu escolho as questões</label></div>' +
+    '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="manual"> Manual: eu escolho as questões</label>' +
+    '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="prova"> De uma prova: as questões aprovadas de uma prova (ex.: EsPCEx 2026), na ordem original</label></div>' +
+    '<div id="s-prova"></div>' +
     '<label class="s-rep"><input type="checkbox" id="s-rep" checked> <span><b>Repetir os temas mais errados do último simulado</b> ' +
     '(abaixo de ' + CORTE_REAVALIAR + '%): até 40% de cada disciplina, de preferência com questões novas. Serve para conferir se os alunos corrigiram o erro com as missões.</span></label>' +
     '<div id="s-temas"></div>' +
@@ -3244,8 +3319,9 @@ function formSimulado(aoCriar) {
       var r = reavaliar(d[0]);
       return r.length ? '<li><b>' + esc(d[0]) + ':</b> ' + r.map(function (t) { return esc(t.tema) + ' (' + num(t.pct) + '%)'; }).join(', ') + '</li>' : '';
     }).join('');
-    var manual = $('input[name=s-modo]:checked', md.el).value === 'manual';
-    $('.s-rep', md.el).style.display = manual ? 'none' : '';
+    var modo = $('input[name=s-modo]:checked', md.el).value, manual = modo === 'manual';
+    $('.s-rep', md.el).style.display = modo === 'auto' ? '' : 'none';
+    if (modo === 'prova') { alvo.innerHTML = ''; return; }
     alvo.innerHTML = (manual || $('#s-rep', md.el).checked) && linhas ? '<div class="aviso azul peq s-temas"><b>' +
       (manual ? 'Temas mais errados no último simulado (marcados abaixo como "tema a reavaliar"):' : 'Voltam neste simulado:') + '</b><ul>' + linhas + '</ul></div>' : '';
   };
@@ -3262,7 +3338,7 @@ function formSimulado(aoCriar) {
           (qs.length ? qs.map(function (q) {
             var volta = q.temaEdital && reavaliar(d[0]).some(function (t) { return t.tema === q.temaEdital; });
             return '<label style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--n-200)"><input type="checkbox" class="s-q" value="' + q.id + '" data-d="' + esc(d[0]) + '">' +
-              '<span class="peq"><b>' + esc(q.id) + '</b> · ' + esc(q.conteudo) + (volta ? ' <span class="tag ambar">tema a reavaliar</span>' : '') + ' — ' + esc(semFiguras(q.enunciado).slice(0, 120)) + '…</span></label>';
+              '<span class="peq"><b>' + esc(q.id) + '</b> · ' + esc(q.conteudo) + (volta ? ' <span class="tag ambar">tema a reavaliar</span>' : '') + ' — ' + esc(semFiguras(perguntaDe(q.enunciado)).slice(0, 120)) + '…</span></label>';
           }).join('') : '<p class="mut peq">Nenhuma questão aprovada.</p>') + '</div>';
       }).join('');
       $$('.s-q', alvo).forEach(function (cb) {
@@ -3282,8 +3358,30 @@ function formSimulado(aoCriar) {
       call('listarQuestoes', { status: 'APROVADA' }).then(function (qs) { aprovadas = qs; montar(); });
     }
   };
-  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = function () { desenharManual(); desenharTemas(); }; });
-  $('#s-dia', md.el).onchange = function () { desenharManual(); desenharTemas(); };
+  // "De uma prova": as provas de onde vieram as questões aprovadas (origem), com quantas questões há em cada dia
+  var desenharProva = function () {
+    var alvo = $('#s-prova', md.el);
+    if ($('input[name=s-modo]:checked', md.el).value !== 'prova') { alvo.innerHTML = ''; return; }
+    var montar = function () {
+      var dia = $('#s-dia', md.el).value, prova = c.provas.filter(function (p) { return String(p.dia) === dia; })[0];
+      var discsDia = prova.disciplinas.map(function (d) { return d[0]; }), conta = {};
+      aprovadas.forEach(function (q) {
+        if (!q.origem || q.origem === 'Autoral' || /^(Livro|Outra): /.test(q.origem) || discsDia.indexOf(q.disciplina) < 0) return;
+        conta[q.origem] = (conta[q.origem] || 0) + 1;
+      });
+      var origens = Object.keys(conta).sort().reverse();
+      var total = prova.disciplinas.reduce(function (t, d) { return t + d[1]; }, 0);
+      alvo.innerHTML = origens.length ? '<label class="campo"><span>Prova</span><select id="s-orig">' + origens.map(function (o) {
+          return '<option value="' + esc(o) + '">' + esc(o) + ' · ' + conta[o] + ' de ' + total + ' questões aprovadas neste dia</option>';
+        }).join('') + '</select></label>' +
+        (prova.redacao ? '<p class="mut peq" style="margin:-6px 0 10px">Depois de criar, cadastre a proposta de redação no cartão do simulado (botão <b>Cadastrar redação</b>).</p>' : '')
+        : '<div class="aviso ambar peq">Nenhuma questão aprovada de prova para este dia. Importe as questões em <b>Banco de questões › Importar questões</b> e aprove-as.</div>';
+    };
+    if (aprovadas) montar();
+    else { carregando(alvo, 'Carregando questões aprovadas…'); call('listarQuestoes', { status: 'APROVADA' }).then(function (qs) { aprovadas = qs; montar(); }); }
+  };
+  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = function () { desenharManual(); desenharProva(); desenharTemas(); }; });
+  $('#s-dia', md.el).onchange = function () { desenharManual(); desenharProva(); desenharTemas(); };
   $('#s-rep', md.el).onchange = desenharTemas;
 
   $('#fs', md.el).onsubmit = function (e) {
@@ -3293,8 +3391,10 @@ function formSimulado(aoCriar) {
       turmas: csv($('#s-tur', md.el).value).join(', '), dataAplicacao: $('#s-data', md.el).value,
       modo: $('input[name=s-modo]:checked', md.el).value, permitirIncompleto: $('#s-red', md.el).checked,
       questoes: $$('.s-q:checked', md.el).map(function (x) { return x.value; }),
-      versoes: Number($('#s-ver', md.el).value), repetirErrados: $('#s-rep', md.el).checked
+      versoes: Number($('#s-ver', md.el).value), repetirErrados: $('#s-rep', md.el).checked,
+      origem: $('#s-orig', md.el) ? $('#s-orig', md.el).value : ''
     };
+    if (d.modo === 'prova' && !d.origem) { toast('Escolha a prova.', true); return; }
     ocupado($('#s-criar', md.el), 'Montando…', function () { return call('criarSimulado', d); }).then(function (r) {
       md.fechar();
       toast('Simulado ' + r.simulado.codigo + ' criado como rascunho. Abra-o para os alunos quando for aplicar.');
@@ -3303,6 +3403,73 @@ function formSimulado(aoCriar) {
       aoCriar();
     }).catch(function () {});
   };
+}
+
+/**
+ * Coordenação: proposta de redação do simulado (dias com redação). Vai no caderno (textos de apoio, tema e rascunho)
+ * e na Folha de redação. Também aceita o arquivo de redação preparado pelo Claude (formato "mira-redacao-1").
+ */
+function formRedacao(s, depois) {
+  var md = modal(topoModal('Redação · ' + s.codigo) + '<div id="rd-corpo"><div class="carregando"><div class="giro"></div>Carregando…</div></div>', true);
+  call('redacaoSimulado', { simuladoId: s.id }).then(function (d) {
+    var r = d.redacao || {}, figs = (d.figuras || []).map(function (f) { return { id: f.id, url: f.url }; });
+    var corpo = $('#rd-corpo', md.el);
+    corpo.innerHTML = '<p class="peq" style="margin-top:0">A proposta sai no caderno de prova, depois das questões: textos de apoio, tema e uma folha de rascunho. ' +
+      'Para cada aluno, imprima também a <b>Folha de redação</b>. A correção da redação ainda não é feita pelo MIRA.</p>' +
+      '<div class="linha" style="align-items:flex-end"><label class="campo"><span>Arquivo de redação do Claude (opcional)</span><input type="file" id="rd-arq" accept=".json,application/json"></label></div>' +
+      '<label class="campo"><span>Tema *</span><input type="text" id="rd-tema" maxlength="300" value="' + esc(r.tema || '') + '" placeholder="Ex.: Alimentos ultraprocessados: entre motivações e impactos do consumo por crianças e adolescentes"></label>' +
+      '<label class="campo"><span>Textos de apoio e proposta</span><textarea id="rd-txt" rows="14">' + esc(r.texto || '') + '</textarea></label>' +
+      '<p class="mut peq" style="margin:-6px 0 12px">Escreva <b>[FIGURA 1]</b> onde cada figura entra. Uma linha só com “TEXTO 1”, “TEXTO 2”… vira título, como na prova.</p>' +
+      '<div class="campo"><span class="mut peq" style="font-weight:600">Figuras</span><div id="rd-figs" class="figs"></div>' +
+      '<label class="btn peq" style="margin-top:6px">+ Adicionar figura<input type="file" id="rd-fig" accept="image/*" hidden></label></div>' +
+      '<label class="campo" style="max-width:220px"><span>Linhas da folha de redação</span><input type="number" id="rd-lin" min="15" max="40" value="' + (r.linhas || d.linhasPadrao) + '"></label>' +
+      '<div class="linha" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:6px">' +
+      (r.tema ? '<button class="btn perigo" id="rd-rem" style="flex:none">Remover redação</button>' : '<span></span>') +
+      '<div style="display:flex;gap:8px"><button class="btn fechar">Cancelar</button><button class="btn pri" id="rd-ok">Salvar redação</button></div></div>';
+    var desenharFigs = function () {
+      $('#rd-figs', corpo).innerHTML = figs.length ? figs.map(function (f, i) {
+        return '<div class="fig-card"><img src="' + imgSrc(f.url) + '" alt="Figura ' + (i + 1) + '"><div style="flex:1"><b>Figura ' + (i + 1) + '</b></div>' +
+          '<button class="btn peq" data-rm="' + i + '">Remover</button></div>';
+      }).join('') : '<p class="mut peq" style="margin:4px 0">Nenhuma figura.</p>';
+      $$('[data-rm]', corpo).forEach(function (b) { b.onclick = function () { figs.splice(+b.getAttribute('data-rm'), 1); desenharFigs(); }; });
+    };
+    desenharFigs();
+    $('#rd-fig', corpo).onchange = function (e) {
+      var f = e.target.files[0]; if (!f) return;
+      lerImagem(f, 1400, 0.85).then(function (img) { figs.push({ base64: img.base64, mime: img.mime, url: 'data:' + img.mime + ';base64,' + img.base64 }); desenharFigs(); })
+        .catch(function (er) { toast(msgErro(er), true); });
+      e.target.value = '';
+    };
+    $('#rd-arq', corpo).onchange = function (e) {
+      var f = e.target.files[0]; if (!f) return;
+      var leitor = new FileReader();
+      leitor.onload = function () {
+        try {
+          var j = JSON.parse(leitor.result);
+          if (!j || j.formato !== 'mira-redacao-1' || !j.tema) throw new Error('formato');
+          $('#rd-tema', corpo).value = j.tema; $('#rd-txt', corpo).value = j.texto || '';
+          if (j.linhas) $('#rd-lin', corpo).value = j.linhas;
+          figs = (j.figuras || []).map(function (x) { return { base64: x.base64, mime: x.mime, url: 'data:' + x.mime + ';base64,' + x.base64 }; });
+          desenharFigs();
+          toast('Arquivo carregado. Confira e clique em Salvar redação.');
+        } catch (er) { toast('Este arquivo não é um arquivo de redação do MIRA.', true); }
+      };
+      leitor.readAsText(f);
+    };
+    $('#rd-ok', corpo).onclick = function () {
+      var dados = { simuladoId: s.id, tema: $('#rd-tema', corpo).value, texto: $('#rd-txt', corpo).value, linhas: Number($('#rd-lin', corpo).value),
+        figuras: figs.map(function (f) { return f.id ? { id: f.id } : { base64: f.base64, mime: f.mime }; }) };
+      ocupado(this, 'Salvando…', function () { return call('salvarRedacao', dados); }).then(function () {
+        md.fechar(); toast('Redação salva. Ela já sai no caderno de prova.'); if (depois) depois();
+      }).catch(function () {});
+    };
+    if ($('#rd-rem', corpo)) $('#rd-rem', corpo).onclick = function () {
+      confirmar('Remover a proposta de redação deste simulado? O caderno sai sem redação.', 'Remover').then(function () {
+        call('salvarRedacao', { simuladoId: s.id, remover: true }).then(function () { md.fechar(); toast('Redação removida.'); if (depois) depois(); })
+          .catch(function (er) { toast(msgErro(er), true); });
+      });
+    };
+  }).catch(function (e) { $('#rd-corpo', md.el).innerHTML = caixaErro(e); });
 }
 
 function escolherAluno(s) {
