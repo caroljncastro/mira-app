@@ -276,6 +276,12 @@
   .pesq-acao { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .pesq-motivos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
   .pesq-lista { margin-bottom: 0; }
+  /* escolha do tema de redação do simulado */
+  .et-lista { display: grid; gap: 8px; max-height: 50vh; overflow-y: auto; }
+  .et-op { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--n-300); border-radius: var(--r-ctl); cursor: pointer; }
+  .et-op:has(input:checked) { border-color: var(--marca-600); background: var(--marca-50); }
+  .et-op input { margin-top: 3px; accent-color: var(--marca-700); }
+  .et-op small { display: block; font-size: 12.5px; color: var(--n-500); margin-top: 2px; }
   @media (max-width: 520px) {
     .motivo-ops { display: grid; grid-template-columns: 1fr 1fr; }
     .pesq-chutes .linha-chute > span { min-width: 100%; }
@@ -1844,7 +1850,7 @@ function ir(rota, params) {
   var menu = MENUS[S.user.perfil];
   $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' +
     (MENU_PERFIL[S.user.perfil] ? '<span class="menu-perfil">' + MENU_PERFIL[S.user.perfil] + '</span>' : '') + menu.map(function (m) {
-    var ativo = m[0] === rota || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
+    var ativo = m[0] === rota || (rota === 'temas' && m[0] === 'questoes') || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
       (rota === 'enviar' && (m[0] === 'meus' || m[0] === 'simulados'));
     var ic = m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
     return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ic) + '<span>' + esc(m[1]) + '</span></button>';
@@ -2266,6 +2272,7 @@ VIEWS.questoes = function (m, p) {
     adm ? 'Questões enviadas pelos professores, curadoria, análise do professor e aprovação' : 'Cadastre questões no padrão da banca. A curadoria analisa cada uma, você confere o relatório e a coordenação aprova.',
     (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
       '<button class="btn" id="impq">Importar questões</button>' : '') +
+    (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
@@ -2295,6 +2302,7 @@ VIEWS.questoes = function (m, p) {
     $('#ver-an').onclick = function (e) { e.preventDefault(); $('#f-status').value = 'ANALISE_PROF'; VIEWS.questoes.recarregar(); };
   }).catch(function () {});
   $('#nova').onclick = function () { formQuestao(null); };
+  if ($('#temas')) $('#temas').onclick = function () { ir('temas'); };
   if (adm) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
@@ -2832,10 +2840,11 @@ function importarQuestoes() {
         var j = JSON.parse(leitor.result);
         if (!j || j.formato !== 'mira-questoes-1' || !Array.isArray(j.questoes) || !j.questoes.length) throw new Error('formato');
         arq = j;
-        var porDisc = {};
+        var porDisc = {}, nr = (j.redacoes || []).length;
         j.questoes.forEach(function (q) { porDisc[q.disciplina] = (porDisc[q.disciplina] || 0) + 1; });
         $('#iq-res', md.el).innerHTML = '<div class="aviso azul peq"><b>' + esc(j.titulo || 'Questões') + '</b>: ' + j.questoes.length + ' questões (' +
-          Object.keys(porDisc).map(function (d) { return esc(d) + ' ' + porDisc[d]; }).join(', ') + ').</div>';
+          Object.keys(porDisc).map(function (d) { return esc(d) + ' ' + porDisc[d]; }).join(', ') + ')' +
+          (nr ? ' e ' + nr + (nr === 1 ? ' tema de redação' : ' temas de redação') : '') + '.</div>';
         $('#iq-ok', md.el).disabled = false;
       } catch (er) { $('#iq-res', md.el).innerHTML = '<div class="aviso verm peq">Este arquivo não é um arquivo de questões do MIRA.</div>'; }
     };
@@ -2845,10 +2854,22 @@ function importarQuestoes() {
     if (!arq) return;
     var btn = this, res = $('#iq-res', md.el), feitas = 0, novas = 0, atualizadas = 0, ignoradas = 0, erros = [], alertas = 0;
     btn.disabled = true; $('#iq-arq', md.el).disabled = true;
+    var temas = 0;
+    var passoTema = function (k) {
+      var rs = arq.redacoes || [];
+      if (k >= rs.length) { passo(0); return; }
+      var x = rs[k], t = {};
+      Object.keys(x).forEach(function (c) { if (c !== 'figuras') t[c] = x[c]; });
+      if (!t.origem) t.origem = arq.origem;
+      btn.textContent = 'Importando o tema de redação…';
+      call('importarTema', { tema: t, figuras: x.figuras || [] }).then(function (r) { if (!r.ignorado) temas++; })
+        .catch(function (e) { erros.push('Redação: ' + msgErro(e)); }).then(function () { passoTema(k + 1); });
+    };
     var passo = function (i) {
       if (i >= arq.questoes.length) {
         res.innerHTML = '<div class="aviso verde peq">' + (novas ? novas + ' questão(ões) nova(s). ' : '') + (atualizadas ? atualizadas + ' atualizada(s). ' : '') +
-          (ignoradas ? ignoradas + ' já aprovada(s) ficaram como estavam. ' : '') + 'Elas estão em <b>Análise do professor</b>.</div>' +
+          (ignoradas ? ignoradas + ' já em simulado ficaram como estavam. ' : '') + 'Elas estão em <b>Análise do professor</b>.' +
+          (temas ? ' ' + temas + (temas === 1 ? ' tema de redação aguarda' : ' temas de redação aguardam') + ' a sua aprovação em <b>Temas de redação</b>.' : '') + '</div>' +
           (alertas ? '<div class="aviso ambar peq">' + alertas + ' questão(ões) com alertas da curadoria: vale abrir e ler antes de aprovar.</div>' : '') +
           (erros.length ? '<div class="aviso verm peq">' + erros.map(esc).join('<br>') + '</div>' : '');
         btn.disabled = false; btn.textContent = 'Importar';
@@ -2867,7 +2888,94 @@ function importarQuestoes() {
         erros.push(x.disciplina + ' ' + (x.numero || i + 1) + ': ' + msgErro(e));
       }).then(function () { passo(i + 1); });
     };
-    passo(0);
+    passoTema(0);
+  };
+}
+
+// ---------------------------------------------------------------- banco de temas de redação
+var STATUS_T = { PENDENTE: ['Aguardando aprovação', 'ambar'], APROVADA: ['Aprovado', 'verde'], DEVOLVIDA: ['Devolvido', 'verm'] };
+/** Professor de Redação (ou sem disciplina cadastrada) cadastra temas */
+function podeTemas() {
+  if (S.user.perfil === 'ADM') return true;
+  var ds = csv(S.user.disciplinas || '');
+  return S.user.perfil === 'PROFESSOR' && (!ds.length || ds.indexOf('Redação') >= 0);
+}
+VIEWS.temas = function (m) {
+  var adm = S.user.perfil === 'ADM';
+  m.innerHTML = cabPag('Temas de redação', adm ? 'Os temas que entram nos simulados com redação. Só os aprovados podem ser usados.'
+      : 'Cadastre temas de redação. A coordenação aprova e eles passam a entrar nos simulados.',
+    '<button class="btn" id="tm-voltar">Voltar ao banco de questões</button><button class="btn pri" id="tm-novo">+ Novo tema</button>') + '<div id="tm-lista"></div>';
+  $('#tm-voltar').onclick = function () { ir('questoes'); };
+  $('#tm-novo').onclick = function () { formTema(null, carregar); };
+  var carregar = function () {
+    var l = $('#tm-lista'); carregando(l);
+    call('listarTemas', {}).then(function (ts) {
+      if (!ts.length) { l.innerHTML = '<div class="card vazio">Nenhum tema cadastrado ainda.</div>'; return; }
+      l.innerHTML = ts.map(function (t, i) {
+        return '<div class="card clic tm-item" data-i="' + i + '" style="cursor:pointer"><div class="q-meta">' + tag(STATUS_T, t.status) +
+          '<span class="meta">' + esc(t.origem === 'Autoral' ? 'Tema autoral' : t.origem) + ' · ' + t.linhas + ' linhas' + (t.nFiguras ? ' · ' + t.nFiguras + ' figura(s)' : '') +
+          ' · ' + (t.usos ? 'usado em ' + t.usos + (t.usos === 1 ? ' simulado' : ' simulados') : 'nunca usado') + (adm ? ' · ' + esc(t.autorNome) : '') + '</span></div>' +
+          '<h2 style="margin:6px 0 0;font-size:17px">' + esc(t.tema) + '</h2>' +
+          (t.status === 'DEVOLVIDA' && t.observacaoAdm ? '<p class="peq" style="margin:6px 0 0"><b>Coordenação:</b> ' + esc(t.observacaoAdm) + '</p>' : '') + '</div>';
+      }).join('');
+      $$('.tm-item', l).forEach(function (c) { c.onclick = function () { formTema(ts[+c.getAttribute('data-i')], carregar); }; });
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
+  };
+  carregar();
+};
+/** Cadastro ou edição de um tema; a coordenação também aprova ou devolve aqui */
+function formTema(t, depois) {
+  var adm = S.user.perfil === 'ADM';
+  t = t || { tema: '', texto: '', linhas: 38, origem: '', status: '' };
+  var travado = !adm && t.id && (t.status === 'APROVADA' || (t.usos && t.status !== 'DEVOLVIDA'));
+  var md = modal(topoModal(t.id ? 'Tema de redação' : 'Novo tema de redação') +
+    (travado ? '<div class="aviso azul peq">Este tema já foi aprovado ou está num simulado. Para mudar, peça à coordenação que o devolva a você.</div>' : '') +
+    '<label class="campo"><span>Tema *</span><input type="text" id="tm-tema" maxlength="300" value="' + esc(t.tema) + '" placeholder="Ex.: Alimentos ultraprocessados: entre motivações e impactos do consumo por crianças e adolescentes"></label>' +
+    campoOrigem(t.origem || 'Autoral').replace('Origem da questão *', 'Origem do tema').replace('Autoral (criada por mim)', 'Autoral (criado por mim)') +
+    '<label class="campo"><span>Textos de apoio e proposta</span><textarea id="tm-txt" rows="14">' + esc(t.texto) + '</textarea></label>' +
+    '<p class="mut peq" style="margin:-6px 0 12px">Escreva <b>[FIGURA 1]</b> onde cada figura entra. Uma linha só com “TEXTO 1”, “TEXTO 2”… vira título, como na prova.</p>' +
+    '<div class="campo"><span class="mut peq" style="font-weight:600">Figuras</span><div id="tm-figs" class="figs"></div>' +
+    '<label class="btn peq" style="margin-top:6px">+ Adicionar figura<input type="file" id="tm-fig" accept="image/*" hidden></label></div>' +
+    '<label class="campo" style="max-width:220px"><span>Linhas da folha de redação</span><input type="number" id="tm-lin" min="15" max="40" value="' + (t.linhas || 38) + '"></label>' +
+    (adm && t.id ? '<div class="card" style="margin-top:12px;background:var(--n-50)"><h3>Decisão da coordenação</h3>' +
+      '<label class="campo"><span>Observação ao professor (para devolução)</span><input type="text" id="tm-obs" value="' + esc(t.observacaoAdm || '') + '"></label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn perigo" id="tm-dev">Devolver ao professor</button>' +
+      '<button class="btn ok" id="tm-apr" style="margin-left:auto">Aprovar para simulados</button></div></div>' : '') +
+    '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px"><button class="btn fechar" style="flex:none">Cancelar</button>' +
+    (travado ? '' : '<button class="btn" id="tm-ok" style="flex:none">Salvar tema</button>') + '</div>', true);
+  ligarOrigem(md.el);
+  var figs = [];
+  var desenharFigs = function () {
+    $('#tm-figs', md.el).innerHTML = figs.length ? figs.map(function (f, i) {
+      return '<div class="fig-card"><img src="' + imgSrc(f.url) + '" alt="Figura ' + (i + 1) + '"><div style="flex:1"><b>Figura ' + (i + 1) + '</b></div>' +
+        (travado ? '' : '<button class="btn peq" data-rm="' + i + '">Remover</button>') + '</div>';
+    }).join('') : '<p class="mut peq" style="margin:4px 0">Nenhuma figura.</p>';
+    $$('[data-rm]', md.el).forEach(function (b) { b.onclick = function () { figs.splice(+b.getAttribute('data-rm'), 1); desenharFigs(); }; });
+  };
+  desenharFigs();
+  if (t.id && t.nFiguras) call('figurasTema', { id: t.id }).then(function (l) { figs = l.map(function (f) { return { id: f.id, url: f.url }; }); desenharFigs(); });
+  $('#tm-fig', md.el).onchange = function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    lerImagem(f, 1400, 0.85).then(function (img) { figs.push({ base64: img.base64, mime: img.mime, url: 'data:' + img.mime + ';base64,' + img.base64 }); desenharFigs(); })
+      .catch(function (er) { toast(msgErro(er), true); });
+    e.target.value = '';
+  };
+  var dados = function () {
+    var o = lerOrigem(md.el); if (!o) return null;
+    return { id: t.id || null, tema: $('#tm-tema', md.el).value, texto: $('#tm-txt', md.el).value, linhas: Number($('#tm-lin', md.el).value), origem: o,
+      figuras: figs.map(function (f) { return f.id ? { id: f.id } : { base64: f.base64, mime: f.mime }; }) };
+  };
+  var fim = function (msg) { md.fechar(); toast(msg); if (depois) depois(); };
+  if ($('#tm-ok', md.el)) $('#tm-ok', md.el).onclick = function () {
+    var d = dados(); if (!d) return;
+    ocupado(this, 'Salvando…', function () { return call('salvarTema', d); })
+      .then(function (r) { fim(r.status === 'PENDENTE' ? 'Tema salvo. Ele aguarda a aprovação da coordenação.' : 'Tema salvo.'); }).catch(function () {});
+  };
+  if ($('#tm-apr', md.el)) $('#tm-apr', md.el).onclick = function () {
+    ocupado(this, 'Aprovando…', function () { return call('decidirTema', { id: t.id, decisao: 'APROVADA' }); }).then(function () { fim('Tema aprovado. Ele já pode entrar nos simulados.'); }).catch(function () {});
+  };
+  if ($('#tm-dev', md.el)) $('#tm-dev', md.el).onclick = function () {
+    ocupado(this, 'Devolvendo…', function () { return call('decidirTema', { id: t.id, decisao: 'DEVOLVIDA', observacao: $('#tm-obs', md.el).value }); }).then(function () { fim('Tema devolvido ao professor.'); }).catch(function () {});
   };
 }
 
@@ -3128,7 +3236,7 @@ VIEWS.simulados = function (m, p) {
           '<button class="btn peq" data-a="caderno" data-i="' + i + '">Caderno de prova</button>' +
           (adm ? '<button class="btn peq" data-a="cartao" data-i="' + i + '">Cartão-resposta</button>' : '') +
           '<button class="btn peq" data-a="gabarito" data-i="' + i + '">Gabarito comentado</button>' +
-          (adm && s.temRedacao ? '<button class="btn peq" data-a="redacao" data-i="' + i + '">' + (s.redacaoTema ? 'Redação' : 'Cadastrar redação') + '</button>' : '') +
+          (adm && s.temRedacao ? '<button class="btn peq" data-a="redacao" data-i="' + i + '">' + (s.redacaoTema ? 'Tema de redação' : 'Escolher tema de redação') + '</button>' : '') +
           (s.redacaoTema ? '<button class="btn peq" data-a="folha" data-i="' + i + '">Folha de redação</button>' : '') +
           (adm ? '<button class="btn peq" data-a="res" data-i="' + i + '">Resultados</button>' +
             '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' : '') +
@@ -3175,7 +3283,7 @@ VIEWS.simulados = function (m, p) {
           if (a === 'lancar') return escolherAluno(s);
           if (a === 'ajustar') return ajustarGabarito(s, carregar);
           if (a === 'analise') return analiseParaClaude(s);
-          if (a === 'redacao') return formRedacao(s, carregar);
+          if (a === 'redacao') return escolherTemaSimulado(s, carregar);
           if (a === 'folha') return verImpresso(s, 'redacao');
           if (a === 'cartao' && adm) return escolherCartoes(s);
           if (a === 'caderno' && s.versoes > 1) return escolherVersao(s);
@@ -3370,6 +3478,7 @@ function formSimulado(aoCriar) {
     '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="manual"> Manual: eu escolho as questões</label>' +
     '<label style="display:block;margin:4px 0"><input type="radio" name="s-modo" value="prova"> De uma prova: as questões aprovadas de uma prova (ex.: EsPCEx 2026), na ordem original</label></div>' +
     '<div id="s-prova"></div>' +
+    '<div id="s-tema"></div>' +
     '<label class="s-rep"><input type="checkbox" id="s-rep" checked> <span><b>Repetir os temas mais errados do último simulado</b> ' +
     '(abaixo de ' + CORTE_REAVALIAR + '%): até 40% de cada disciplina, de preferência com questões novas. Serve para conferir se os alunos corrigiram o erro com as missões.</span></label>' +
     '<div id="s-temas"></div>' +
@@ -3448,14 +3557,32 @@ function formSimulado(aoCriar) {
       alvo.innerHTML = origens.length ? '<label class="campo"><span>Prova</span><select id="s-orig">' + origens.map(function (o) {
           return '<option value="' + esc(o) + '">' + esc(o) + ' · ' + conta[o] + ' de ' + total + ' questões aprovadas neste dia</option>';
         }).join('') + '</select></label>' +
-        (prova.redacao ? '<p class="mut peq" style="margin:-6px 0 10px">Depois de criar, cadastre a proposta de redação no cartão do simulado (botão <b>Cadastrar redação</b>).</p>' : '')
+        ''
         : '<div class="aviso ambar peq">Nenhuma questão aprovada de prova para este dia. Importe as questões em <b>Banco de questões › Importar questões</b> e aprove-as.</div>';
     };
     if (aprovadas) montar();
     else { carregando(alvo, 'Carregando questões aprovadas…'); call('listarQuestoes', { status: 'APROVADA' }).then(function (qs) { aprovadas = qs; montar(); }); }
   };
-  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = function () { desenharManual(); desenharProva(); desenharTemas(); }; });
-  $('#s-dia', md.el).onchange = function () { desenharManual(); desenharProva(); desenharTemas(); };
+  // tema de redação (dias com redação): sorteado (prioriza os nunca usados), escolhido ou sem redação
+  var temasAprov = null;
+  var desenharTema = function () {
+    var alvo = $('#s-tema', md.el), dia = $('#s-dia', md.el).value;
+    var prova = c.provas.filter(function (p) { return String(p.dia) === dia; })[0];
+    if (!prova.redacao) { alvo.innerHTML = ''; return; }
+    var montar = function () {
+      var modoProva = $('input[name=s-modo]:checked', md.el).value === 'prova';
+      alvo.innerHTML = '<label class="campo"><span>Tema de redação</span><select id="s-tema-sel">' +
+        '<option value="SORTEAR">' + (modoProva ? 'O tema da própria prova (se não houver, sorteia)' : 'Sortear (prefere os nunca usados)') + '</option>' +
+        temasAprov.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.tema.slice(0, 90)) + ' · ' + (t.usos ? 'usado ' + t.usos + 'x' : 'nunca usado') + '</option>'; }).join('') +
+        '<option value="NENHUM">Sem redação</option></select></label>' +
+        (temasAprov.length ? '' : '<p class="mut peq" style="margin:-6px 0 10px">Ainda não há tema aprovado: o simulado sai sem redação. Cadastre em Banco de questões › Temas de redação.</p>');
+    };
+    if (temasAprov) montar();
+    else call('listarTemas', { status: 'APROVADA' }).then(function (ts) { temasAprov = ts; montar(); }).catch(function () { temasAprov = []; montar(); });
+  };
+  desenharTema();
+  $$('input[name=s-modo]', md.el).forEach(function (r) { r.onchange = function () { desenharManual(); desenharProva(); desenharTemas(); desenharTema(); }; });
+  $('#s-dia', md.el).onchange = function () { desenharManual(); desenharProva(); desenharTemas(); desenharTema(); };
   $('#s-rep', md.el).onchange = desenharTemas;
 
   $('#fs', md.el).onsubmit = function (e) {
@@ -3466,7 +3593,8 @@ function formSimulado(aoCriar) {
       modo: $('input[name=s-modo]:checked', md.el).value, permitirIncompleto: $('#s-red', md.el).checked,
       questoes: $$('.s-q:checked', md.el).map(function (x) { return x.value; }),
       versoes: Number($('#s-ver', md.el).value), repetirErrados: $('#s-rep', md.el).checked,
-      origem: $('#s-orig', md.el) ? $('#s-orig', md.el).value : ''
+      origem: $('#s-orig', md.el) ? $('#s-orig', md.el).value : '',
+      tema: $('#s-tema-sel', md.el) ? $('#s-tema-sel', md.el).value : 'NENHUM'
     };
     if (d.modo === 'prova' && !d.origem) { toast('Escolha a prova.', true); return; }
     ocupado($('#s-criar', md.el), 'Montando…', function () { return call('criarSimulado', d); }).then(function (r) {
@@ -3479,71 +3607,40 @@ function formSimulado(aoCriar) {
   };
 }
 
-/**
- * Coordenação: proposta de redação do simulado (dias com redação). Vai no caderno (textos de apoio, tema e rascunho)
- * e na Folha de redação. Também aceita o arquivo de redação preparado pelo Claude (formato "mira-redacao-1").
- */
-function formRedacao(s, depois) {
-  var md = modal(topoModal('Redação · ' + s.codigo) + '<div id="rd-corpo"><div class="carregando"><div class="giro"></div>Carregando…</div></div>', true);
-  call('redacaoSimulado', { simuladoId: s.id }).then(function (d) {
-    var r = d.redacao || {}, figs = (d.figuras || []).map(function (f) { return { id: f.id, url: f.url }; });
-    var corpo = $('#rd-corpo', md.el);
-    corpo.innerHTML = '<p class="peq" style="margin-top:0">A proposta sai no caderno de prova, depois das questões: textos de apoio, tema e uma folha de rascunho. ' +
-      'Para cada aluno, imprima também a <b>Folha de redação</b>. A correção da redação ainda não é feita pelo MIRA.</p>' +
-      '<div class="linha" style="align-items:flex-end"><label class="campo"><span>Arquivo de redação do Claude (opcional)</span><input type="file" id="rd-arq" accept=".json,application/json"></label></div>' +
-      '<label class="campo"><span>Tema *</span><input type="text" id="rd-tema" maxlength="300" value="' + esc(r.tema || '') + '" placeholder="Ex.: Alimentos ultraprocessados: entre motivações e impactos do consumo por crianças e adolescentes"></label>' +
-      '<label class="campo"><span>Textos de apoio e proposta</span><textarea id="rd-txt" rows="14">' + esc(r.texto || '') + '</textarea></label>' +
-      '<p class="mut peq" style="margin:-6px 0 12px">Escreva <b>[FIGURA 1]</b> onde cada figura entra. Uma linha só com “TEXTO 1”, “TEXTO 2”… vira título, como na prova.</p>' +
-      '<div class="campo"><span class="mut peq" style="font-weight:600">Figuras</span><div id="rd-figs" class="figs"></div>' +
-      '<label class="btn peq" style="margin-top:6px">+ Adicionar figura<input type="file" id="rd-fig" accept="image/*" hidden></label></div>' +
-      '<label class="campo" style="max-width:220px"><span>Linhas da folha de redação</span><input type="number" id="rd-lin" min="15" max="40" value="' + (r.linhas || d.linhasPadrao) + '"></label>' +
-      '<div class="linha" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:6px">' +
-      (r.tema ? '<button class="btn perigo" id="rd-rem" style="flex:none">Remover redação</button>' : '<span></span>') +
-      '<div style="display:flex;gap:8px"><button class="btn fechar">Cancelar</button><button class="btn pri" id="rd-ok">Salvar redação</button></div></div>';
-    var desenharFigs = function () {
-      $('#rd-figs', corpo).innerHTML = figs.length ? figs.map(function (f, i) {
-        return '<div class="fig-card"><img src="' + imgSrc(f.url) + '" alt="Figura ' + (i + 1) + '"><div style="flex:1"><b>Figura ' + (i + 1) + '</b></div>' +
-          '<button class="btn peq" data-rm="' + i + '">Remover</button></div>';
-      }).join('') : '<p class="mut peq" style="margin:4px 0">Nenhuma figura.</p>';
-      $$('[data-rm]', corpo).forEach(function (b) { b.onclick = function () { figs.splice(+b.getAttribute('data-rm'), 1); desenharFigs(); }; });
+/** Coordenação: o tema de redação do simulado, escolhido no banco de temas (ou sorteado, com prioridade para os nunca usados) */
+function escolherTemaSimulado(s, depois) {
+  var md = modal(topoModal('Tema de redação · ' + s.codigo) + '<div id="et-corpo"><div class="carregando"><div class="giro"></div>Carregando…</div></div>', true);
+  call('listarTemas', { status: 'APROVADA' }).then(function (ts) {
+    var corpo = $('#et-corpo', md.el);
+    corpo.innerHTML = '<p class="peq" style="margin-top:0">' + (s.redacaoTema ? 'Tema atual: <b>' + esc(s.redacaoTema) + '</b>. ' : 'Este simulado ainda não tem redação. ') +
+      'Escolha um tema aprovado ou sorteie: o sorteio prefere os que nunca foram usados. A proposta e a folha de rascunho saem no caderno.</p>' +
+      (ts.length ? '<div class="et-lista">' + ts.map(function (t) {
+        return '<label class="et-op"><input type="radio" name="et" value="' + esc(t.id) + '"' + (t.id === s.redacaoTemaId ? ' checked' : '') + '>' +
+          '<span><b>' + esc(t.tema) + '</b><small>' + esc(t.origem === 'Autoral' ? 'Tema autoral' : t.origem) + ' · ' +
+          (t.usos ? 'usado em ' + t.usos + (t.usos === 1 ? ' simulado' : ' simulados') : 'nunca usado') + '</small></span></label>';
+      }).join('') + '</div>' : '<div class="aviso ambar peq">Nenhum tema aprovado ainda. Cadastre e aprove em <b>Banco de questões › Temas de redação</b>.</div>') +
+      '<div class="linha" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px">' +
+      (s.redacaoTema ? '<button class="btn perigo" id="et-rem" style="flex:none">Tirar a redação</button>' : '<button class="btn" id="et-banco" style="flex:none">Abrir o banco de temas</button>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="et-sort"' + (ts.length ? '' : ' disabled') + '>Sortear tema</button>' +
+      '<button class="btn pri" id="et-ok"' + (ts.length ? '' : ' disabled') + '>Usar este tema</button></div></div>';
+    var feito = function (r, msg) { md.fechar(); toast(msg); if (depois) depois(); };
+    $('#et-ok', corpo).onclick = function () {
+      var r = $('input[name=et]:checked', corpo);
+      if (!r) { toast('Escolha um tema na lista.', true); return; }
+      ocupado(this, 'Salvando…', function () { return call('escolherTema', { simuladoId: s.id, temaId: r.value }); })
+        .then(function (x) { feito(x, 'Tema de redação escolhido: ' + x.redacao.tema); }).catch(function () {});
     };
-    desenharFigs();
-    $('#rd-fig', corpo).onchange = function (e) {
-      var f = e.target.files[0]; if (!f) return;
-      lerImagem(f, 1400, 0.85).then(function (img) { figs.push({ base64: img.base64, mime: img.mime, url: 'data:' + img.mime + ';base64,' + img.base64 }); desenharFigs(); })
-        .catch(function (er) { toast(msgErro(er), true); });
-      e.target.value = '';
+    $('#et-sort', corpo).onclick = function () {
+      ocupado(this, 'Sorteando…', function () { return call('escolherTema', { simuladoId: s.id, sortear: true }); })
+        .then(function (x) { feito(x, 'Tema sorteado: ' + x.redacao.tema); }).catch(function () {});
     };
-    $('#rd-arq', corpo).onchange = function (e) {
-      var f = e.target.files[0]; if (!f) return;
-      var leitor = new FileReader();
-      leitor.onload = function () {
-        try {
-          var j = JSON.parse(leitor.result);
-          if (!j || j.formato !== 'mira-redacao-1' || !j.tema) throw new Error('formato');
-          $('#rd-tema', corpo).value = j.tema; $('#rd-txt', corpo).value = j.texto || '';
-          if (j.linhas) $('#rd-lin', corpo).value = j.linhas;
-          figs = (j.figuras || []).map(function (x) { return { base64: x.base64, mime: x.mime, url: 'data:' + x.mime + ';base64,' + x.base64 }; });
-          desenharFigs();
-          toast('Arquivo carregado. Confira e clique em Salvar redação.');
-        } catch (er) { toast('Este arquivo não é um arquivo de redação do MIRA.', true); }
-      };
-      leitor.readAsText(f);
-    };
-    $('#rd-ok', corpo).onclick = function () {
-      var dados = { simuladoId: s.id, tema: $('#rd-tema', corpo).value, texto: $('#rd-txt', corpo).value, linhas: Number($('#rd-lin', corpo).value),
-        figuras: figs.map(function (f) { return f.id ? { id: f.id } : { base64: f.base64, mime: f.mime }; }) };
-      ocupado(this, 'Salvando…', function () { return call('salvarRedacao', dados); }).then(function () {
-        md.fechar(); toast('Redação salva. Ela já sai no caderno de prova.'); if (depois) depois();
-      }).catch(function () {});
-    };
-    if ($('#rd-rem', corpo)) $('#rd-rem', corpo).onclick = function () {
-      confirmar('Remover a proposta de redação deste simulado? O caderno sai sem redação.', 'Remover').then(function () {
-        call('salvarRedacao', { simuladoId: s.id, remover: true }).then(function () { md.fechar(); toast('Redação removida.'); if (depois) depois(); })
-          .catch(function (er) { toast(msgErro(er), true); });
+    if ($('#et-rem', corpo)) $('#et-rem', corpo).onclick = function () {
+      confirmar('Tirar a redação deste simulado? O caderno sai sem a proposta e sem a folha de rascunho.', 'Tirar').then(function () {
+        call('escolherTema', { simuladoId: s.id, remover: true }).then(function () { feito(null, 'Redação retirada do simulado.'); }).catch(function (e) { toast(msgErro(e), true); });
       });
     };
-  }).catch(function (e) { $('#rd-corpo', md.el).innerHTML = caixaErro(e); });
+    if ($('#et-banco', corpo)) $('#et-banco', corpo).onclick = function () { md.fechar(); ir('temas'); };
+  }).catch(function (e) { $('#et-corpo', md.el).innerHTML = caixaErro(e); });
 }
 
 function escolherAluno(s) {
