@@ -67,6 +67,7 @@
     --erro-contorno: #E7B4B6;      /* contorno do botão de perigo */
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; } /* o atributo hidden vence o display das classes (.linha, .campo) */
   html, body { margin: 0; background: var(--n-50); color: var(--n-900); font-family: var(--fonte);
     font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
   /* nada pode empurrar a página para o lado (rolagem lateral no celular) */
@@ -276,6 +277,13 @@
   .pesq-acao { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .pesq-motivos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
   .pesq-lista { margin-bottom: 0; }
+  /* arquivos de questões enviados pelos professores */
+  .envios summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; list-style: none; }
+  .envios summary h2 { margin: 0; }
+  .env-lista { list-style: none; margin: 10px 0 0; padding: 0; }
+  .env-lista li { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--n-200); flex-wrap: wrap; }
+  .env-lista li > div { flex: 1; min-width: 200px; }
+  .env-lista small { display: block; font-size: 12.5px; color: var(--n-500); margin-top: 2px; }
   /* escolha do tema de redação do simulado */
   .et-lista { display: grid; gap: 8px; max-height: 50vh; overflow-y: auto; }
   .et-op { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--n-300); border-radius: var(--r-ctl); cursor: pointer; }
@@ -2273,13 +2281,14 @@ VIEWS.questoes = function (m, p) {
     (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
       '<button class="btn" id="impq">Importar questões</button>' : '') +
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
+    (adm ? '' : '<button class="btn" id="enviar-arq">Enviar arquivo de questões</button>') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
     Object.keys(STATUS_Q).map(function (k) { return '<option value="' + k + '">' + STATUS_Q[k][0] + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="f-disc"><option value="">Todas</option>' +
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label></div></div>' +
-    '<div id="aviso-an"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
+    '<div id="aviso-an"></div><div id="envios"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
   if (p.status) $('#f-status').value = p.status;
   call('temasUltimoSimulado', {}).then(function (dados) {
     var minhasD = !adm && S.user.disciplinas ? csv(S.user.disciplinas) : discs;
@@ -2303,6 +2312,9 @@ VIEWS.questoes = function (m, p) {
   }).catch(function () {});
   $('#nova').onclick = function () { formQuestao(null); };
   if ($('#temas')) $('#temas').onclick = function () { ir('temas'); };
+  if ($('#enviar-arq')) $('#enviar-arq').onclick = function () { enviarArquivoQuestoes(desenharEnvios); };
+  var desenharEnvios = function () { cardEnvios($('#envios'), adm, desenharEnvios); };
+  desenharEnvios();
   if (adm) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
@@ -2875,6 +2887,8 @@ function importarQuestoes() {
           (alertas ? '<div class="aviso ambar peq">' + alertas + ' questão(ões) com alertas da curadoria: vale abrir e ler antes de aprovar.</div>' : '') +
           (erros.length ? '<div class="aviso verm peq">' + erros.map(esc).join('<br>') + '</div>' : '');
         btn.disabled = false; btn.textContent = 'Importar';
+        // arquivo de um professor: marca o envio como transcrito
+        if (arq.envio && (novas + atualizadas)) call('marcarEnvio', { id: arq.envio, status: 'TRANSCRITO', quantidade: novas + atualizadas }).catch(function () {});
         if (VIEWS.questoes.recarregar) VIEWS.questoes.recarregar();
         return;
       }
@@ -2882,7 +2896,7 @@ function importarQuestoes() {
       Object.keys(x).forEach(function (k) { if (k !== 'figuras') q[k] = x[k]; });
       if (!q.origem) q.origem = arq.origem;
       btn.textContent = 'Importando ' + (i + 1) + ' de ' + arq.questoes.length + '…';
-      call('importarQuestao', { questao: q, figuras: figuras }).then(function (r) {
+      call('importarQuestao', { questao: q, figuras: figuras, envio: arq.envio || null }).then(function (r) {
         feitas++;
         if (r.ignorada) ignoradas++; else if (r.atualizada) atualizadas++; else novas++;
         if (r.alertas && r.alertas.length) alertas++;
@@ -2892,6 +2906,72 @@ function importarQuestoes() {
     };
     passoTema(0);
   };
+}
+
+// ---------------------------------------------------------------- arquivos de questões dos professores
+var STATUS_ENV = { RECEBIDO: ['Recebido', 'azul'], TRANSCRITO: ['Transcrito', 'verde'], PROBLEMA: ['Com problema', 'verm'] };
+var MODELO_QUESTOES_URL = 'https://caroljncastro.github.io/mira-app/modelo-questoes.docx'; // fica no repositório mira-app
+/** Professor: envia o Word/PDF que já tem (ou o modelo do MIRA) para a coordenação transcrever com o Claude */
+function enviarArquivoQuestoes(depois) {
+  var minhas = csv(S.user.disciplinas || ''), todas = disciplinasDe('ESPCEX').concat(['Redação']);
+  var ds = minhas.length ? minhas : todas;
+  var md = modal(topoModal('Enviar arquivo de questões') +
+    '<p class="peq" style="margin-top:0">Envie o arquivo que você já tem, em Word, PDF ou foto, com as questões, as figuras e o gabarito. ' +
+    'A coordenação transcreve, faz a curadoria e as questões aparecem aqui em <b>Análise do professor</b>, no seu nome. ' +
+    'Para errar menos, use o <a href="' + MODELO_QUESTOES_URL + '" target="_blank" rel="noopener">modelo em Word</a>.</p>' +
+    '<label class="campo"><span>Arquivo (até 10 MB)</span><input type="file" id="ea-arq" accept=".pdf,.doc,.docx,.odt,image/jpeg,image/png"></label>' +
+    '<label class="campo"><span>Disciplina</span><select id="ea-disc">' + ds.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    campoOrigem('Autoral').replace('Origem da questão *', 'Origem das questões').replace('Autoral (criada por mim)', 'Autorais (criadas por mim)') +
+    '<label class="campo"><span>Observação para a coordenação (opcional)</span><input type="text" id="ea-obs" maxlength="500" placeholder="Ex.: questões 3 e 5 têm figura na página 2"></label>' +
+    '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button>' +
+    '<button class="btn pri" id="ea-ok" style="flex:none">Enviar arquivo</button></div>');
+  ligarOrigem(md.el);
+  $('#ea-ok', md.el).onclick = function () {
+    var f = $('#ea-arq', md.el).files[0];
+    if (!f) { toast('Escolha o arquivo.', true); return; }
+    if (f.size > 10 * 1024 * 1024) { toast('O arquivo passa de 10 MB. Divida em partes menores.', true); return; }
+    var o = lerOrigem(md.el); if (!o) return;
+    var btn = this;
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      var b64 = String(leitor.result).split(',')[1] || '';
+      var tipo = f.type || ({ pdf: 'application/pdf', doc: 'application/msword', odt: 'application/vnd.oasis.opendocument.text',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })[(f.name.split('.').pop() || '').toLowerCase()] || '';
+      ocupado(btn, 'Enviando…', function () {
+        return call('enviarArquivoQuestoes', { nome: f.name, mime: tipo, base64: b64, disciplina: $('#ea-disc', md.el).value, origem: o, observacao: $('#ea-obs', md.el).value });
+      }).then(function () { md.fechar(); toast('Arquivo enviado. A coordenação avisa quando as questões chegarem para a sua análise.'); if (depois) depois(); }).catch(function () {});
+    };
+    leitor.readAsDataURL(f);
+  };
+}
+/** Lista dos envios: o professor vê os dele; a coordenação vê todos e marca a situação */
+function cardEnvios(alvo, adm, recarregar) {
+  if (!alvo) return;
+  call('listarEnvios', {}).then(function (es) {
+    if (!es.length) { alvo.innerHTML = ''; return; }
+    var novos = es.filter(function (e) { return e.status === 'RECEBIDO'; }).length;
+    alvo.innerHTML = '<details class="card envios"' + (novos ? ' open' : '') + '><summary><h2>' + (adm ? 'Arquivos dos professores' : 'Seus arquivos enviados') + '</h2>' +
+      '<span class="mut peq">' + (novos ? novos + (novos === 1 ? ' esperando transcrição' : ' esperando transcrição') : es.length + ' enviado(s)') + '</span></summary>' +
+      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos dos professores”.</p>' : '') +
+      '<ul class="env-lista">' + es.map(function (e) {
+        return '<li><div><b>' + esc(e.arquivo) + '</b><small>' + (adm ? esc(e.autorNome) + ' · ' : '') + esc(e.disciplina) + ' · ' + esc(e.origem) + ' · ' + dataBr(e.criadoEm) +
+          (e.status === 'TRANSCRITO' && e.quantidade ? ' · ' + e.quantidade + (e.quantidade === 1 ? ' questão' : ' questões') : '') + '</small>' +
+          (e.mensagem ? '<small>' + (e.status === 'PROBLEMA' ? '<b>Coordenação:</b> ' : '') + esc(e.mensagem) + '</small>' : '') + '</div>' +
+          tag(STATUS_ENV, e.status) +
+          (adm && e.status !== 'PROBLEMA' ? '<button class="btn peq" data-env-prob="' + esc(e.id) + '">Marcar com problema</button>' : '') + '</li>';
+      }).join('') + '</ul></details>';
+    $$('[data-env-prob]', alvo).forEach(function (b) {
+      b.onclick = function () {
+        var md = modal(topoModal('Arquivo com problema') + '<label class="campo"><span>O que o professor precisa corrigir</span>' +
+          '<input type="text" id="ep-msg" maxlength="500" placeholder="Ex.: faltou o gabarito; a figura da questão 4 está ilegível"></label>' +
+          '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button><button class="btn pri" id="ep-ok" style="flex:none">Avisar o professor</button></div>');
+        $('#ep-ok', md.el).onclick = function () {
+          ocupado(this, 'Salvando…', function () { return call('marcarEnvio', { id: b.getAttribute('data-env-prob'), status: 'PROBLEMA', mensagem: $('#ep-msg', md.el).value }); })
+            .then(function () { md.fechar(); toast('O professor vai ver o aviso em Minhas questões.'); recarregar(); }).catch(function () {});
+        };
+      };
+    });
+  }).catch(function () { alvo.innerHTML = ''; });
 }
 
 // ---------------------------------------------------------------- banco de temas de redação
