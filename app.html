@@ -2939,6 +2939,7 @@ VIEWS.simulados = function (m, p) {
             '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' : '') +
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
             '<button class="btn peq" data-a="ajustar" data-i="' + i + '">Anular ou trocar gabarito</button>' +
+            '<button class="btn peq" data-a="analise" data-i="' + i + '">Análise para o Claude</button>' +
             '<select data-a="status" data-i="' + i + '" style="width:auto;margin-left:auto;padding:5px 8px">' +
             Object.keys(STATUS_S).map(function (k) { return '<option value="' + k + '"' + (k === s.status ? ' selected' : '') + '>' + STATUS_S[k][0] + '</option>'; }).join('') +
             '</select>' : '') + '</div>' +
@@ -2978,6 +2979,7 @@ VIEWS.simulados = function (m, p) {
           if (a === 'mapa') return ir('turmas', { simuladoId: s.id });
           if (a === 'lancar') return escolherAluno(s);
           if (a === 'ajustar') return ajustarGabarito(s, carregar);
+          if (a === 'analise') return analiseParaClaude(s);
           if (a === 'cartao' && adm) return escolherCartoes(s);
           if (a === 'caderno' && s.versoes > 1) return escolherVersao(s);
           verImpresso(s, a);
@@ -2988,6 +2990,24 @@ VIEWS.simulados = function (m, p) {
   carregar();
   if (adm && p && p.novo) formSimulado(carregar);
 };
+
+/**
+ * Coordenação: texto do simulado para colar no chat do Claude (avaliação da turma).
+ * Só números agregados, sem nome de aluno.
+ */
+function analiseParaClaude(s) {
+  var md = modal(topoModal('Análise para o Claude · ' + s.codigo) +
+    '<p class="peq" style="margin-top:0">Copie o texto e cole no chat do Claude com a frase "o simulado terminou". ' +
+    'Ele avalia cada disciplina e questão, aponta possíveis erros de gabarito e sugere o que retomar em sala. ' +
+    'O texto não tem nome, matrícula nem e-mail de aluno: só os números da turma.</p>' +
+    '<div id="an-corpo"><div class="carregando"><div class="giro"></div>Montando a análise…</div></div>', true);
+  call('analiseSimulado', { simuladoId: s.id }).then(function (r) {
+    $('#an-corpo', md.el).innerHTML = '<p class="mut peq" style="margin:0 0 6px">' + r.participantes + ' cartão(ões) e ' + r.questoes + ' questão(ões).</p>' +
+      '<textarea id="an-txt" rows="12" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn pri" id="an-cp">Copiar texto</button></div>';
+    $('#an-cp', md.el).onclick = function () { $('#an-txt', md.el).select(); copiar(r.texto, this); };
+  }).catch(function (e) { $('#an-corpo', md.el).innerHTML = caixaErro(e); });
+}
 
 /**
  * Coordenação: anular uma questão (ponto para todos) ou trocar o gabarito depois da aplicação.
