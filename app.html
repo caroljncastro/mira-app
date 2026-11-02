@@ -1431,7 +1431,12 @@ function modal(html, larga) {
   f.innerHTML = '<div class="janela' + (larga ? ' larga' : '') + '">' + html + '</div>';
   document.body.appendChild(f);
   var fechar = function () { f.remove(); };
-  f.addEventListener('click', function (e) { if (e.target === f) fechar(); });
+  // clique fora fecha só janelas sem campos de formulário (um formulário não pode sumir com o que já foi escrito)
+  f.addEventListener('click', function (e) {
+    if (e.target !== f) return;
+    if ($('form, textarea, input:not([type=hidden]):not([disabled]), select:not([disabled])', f)) { toast('Para sair, use Cancelar ou Fechar.'); return; }
+    fechar();
+  });
   $$('.fechar', f).forEach(function (b) { b.addEventListener('click', fechar); });
   return { el: f, fechar: fechar };
 }
@@ -2309,6 +2314,7 @@ VIEWS.questoes = function (m, p) {
       '<a href="#" id="ver-an">Ver agora</a></div>';
     $('#ver-an').onclick = function (e) { e.preventDefault(); $('#f-status').value = 'ANALISE_PROF'; VIEWS.questoes.recarregar(); };
   }).catch(function () {});
+  if (ler(chaveRascunhoQuestao())) $('#nova').textContent = 'Continuar rascunho';
   $('#nova').onclick = function () { formQuestao(null); };
   if ($('#temas')) $('#temas').onclick = function () { ir('temas'); };
   if ($('#enviar-arq')) $('#enviar-arq').onclick = function () { enviarArquivoQuestoes(desenharEnvios); };
@@ -2542,6 +2548,7 @@ function painelTemas(dados, discs, op) {
   }).join('') + '</div>';
 }
 
+function chaveRascunhoQuestao() { return 'mira-rascunho-questao-' + ((S.user && S.user.id) || ''); }
 function formQuestao(q) {
   var c = conc('ESPCEX');
   var discs = disciplinasDe('ESPCEX');
@@ -2576,8 +2583,10 @@ function formQuestao(q) {
         '<span class="alt-ok">✔ correta</span></div>';
     }).join('') + '</div>' +
     '<div class="campo"><span class="mut peq" style="font-weight:600">Prévia (como o aluno vê)</span><div id="q-previa" class="previa"></div></div>' +
-    '<div class="aviso azul peq">Depois de salva, a questão passa pela curadoria: resolução, conferência do gabarito e o erro de raciocínio por trás de cada alternativa incorreta. Capriche nas alternativas erradas: elas é que revelam as dificuldades dos alunos.</div>' +
-    '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn fechar">Cancelar</button>' +
+    (q.id ? '<div class="aviso azul peq">Se você só trocar a figura, ajustar a formatação do texto ou corrigir o gabarito para o da curadoria, a curadoria continua valendo. Se mudar o conteúdo, a questão passa de novo pela curadoria.</div>'
+      : '<div class="aviso azul peq">Depois de salva, a questão passa pela curadoria: resolução, conferência do gabarito e o erro de raciocínio por trás de cada alternativa incorreta. Capriche nas alternativas erradas: elas é que revelam as dificuldades dos alunos.' +
+        ' Enquanto você escreve, o MIRA guarda um rascunho neste aparelho: se a janela fechar, é só clicar em Nova questão para continuar.</div>') +
+    '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="q-cancelar">Cancelar</button>' +
     '<button class="btn pri" id="q-salvar">Salvar questão</button></div></form>', true);
 
   var enun = $('#q-enun', md.el);
@@ -2677,6 +2686,46 @@ function formQuestao(q) {
   $$('input[name=q-gab]', md.el).forEach(function (r) { r.addEventListener('change', marcarCorreta); });
   marcarCorreta();
 
+  // rascunho (só questão nova): guardado neste aparelho a cada alteração; some ao salvar ou cancelar
+  var chaveR = q.id ? '' : chaveRascunhoQuestao();
+  var gravarRascunho = function () {
+    if (!chaveR) return;
+    var campos = {};
+    $$('#fq [id]', md.el).forEach(function (x) { if (/^(INPUT|TEXTAREA|SELECT)$/.test(x.tagName) && x.type !== 'file' && x.type !== 'radio') campos[x.id] = x.value; });
+    var radios = {};
+    $$('#fq input[type=radio]:checked', md.el).forEach(function (x) { radios[x.name] = x.value; });
+    var tem = enun.value.trim() || c.alternativas.some(function (l) { return $('#q-alt-' + l, md.el).value.trim(); }) || figuras.length;
+    if (!tem) { guardar(chaveR, null); return; }
+    var r = { em: new Date().toISOString(), campos: campos, radios: radios, figuras: figuras.filter(function (f) { return f.base64; }) };
+    try { localStorage.setItem(chaveR, JSON.stringify(r)); }
+    catch (e) { r.figuras = []; r.semFiguras = true; guardar(chaveR, JSON.stringify(r)); }
+  };
+  var tRasc = null;
+  var agendarRascunho = function () { clearTimeout(tRasc); tRasc = setTimeout(gravarRascunho, 600); };
+  if (chaveR) {
+    md.el.addEventListener('input', agendarRascunho);
+    md.el.addEventListener('change', agendarRascunho);
+    var rasc = null;
+    try { rasc = JSON.parse(ler(chaveR) || 'null'); } catch (e) { rasc = null; }
+    if (rasc && rasc.campos) {
+      if (rasc.campos['q-disc'] !== undefined) { $('#q-disc', md.el).value = rasc.campos['q-disc']; opcoesConteudo(); }
+      Object.keys(rasc.campos).forEach(function (id) { var x = $('#' + id, md.el); if (x && id !== 'q-disc') x.value = rasc.campos[id]; });
+      Object.keys(rasc.radios || {}).forEach(function (n) {
+        var x = $('input[name="' + n + '"][value="' + rasc.radios[n] + '"]', md.el);
+        if (x) { x.checked = true; if (x.onchange) x.onchange(); }
+      });
+      figuras = (rasc.figuras || []).filter(function (f) { return f.base64; }).map(function (f) { return { url: f.url, base64: f.base64, mime: f.mime }; });
+      desenharFiguras(); marcarCorreta(); setTimeout(previa, 0);
+      toast('Rascunho recuperado' + (rasc.semFiguras ? ' (as figuras não couberam no aparelho: adicione de novo).' : '.') + ' Para começar do zero, clique em Cancelar.');
+    }
+  }
+  var rotuloNova = function () { var bn = $('#nova'); if (bn) bn.textContent = chaveR && ler(chaveR) ? 'Continuar rascunho' : '+ Nova questão'; };
+  $$('.fechar', md.el).forEach(function (b) { b.addEventListener('click', function () { if (chaveR) { clearTimeout(tRasc); gravarRascunho(); rotuloNova(); } }); });
+  $('#q-cancelar', md.el).onclick = function () {
+    if (!chaveR || !ler(chaveR)) { md.fechar(); return; }
+    confirmar('Descartar esta questão? O que você escreveu será apagado.', 'Descartar').then(function () { clearTimeout(tRasc); guardar(chaveR, null); rotuloNova(); md.fechar(); });
+  };
+
   var preencherAlternativas = function (alts) {
     Object.keys(alts).forEach(function (l) { var t = $('#q-alt-' + l, md.el); if (t) t.value = alts[l]; });
   };
@@ -2738,9 +2787,10 @@ function formQuestao(q) {
     };
     ocupado($('#q-salvar', md.el), 'Salvando…', function () { return call('salvarQuestao', dados); })
       .then(function (r) {
+        if (chaveR) { clearTimeout(tRasc); guardar(chaveR, null); rotuloNova(); }
         md.fechar();
         if (r.aviso) toast(r.aviso, true);
-        else toast(r.questao.status === 'PENDENTE' ? 'Questão salva. Ela entra na próxima curadoria.' : 'Questão salva e analisada.');
+        else toast(r.questao.status === 'PENDENTE' ? 'Questão salva. Ela entra na próxima curadoria.' : q.id ? 'Questão salva. A curadoria foi mantida.' : 'Questão salva e analisada.');
         if (VIEWS.questoes.recarregar && S.rota === 'questoes') VIEWS.questoes.recarregar();
         verQuestao(r.questao, VIEWS.questoes.recarregar);
       }).catch(function () {});
