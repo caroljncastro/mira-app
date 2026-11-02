@@ -361,6 +361,11 @@
 
   /* questões */
   .q-lista { background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-card); overflow: hidden; margin-bottom: 16px; }
+  .grupo-q { margin-bottom: 10px; }
+  .grupo-q > summary { cursor: pointer; padding: 10px 4px; font-size: 15px; }
+  .grupo-q > summary .tag { margin-left: 6px; vertical-align: middle; }
+  .grupo-q > summary::marker { color: var(--n-500); }
+  .grupo-q > .q-lista { margin-bottom: 6px; }
   .q-item { cursor: pointer; position: relative; margin: 0; border: 0; border-radius: 0; padding: 14px 20px;
     border-top: 1px solid var(--n-200); background: #fff; }
   .q-item:first-child { border-top: 0; }
@@ -2283,6 +2288,7 @@ function importarAlunos(aoFim) {
    (parte do App; a ordem dos arquivos está em Index.html)
    ===================================================================== */
 // ---------------------------------------------------------------- questões
+var SEM_TEMA = 'Sem tema do edital';
 VIEWS.questoes = function (m, p) {
   var adm = S.user.perfil === 'ADM';
   var discs = disciplinasDe('ESPCEX');
@@ -2296,7 +2302,8 @@ VIEWS.questoes = function (m, p) {
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
     Object.keys(STATUS_Q).map(function (k) { return '<option value="' + k + '">' + STATUS_Q[k][0] + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="f-disc"><option value="">Todas</option>' +
-    discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label></div></div>' +
+    discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="campo" style="margin:0"><span>Tema</span><select id="f-tema" disabled><option value="">Escolha a disciplina</option></select></label></div></div>' +
     '<div id="aviso-an"></div><div id="envios"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
   if (p.status) $('#f-status').value = p.status;
   call('temasUltimoSimulado', {}).then(function (dados) {
@@ -2362,9 +2369,11 @@ VIEWS.questoes = function (m, p) {
     var l = $('#lista'); carregando(l);
     marcadas = {};
     call('listarQuestoes', { status: $('#f-status').value, disciplina: $('#f-disc').value }).then(function (qs) {
+      var temaSel = $('#f-tema').value;
+      if (temaSel) qs = qs.filter(function (q) { return (q.temaEdital || SEM_TEMA) === temaSel; });
       ultimas = qs;
       if (!qs.length) { l.innerHTML = '<div class="card vazio">' + icone('biblioteca', 'ic-vazio') + 'Nenhuma questão encontrada.</div>'; barraLote([]); return; }
-      l.innerHTML = '<p class="mut peq">' + qs.length + ' questão(ões)</p><div class="q-lista">' + qs.map(function (q, i) {
+      var cartao = function (q, i) {
         var sel = adm && APROVAVEIS.indexOf(q.status) >= 0;
         return '<div class="card q-item' + (sel ? ' com-sel' : '') + '" data-i="' + i + '" data-id="' + esc(q.id) + '">' +
           (sel ? '<label class="q-sel-box" title="Selecionar para aprovar"><input type="checkbox" class="q-sel" data-id="' + esc(q.id) + '"></label>' : '') +
@@ -2375,7 +2384,26 @@ VIEWS.questoes = function (m, p) {
           (q.origem ? ' · ' + esc(rotuloOrigem(q.origem)) : '') + '</span>' +
           '<span class="dir">' + (adm ? esc(q.autorNome) + ' · ' : '') + dataBr(q.atualizadoEm) + '</span></div>' +
           '<div class="q-trecho">' + esc(semFiguras(perguntaDe(q.enunciado))) + '</div></div>';
-      }).join('') + '</div>';
+      };
+      // agrupadas por disciplina e tema do edital, na ordem do edital
+      var edital = conc('ESPCEX').edital || {}, grupos = {}, chaves = [];
+      qs.forEach(function (q, i) {
+        var k = q.disciplina + '\u0001' + (q.temaEdital || SEM_TEMA);
+        if (!grupos[k]) { grupos[k] = []; chaves.push(k); }
+        grupos[k].push(cartao(q, i));
+      });
+      var ordem = function (k) {
+        var p = k.split('\u0001'), di = discs.indexOf(p[0]), ti = (edital[p[0]] || []).indexOf(p[1]);
+        return (di < 0 ? 99 : di) * 1000 + (ti < 0 ? 999 : ti);
+      };
+      chaves.sort(function (a, b) { return ordem(a) - ordem(b); });
+      var abertos = qs.length <= 20 || chaves.length === 1;
+      l.innerHTML = '<p class="mut peq">' + qs.length + ' questão(ões) em ' + chaves.length + (chaves.length === 1 ? ' tema' : ' temas') + '</p>' +
+        chaves.map(function (k) {
+          var p = k.split('\u0001');
+          return '<details class="grupo-q"' + (abertos ? ' open' : '') + '><summary>' + ($('#f-disc').value ? '' : '<span class="mut">' + esc(p[0]) + ' ›</span> ') +
+            '<b>' + esc(p[1]) + '</b> <span class="tag">' + grupos[k].length + '</span></summary><div class="q-lista">' + grupos[k].join('') + '</div></details>';
+        }).join('');
       $$('.q-item', l).forEach(function (c) {
         c.onclick = function (e) {
           if (e.target.closest('.q-sel-box')) return;
@@ -2405,7 +2433,15 @@ VIEWS.questoes = function (m, p) {
       barraLote(ultimas);
     }
   };
-  $('#f-status').onchange = carregar; $('#f-disc').onchange = carregar;
+  var opcoesTema = function () {
+    var d = $('#f-disc').value, s = $('#f-tema');
+    s.disabled = !d;
+    s.innerHTML = !d ? '<option value="">Escolha a disciplina</option>' :
+      '<option value="">Todos</option>' + ((conc('ESPCEX').edital || {})[d] || []).concat([SEM_TEMA]).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
+  };
+  $('#f-status').onchange = carregar;
+  $('#f-disc').onchange = function () { opcoesTema(); carregar(); };
+  $('#f-tema').onchange = carregar;
   VIEWS.questoes.recarregar = carregar;
   carregar();
 };
