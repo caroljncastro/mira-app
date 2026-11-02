@@ -3225,9 +3225,9 @@ function verQuestao(q, aoMudar) {
       (ad ? '<p class="peq mut" style="margin-top:0">Aprovar agora aplica a versão adaptada, mesmo sem a análise do professor.</p>' : '') +
       '<div class="linha"><label class="campo"><span>Gabarito final</span><select id="v-gab">' +
       c.alternativas.map(function (l) { return '<option' + (l === gabVersao ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
-      '<label class="campo" style="flex:3"><span>Observação ao professor (para devolução)</span><input type="text" id="v-obs" value="' + esc(q.observacaoAdm) + '"></label></div>' +
+      '<label class="campo" style="flex:3"><span>Observação (para devolver ao professor ou pedir nova curadoria)</span><input type="text" id="v-obs" value="' + esc(q.observacaoAdm) + '"></label></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="v-edit">Editar questão</button>' +
-      '<button class="btn" id="v-curar">' + (cur ? 'Refazer curadoria automática' : 'Fazer curadoria automática') + '</button>' +
+      ((q.status !== 'PENDENTE' && q.status !== 'AJUSTE' && !q.emSimulado) ? '<button class="btn" id="v-curar">Pedir nova curadoria</button>' : '') +
       '<button class="btn perigo" id="v-dev">Devolver ao professor</button>' +
       '<button class="btn ok" id="v-apr" style="margin-left:auto">Aprovar para simulados</button></div></div>';
     if (cur) h += '<p class="mut peq" style="text-align:right;margin:6px 0 0">Ao editar, a coordenação mantém a curadoria e a situação da questão.</p>';
@@ -3265,9 +3265,14 @@ function verQuestao(q, aoMudar) {
     };
   }
   if (adm) {
-    $('#v-curar', md.el).onclick = function () {
-      ocupado(this, 'Analisando…', function () { return call('curarQuestao', { id: q.id }); })
-        .then(function (n) { depois(n, 'Curadoria atualizada.'); }).catch(function () {});
+    if ($('#v-curar', md.el)) $('#v-curar', md.el).onclick = function () {
+      var obs = $('#v-obs', md.el).value.trim();
+      if (!obs) { toast('Escreva na observação o que a nova curadoria deve mudar.', true); $('#v-obs', md.el).focus(); return; }
+      ocupado(this, 'Enviando…', function () { return call('decidirQuestao', { id: q.id, decisao: 'CURADORIA', observacao: obs }); })
+        .then(function (r) {
+          if (r.aviso) toast(r.aviso, true);
+          depois(null, r.status === 'ANALISE_PROF' ? 'Nova curadoria feita. A questão está na análise do professor.' : 'Pedido registrado. A questão entra no próximo lote de curadoria.');
+        }).catch(function () {});
     };
     var curEditada = function () {
       if (!cur) return null;
