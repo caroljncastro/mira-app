@@ -634,6 +634,8 @@
   .ini-nums b small { font-size: 14px; color: var(--n-500); }
   .ini-nums span { font-size: 12.5px; color: var(--n-500); }
   .ini-card > .btn { margin-top: auto; align-self: flex-start; }
+  .ini-lista-at { margin-bottom: 14px; }
+  .ini-card .sit-lista { margin-bottom: 14px; }
   .sec-tit { margin: 28px 0 12px; }
   .meu-tit { margin: 10px 0 2px; }
   .meu-cod { font-family: monospace; font-weight: 700; font-size: 13px; color: var(--n-500); }
@@ -820,11 +822,7 @@
   .destaque-pend h2 { font-size: 24px; margin: 0 0 4px; }
   .destaque-pend p { margin: 0; font-size: 14.5px; }
   .destaque .btn { box-shadow: none; }
-  .destaque .outras { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .14); display: flex; flex-wrap: wrap; gap: 8px; }
-  .destaque .outras button { display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, .1); color: #fff; border: 0;
     border-radius: 999px; padding: 7px 14px 7px 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-  .destaque .outras button:hover { background: rgba(255, 255, 255, .18); }
-  .destaque .outras b { min-width: 24px; height: 24px; border-radius: 999px; background: #fff; color: var(--marca-700); display: grid; place-items: center; font-size: 12.5px; padding: 0 6px; }
   /* nota no anel + números (cartão de destaque do relatório e do painel do aluno) */
   .nota-destaque { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
   .anel-d { width: 150px; height: 150px; border-radius: 50%; flex: none; display: grid; place-items: center; }
@@ -1510,9 +1508,9 @@ function sair(expirou) {
 
 // ---------------------------------------------------------------- casca
 var MENUS = {
-  ADM: [['painel', 'Painel'], ['questoes', 'Banco de questões'], ['simulados', 'Simulados'], ['resultados', 'Resultados'],
+  ADM: [['painel', 'Início'], ['questoes', 'Banco de questões'], ['simulados', 'Simulados'], ['resultados', 'Resultados'],
     ['estrategias', 'Estratégias de estudo'], ['turmas', 'Mapa da turma'], ['usuarios', 'Usuários'], ['config', 'Configurações'], ['conta', 'Minha conta']],
-  PROFESSOR: [['questoes', 'Minhas questões'], ['simulados', 'Simulados'], ['turmas', 'Mapa da turma'],
+  PROFESSOR: [['painel', 'Início'], ['questoes', 'Minhas questões'], ['simulados', 'Simulados'], ['turmas', 'Mapa da turma'],
     ['resultados', 'Resultados'], ['estrategias', 'Estratégias de estudo'], ['conta', 'Minha conta']],
   ALUNO: [['painel', 'Início'], ['missoes', 'Missões'], ['edital', 'Edital'], ['meus', 'Simulados'], ['conta', 'Conta']]
 };
@@ -1727,7 +1725,7 @@ function ir(rota, params) {
   $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' + menu.map(function (m) {
     var ativo = m[0] === rota || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
       (rota === 'enviar' && (m[0] === 'meus' || m[0] === 'simulados'));
-    var ic = S.user.perfil === 'ALUNO' && m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
+    var ic = m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
     return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ic) + '<span>' + esc(m[1]) + '</span></button>';
   }).join('');
   $$('#menu button').forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-r')); }; });
@@ -1807,10 +1805,10 @@ function fotoQuadrada(file, lado) {
 
   <script>
 /* =====================================================================
-   MIRA — interface: painel da coordenação e usuários
+   MIRA — interface: Início da coordenação e do professor, e usuários
    (parte do App; a ordem dos arquivos está em Index.html)
    ===================================================================== */
-// ---------------------------------------------------------------- painel (ADM)
+// ---------------------------------------------------------------- Início (coordenação e professor)
 /** Cabeçalho acolhedor dos painéis: data por extenso e "Olá, primeiro nome" */
 function cabSaudacao(acoes, sub) {
   var hoje = new Date(), dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'],
@@ -1820,61 +1818,86 @@ function cabSaudacao(acoes, sub) {
     '<h1>Olá, ' + esc(nome) + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (acoes ? '<div class="acoes nao-imprimir">' + acoes + '</div>' : '') + '</div>';
 }
 
+/** "Seu próximo passo": uma caixa com a ação mais importante agora (o mesmo bloco do Início do aluno) */
+function caixaProximo(ic, titulo, texto, botao) {
+  return '<div class="proximo nao-imprimir"><span class="chip">' + icone(ic) + '</span><div class="t"><b>' + esc(titulo) + '</b>' +
+    '<span>' + esc(texto) + '</span></div>' + (botao || '') + '</div>';
+}
+/** Cartão de destaque sem nota (antes do primeiro cartão corrigido) */
+function destaqueVazio(titulo, texto, botao) {
+  return '<section class="destaque"><div class="destaque-pend"><span class="grande">' + icone('avaliacao', 'ic') + '</span><div class="t">' +
+    '<h2>' + esc(titulo) + '</h2><p>' + esc(texto) + '</p></div>' + (botao || '') + '</div></section>';
+}
 VIEWS.painel = function (m) {
   if (S.user.perfil === 'ALUNO') return VIEWS.painelAluno(m);
-  var adm = S.user.perfil === 'ADM';
+  if (S.user.perfil === 'PROFESSOR') return VIEWS.painelProf(m);
   carregando(m);
   return call('painel').then(function (d) {
-    var h = cabSaudacao(adm ? '<button class="btn pri" id="pn-novo">+ Novo simulado</button>' : '');
+    var h = cabSaudacao('', 'Como está o MIRA e o que fazer agora');
     var paraCurar = (d.questoesPorStatus.PENDENTE || 0) + (d.questoesPorStatus.AJUSTE || 0);
     var pend = [];
-    if (d.pedidosAcesso) pend.push(['ambar', d.pedidosAcesso, 'Pedidos de acesso', 'Alunos aguardando a sua aprovação', 'ped']);
-    if (d.questoesPorStatus.VALIDADA) pend.push(['verde', d.questoesPorStatus.VALIDADA, 'Questões para aprovar', 'Já validadas pelos professores', 'val']);
-    if (d.estrategiasPendentes) pend.push(['azul', d.estrategiasPendentes, 'Estratégias de estudo aguardando o OK', 'Sugestões feitas a partir dos relatórios, para os professores conferirem', 'est']);
-    var dc = adm ? diasDesdeCopia(d.ultimaCopia) : 0;
+    if (d.pedidosAcesso) pend.push([d.pedidosAcesso, 'Pedidos de acesso', 'Alunos aguardando a sua aprovação.', 'ped']);
+    if (d.questoesPorStatus.VALIDADA) pend.push([d.questoesPorStatus.VALIDADA, 'Questões para aprovar', 'Já validadas pelos professores.', 'val']);
+    if (d.estrategiasPendentes) pend.push([d.estrategiasPendentes, 'Estratégias aguardando o OK', 'Sugestões antigas para os professores conferirem.', 'est']);
+    var dc = diasDesdeCopia(d.ultimaCopia);
     var da = diasDesdeCopia(d.ultimaCopiaAuto), autoOk = !!window.MIRA_SUPABASE && d.ultimaCopiaAuto && da <= DIAS_COPIA_AUTO;
-    if (adm && window.MIRA_SUPABASE && d.ultimaCopiaAuto && !autoOk) pend.push(['ambar', da + 'd', 'Cópia automática atrasada',
+    if (window.MIRA_SUPABASE && d.ultimaCopiaAuto && !autoOk) pend.push([da + 'd', 'Cópia automática atrasada',
       'A última cópia automática no Drive foi há ' + da + ' dias. Enquanto isso, baixe uma cópia manual.', 'copia']);
-    if (dc >= (autoOk ? DIAS_COPIA_COM_AUTO : DIAS_COPIA)) pend.push(['ambar', d.ultimaCopia ? dc + 'd' : '!', autoOk ? 'Cópia de segurança do mês' : 'Cópia de segurança da semana',
+    if (dc >= (autoOk ? DIAS_COPIA_COM_AUTO : DIAS_COPIA)) pend.push([d.ultimaCopia ? dc + 'd' : '!', autoOk ? 'Cópia de segurança do mês' : 'Cópia de segurança da semana',
       d.ultimaCopia ? 'A última foi há ' + dc + ' dias. Baixe uma nova e guarde no seu computador.' : 'Você ainda não baixou nenhuma. Baixe e guarde no seu computador.', 'copia']);
-    if (paraCurar) pend.push(['azul', paraCurar, 'Questões para a curadoria', d.questoesPorStatus.AJUSTE ?
-      d.questoesPorStatus.AJUSTE + ' com ajuste pedido pelo professor' : 'Peça a curadoria e importe o resultado', 'q']);
-    // a pendência principal vai no cartão de destaque; as outras, logo abaixo dele
-    h += '<section class="destaque">' + (pend.length
-      ? '<div class="destaque-pend"><span class="grande">' + pend[0][1] + '</span><div class="t"><span class="rot">' + icone('notificacoes') + 'Precisa de você</span>' +
-        '<h2>' + esc(pend[0][2]) + '</h2><p>' + esc(pend[0][3]) + '</p></div>' +
-        '<button class="btn verde" data-pend="' + pend[0][4] + '">' + (pend[0][4] === 'copia' ? 'Baixar agora' : 'Revisar agora') + '</button></div>' +
-        (pend.length > 1 ? '<div class="outras">' + pend.slice(1).map(function (p) {
-          return '<button data-pend="' + p[4] + '"><b>' + p[1] + '</b>' + esc(p[2]) + '</button>';
-        }).join('') + '</div>' : '')
-      : '<div class="destaque-pend"><span class="grande">' + icone('conquista', 'ic') + '</span><div class="t"><span class="rot">' + icone('foco') + 'Pendências</span>' +
-        '<h2>Tudo em dia</h2><p>Nenhuma pendência no momento. Bom momento para montar o próximo simulado.</p></div></div>') + '</section>';
-    h += '<div class="grade">' + [['alunos', 'Alunos', d.alunos], ['perfil', 'Professores', d.professores], ['biblioteca', 'Questões', d.questoes],
-      ['avaliacao', 'Simulados', d.simulados], ['relatorio', 'Cartões corrigidos', d.resultados]].map(function (k) {
-        return '<div class="kpi"><span class="chip">' + icone(k[0]) + '</span><small>' + k[1] + '</small><b>' + k[2] + '</b></div>';
-      }).join('') + '</div>';
+    if (paraCurar) pend.push([paraCurar, 'Questões para a curadoria', d.questoesPorStatus.AJUSTE ?
+      d.questoesPorStatus.AJUSTE + ' com ajuste pedido pelo professor.' : 'Peça a curadoria e importe o resultado.', 'q']);
 
-    h += '<div class="grade-2"><div class="card"><h2>Banco pronto para simulados</h2>' +
-      '<p class="mut peq" style="margin-top:0">Questões aprovadas por disciplina, comparadas ao que um simulado completo da EsPCEx exige.</p>';
+    // cartão roxo: o último simulado (como a nota do aluno)
+    var u = d.ultimoSimulado, aprovadas = d.questoesPorStatus.APROVADA || 0;
+    h += u ? notaDestaque(u.media, 'nota média', [
+      ['relatorio', String(u.participantes), u.participantes === 1 ? 'cartão corrigido' : 'cartões corrigidos'],
+      ['foco', u.aptos + ' de ' + u.participantes, 'na mediana em todas'],
+      ['biblioteca', String(aprovadas), 'questões aprovadas no banco']
+    ], '<button class="btn verde peq" id="pn-res">Ver resultados</button>', 'Último simulado: ' + u.titulo)
+      : destaqueVazio('Nenhum cartão corrigido ainda', 'Monte o primeiro simulado com as questões aprovadas.', '<button class="btn verde" id="pn-novo2">+ Novo simulado</button>');
+
+    // seu próximo passo: a pendência mais importante
+    h += pend.length
+      ? caixaProximo('notificacoes', 'Seu próximo passo: ' + pend[0][1].toLowerCase() + ' (' + pend[0][0] + ')', pend[0][2],
+        '<button class="btn pri" data-pend="' + pend[0][3] + '">' + (pend[0][3] === 'copia' ? 'Baixar agora' : 'Revisar agora') + '</button>')
+      : caixaProximo('conquista', 'Tudo em dia', 'Nenhuma pendência. Bom momento para montar o próximo simulado.', '<button class="btn pri" id="pn-novo">+ Novo simulado</button>');
+
+    // cartões com ícone, como no Início do aluno
+    var cardPend = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('notificacoes') + 'Pendências</h2><span class="mut peq">' +
+      (pend.length ? pend.length + (pend.length === 1 ? ' item' : ' itens') : 'tudo em dia') + '</span></div>' +
+      (pend.length ? '<div class="ini-lista-at">' + pend.map(function (p) {
+        return '<a href="#" class="sit" data-pend="' + p[3] + '"><span>' + esc(p[1]) + '</span><b>' + esc(p[0]) + '</b></a>';
+      }).join('') + '</div>' : '<p class="mut peq ini-txt">Nada esperando por você agora.</p>') +
+      '<div class="ini-nums"><div><b>' + d.alunos + '</b><span>alunos</span></div><div><b>' + d.professores + '</b><span>professores</span></div>' +
+      '<div><b>' + d.simulados + '</b><span>simulados</span></div></div>' +
+      '<button class="btn" data-ir="usuarios">Abrir usuários</button></div>';
+    var cardQ = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('biblioteca') + 'Banco de questões</h2><span class="mut peq">' + d.questoes + ' questões</span></div>' +
+      '<div class="sit-lista">' + Object.keys(STATUS_Q).map(function (k) {
+        return '<a href="#" class="sit" data-st="' + k + '">' + tag(STATUS_Q, k) + '<b>' + (d.questoesPorStatus[k] || 0) + '</b></a>';
+      }).join('') + '</div><button class="btn" data-ir="questoes">Abrir o banco</button></div>';
+    var cardBanco = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('avaliacao') + 'Pronto para simulados</h2></div>' +
+      '<p class="mut peq ini-txt">Questões aprovadas por disciplina, comparadas ao que um simulado completo da EsPCEx exige.</p>';
     conc('ESPCEX').provas.forEach(function (p) {
-      h += '<h3 class="mut" style="margin:16px 0 4px;font-size:13px">' + esc(p.titulo) + '</h3>';
+      cardBanco += '<h3 class="mut" style="margin:8px 0 4px;font-size:13px">' + esc(p.titulo) + '</h3>';
       p.disciplinas.forEach(function (x) {
         var tem = d.bancoPorDisciplina[x[0]] || 0;
-        h += barra(x[0], Math.round(100 * tem / x[1]), tem + '/' + x[1], tem >= x[1] ? 'var(--ok)' : 'var(--marca-600)');
+        cardBanco += barra(x[0], Math.round(100 * tem / x[1]), tem + '/' + x[1], tem >= x[1] ? 'var(--ok)' : 'var(--marca-600)');
       });
     });
-    h += '</div><div><div class="card"><h2>Questões por situação</h2><div class="sit-lista">' +
-      Object.keys(STATUS_Q).map(function (k) {
-        return '<a href="#" class="sit" data-st="' + k + '">' + tag(STATUS_Q, k) + '<b>' + (d.questoesPorStatus[k] || 0) + '</b></a>';
-      }).join('') +
-      '</div></div>' +
-      '<div class="card"><h2>Desempenho geral por disciplina</h2>' +
-      (d.desempenho.length ? d.desempenho.map(function (x) {
-        var p = x.total ? Math.round(1000 * x.acertos / x.total) / 10 : 0; return barra(x.disciplina, p);
-      }).join('') : '<div class="vazio">Ainda não há cartões corrigidos.</div>') + '</div></div></div>';
+    cardBanco += '<button class="btn" data-ir="simulados">Abrir simulados</button></div>';
+    var desemp = u ? u.porDisciplina : d.desempenho;
+    var cardDes = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('resultados') + 'Desempenho por disciplina</h2><span class="mut peq">' +
+      (u ? esc(u.titulo) : 'todos os simulados') + '</span></div>' +
+      (desemp.length ? desemp.map(function (x) { return barra(x.disciplina, x.total ? Math.round(1000 * x.acertos / x.total) / 10 : 0); }).join('')
+        : '<p class="mut peq ini-txt">Ainda não há cartões corrigidos.</p>') +
+      '<button class="btn" data-ir="turmas">Abrir o mapa da turma</button></div>';
+    h += '<div class="grade-2 ini-cards">' + cardPend + cardQ + '</div><div class="grade-2 ini-cards">' + cardBanco + cardDes + '</div>';
     m.innerHTML = h;
-    $$('[data-pend]').forEach(function (b) {
-      b.onclick = function () {
+    ligarIr(m);
+    $$('[data-pend]', m).forEach(function (b) {
+      b.onclick = function (e) {
+        if (e) e.preventDefault();
         var k = b.getAttribute('data-pend');
         if (k === 'copia') baixarCopia(b, function () { ir('painel'); });
         else if (k === 'ped') ir('usuarios');
@@ -1883,9 +1906,66 @@ VIEWS.painel = function (m) {
         else ir('questoes', { status: d.questoesPorStatus.PENDENTE ? 'PENDENTE' : 'AJUSTE' });
       };
     });
-    $$('.sit').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); ir('questoes', { status: a.getAttribute('data-st') }); }; });
-    if ($('#pn-novo')) $('#pn-novo').onclick = function () { ir('simulados', { novo: 1 }); };
+    $$('.sit[data-st]', m).forEach(function (a) { a.onclick = function (e) { e.preventDefault(); ir('questoes', { status: a.getAttribute('data-st') }); }; });
+    ['#pn-novo', '#pn-novo2'].forEach(function (id) { if ($(id, m)) $(id, m).onclick = function () { ir('simulados', { novo: 1 }); }; });
+    if ($('#pn-res', m)) $('#pn-res', m).onclick = function () { ir('resultados', { simuladoId: u.id }); };
+  });
+};
 
+/** Início do professor: o último simulado na matéria dele, o próximo passo, as questões dele e os temas mais errados */
+VIEWS.painelProf = function (m) {
+  carregando(m);
+  return Promise.all([call('resultados'), call('listarQuestoes', {}), call('temasUltimoSimulado', {}).catch(function () { return {}; })]).then(function (r) {
+    var rs = r[0], qs = r[1], temas = r[2] || {};
+    var por = {}; qs.forEach(function (q) { por[q.status] = (por[q.status] || 0) + 1; });
+    var minhas = S.user.disciplinas ? csv(S.user.disciplinas).join(', ') : 'todas as disciplinas';
+    var h = cabSaudacao('', 'Como suas turmas estão em ' + esc(minhas) + ' e o que fazer agora');
+
+    // cartão roxo: o último simulado, só na matéria do professor
+    if (rs.length) {
+      var simId = rs[0].simuladoId, us = rs.filter(function (x) { return x.simuladoId === simId; });
+      var ac = 0, tot = 0, aptos = 0;
+      us.forEach(function (x) { ac += Number(x.acertos) || 0; tot += Number(x.total) || 0; if (x.apto) aptos++; });
+      h += notaDestaque(tot ? Math.round(1000 * ac / tot) / 10 : 0, 'acerto médio', [
+        ['relatorio', String(us.length), us.length === 1 ? 'cartão na sua matéria' : 'cartões na sua matéria'],
+        ['foco', aptos + ' de ' + us.length, 'na mediana da sua matéria'],
+        ['biblioteca', String(por.APROVADA || 0), 'questões suas aprovadas']
+      ], '<button class="btn verde peq" id="pp-res">Ver resultados</button>', 'Último simulado: ' + rs[0].simulado);
+    } else {
+      h += destaqueVazio('Ainda sem cartões corrigidos', 'Quando os alunos enviarem o cartão, o desempenho na sua matéria aparece aqui.', '');
+    }
+
+    // seu próximo passo
+    var piores = [];
+    Object.keys(temas).forEach(function (disc) {
+      (temas[disc].temas || []).forEach(function (t) { if (t.pct < 60) piores.push({ disciplina: disc, tema: t.tema, pct: t.pct }); });
+    });
+    piores.sort(function (a, b) { return a.pct - b.pct; });
+    if (por.ANALISE_PROF) h += caixaProximo('relatorio', 'Seu próximo passo: conferir ' + por.ANALISE_PROF + (por.ANALISE_PROF === 1 ? ' relatório de curadoria' : ' relatórios de curadoria'),
+      'A curadoria terminou: dê o De acordo ou peça alteração.', '<button class="btn pri" id="pp-analise">Conferir agora</button>');
+    else if (piores.length) h += caixaProximo('foco', 'Seu próximo passo: questões de ' + piores[0].tema,
+      'Foi o tema mais errado no último simulado (' + num(piores[0].pct) + '% de acerto). Escreva questões novas: ele volta no próximo simulado.',
+      '<button class="btn pri" data-ir="questoes">Escrever questões</button>');
+    else h += caixaProximo('conquista', 'Tudo em dia', 'Nenhuma questão esperando a sua análise.', '<button class="btn pri" data-ir="questoes">Abrir minhas questões</button>');
+
+    // cartões com ícone, como no Início do aluno
+    var cardQ = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('biblioteca') + 'Minhas questões</h2><span class="mut peq">' + qs.length + ' no total</span></div>' +
+      '<div class="ini-nums"><div><b>' + (por.APROVADA || 0) + '</b><span>aprovadas</span></div>' +
+      '<div><b>' + (por.ANALISE_PROF || 0) + '</b><span>para você analisar</span></div>' +
+      '<div><b>' + ((por.PENDENTE || 0) + (por.AJUSTE || 0) + (por.VALIDADA || 0)) + '</b><span>em andamento</span></div></div>' +
+      '<button class="btn" data-ir="questoes">Abrir minhas questões</button></div>';
+    var discs = Object.keys(temas), d0 = discs.length ? temas[discs[0]] : null;
+    var cardT = '<div class="card ini-card"><div class="ini-cab"><h2>' + icone('turmas') + 'Temas do último simulado</h2>' +
+      (d0 ? '<span class="mut peq">' + esc(discs[0]) + ' · ' + d0.alunos + (d0.alunos === 1 ? ' aluno' : ' alunos') + '</span>' : '') + '</div>' +
+      (d0 && d0.temas.length ? '<p class="mut peq ini-txt">Os mais errados primeiro.</p>' + d0.temas.slice(0, 3).map(function (t) {
+        return barra(t.tema, t.pct, t.acertos + '/' + t.total);
+      }).join('') : '<p class="mut peq ini-txt">Ainda não há simulado corrigido nas suas turmas.</p>') +
+      '<button class="btn" data-ir="turmas">Abrir o mapa da turma</button></div>';
+    h += '<div class="grade-2 ini-cards">' + cardQ + cardT + '</div>';
+    m.innerHTML = h;
+    ligarIr(m);
+    if ($('#pp-res', m)) $('#pp-res', m).onclick = function () { ir('resultados', { simuladoId: rs[0].simuladoId }); };
+    if ($('#pp-analise', m)) $('#pp-analise', m).onclick = function () { ir('questoes', { status: 'ANALISE_PROF' }); };
   });
 };
 
