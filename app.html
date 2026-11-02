@@ -234,6 +234,29 @@
     background: #fff; font-size: 14px; cursor: pointer; }
   .origem-op:has(input:checked) { border-color: var(--marca-600); background: var(--marca-50); color: var(--marca-700); font-weight: 600; }
   .origem-op input { margin: 0; accent-color: var(--marca-700); }
+  /* Como foi a prova: um toque por questão (o mesmo desenho das opções da origem da questão) */
+  .pesq-intro { margin-top: 0; }
+  .pesq-disc { font-size: 15px; margin: 18px 0 4px; color: var(--marca-700); }
+  .pesq-q { padding: 10px 0; border-bottom: 1px solid var(--n-200); }
+  .pesq-q:last-child { border-bottom: 0; }
+  .pesq-q-tit { font-size: 14px; }
+  .motivo-ops { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .motivo-op { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--n-300); border-radius: var(--r-ctl);
+    background: #fff; font-size: 13px; cursor: pointer; line-height: 1.3; }
+  .motivo-op:has(input:checked) { border-color: var(--marca-600); background: var(--marca-50); color: var(--marca-700); font-weight: 600; }
+  .motivo-op input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .motivo-op:has(input:focus-visible) { outline: 2px solid var(--marca-600); outline-offset: 2px; }
+  .motivo-op.num { min-width: 40px; justify-content: center; }
+  .pesq-chutes { display: grid; gap: 8px; }
+  .pesq-chutes .linha-chute { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .pesq-chutes .linha-chute > span { font-size: 13px; color: var(--n-500); min-width: 96px; }
+  .pesq-acao { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pesq-motivos { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+  .pesq-lista { margin-bottom: 0; }
+  @media (max-width: 520px) {
+    .motivo-ops { display: grid; grid-template-columns: 1fr 1fr; }
+    .pesq-chutes .linha-chute > span { min-width: 100%; }
+  }
   .btn.perigo { color: var(--erro); border-color: var(--erro-contorno); }
   .btn.perigo:hover { background: var(--erro-bg); }
   .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
@@ -3448,7 +3471,8 @@ VIEWS.enviar = function (m, p) {
                 versao: st.versao || null, ajustes: ajustesLeitura(st), foto: st.foto ? { base64: st.foto.base64 } : null });
             }).then(function (r) {
               toast('Cartão corrigido: ' + r.acertos + '/' + r.total + ' acertos.');
-              ir('relatorio', { id: r.id });
+              // aluno: abre logo o "Como foi a prova?" (opcional), enquanto ele ainda lembra como fez a prova
+              ir('relatorio', S.user.perfil === 'ALUNO' ? { id: r.id, pesquisa: 1 } : { id: r.id });
             }).catch(function () {});
           });
         };
@@ -3530,6 +3554,7 @@ VIEWS.relatorio = function (m, p) {
       '. A nota final e as outras matérias ficam com a coordenação e os professores delas.</div>';
     h += notaDestaque(c ? c.notaFinal || 0 : det.nota, c ? 'nota final' : d.recorte ? 'em ' + d.recorte.join(' e ') : 'aproveitamento', nums, tagsRes);
     h += proximoPasso(det.porDisciplina, d.estrategias, aluno);
+    h += aluno ? cardComoFoi(d) : cardComoFoiProfessor(d);
     h += '<div class="card" id="rel-disc"><h2>Por disciplina</h2>' +
       det.porDisciplina.map(function (x) { return barra(x.disciplina, x.pct, x.acertos + '/' + x.total); }).join('') + '</div>';
 
@@ -3601,6 +3626,8 @@ VIEWS.relatorio = function (m, p) {
     }
     m.innerHTML = h;
     $('#voltar').onclick = function () { ir(aluno ? 'meus' : 'resultados'); };
+    if ($('#pesq-abrir', m)) $('#pesq-abrir', m).onclick = function () { formComoFoi(d, function () { ir('relatorio', { id: p.id }); }); };
+    if (aluno && p.pesquisa && d.pesquisaAberta && !d.pesquisa) formComoFoi(d, function () { ir('relatorio', { id: p.id }); });
     if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = function () { window.print(); };
@@ -3616,6 +3643,147 @@ VIEWS.relatorio = function (m, p) {
     };
   });
 };
+
+// ---------------------------------------------------------------- como foi a prova (pesquisa opcional do aluno)
+/** Etiquetas com quantas questões tiveram cada motivo */
+function resumoMotivos(itens) {
+  var cont = {}, ordem = [];
+  (itens || []).forEach(function (x) { if (!cont[x.rotulo]) { cont[x.rotulo] = 0; ordem.push(x.rotulo); } cont[x.rotulo]++; });
+  ordem.sort(function (a, b) { return cont[b] - cont[a]; });
+  return '<div class="pesq-motivos">' + ordem.map(function (r) { return '<span class="tag">' + esc(r) + ' · ' + cont[r] + '</span>'; }).join('') + '</div>';
+}
+/** Aluno: convite (ou resumo do que respondeu) no relatório */
+function cardComoFoi(d) {
+  var p = d.pesquisa;
+  if (!p && !d.pesquisaAberta) return '';
+  return '<div class="card nao-imprimir" id="rel-pesq"><h2>Como foi a prova?</h2>' +
+    (p ? '<p class="peq pesq-intro">Você contou como foi em ' + dataBr(p.em) + '. Suas missões já levam isso em conta.</p>' + resumoMotivos(p.itens)
+      : '<p class="peq pesq-intro">Além de saber a matéria, o tempo, o cansaço e as pegadinhas também pesam na nota. ' +
+        'Conte o que aconteceu nas questões que você errou e suas missões ficam mais certeiras. É opcional e leva 1 minuto.</p>') +
+    (d.pesquisaAberta ? '<div class="pesq-acao"><button class="btn' + (p ? '' : ' pri') + '" id="pesq-abrir">' + (p ? 'Rever respostas' : 'Responder') + '</button>' +
+      (p ? '<span class="mut peq">Dá para mudar até o simulado ser encerrado.</span>' : '<span class="mut peq">+' + PONTOS_PESQUISA + ' pontos</span>') + '</div>' : '') +
+    '</div>';
+}
+/** Professor e coordenação: o que o aluno disse, questão a questão */
+function cardComoFoiProfessor(d) {
+  var p = d.pesquisa;
+  if (!p) return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2><p class="mut" style="margin:0">O aluno ainda não respondeu a pesquisa (ela é opcional).</p></div>';
+  var conferir = p.itens.filter(function (x) { return x.conferir; }).length;
+  var sit = { errada: 'Errou', branco: 'Em branco', dupla: 'Rasurada', certa: 'Acertou' };
+  return '<div class="card" id="rel-pesq"><h2>Como foi a prova</h2>' +
+    '<p class="mut peq" style="margin-top:0">O que o aluno disse sobre cada questão, em ' + dataBr(p.em) + '.' +
+    (conferir ? ' <b>Conferir</b> = ele disse que foi tempo, atenção ou pegadinha, mas o mesmo erro de conceito se repete: provavelmente é conteúdo.' : '') + '</p>' +
+    resumoMotivos(p.itens) +
+    '<div class="rolagem"><table class="tab"><tr><th>Nº</th><th>Disciplina / conteúdo</th><th>Situação</th><th>Motivo</th></tr>' +
+    p.itens.map(function (x) {
+      return '<tr><td class="num">' + x.nv + '</td><td>' + esc(x.disciplina) + '<div class="mut peq">' + esc(x.conteudo) + '</div></td>' +
+        '<td class="sit-' + x.situacao + '">' + sit[x.situacao] + '</td><td>' + esc(x.rotulo) +
+        (x.conferir ? ' ' + tag({ C: ['Conferir', 'ambar'] }, 'C') : '') +
+        (x.obs ? '<div class="mut peq">"' + esc(x.obs) + '"</div>' : '') + '</td></tr>';
+    }).join('') + '</table></div></div>';
+}
+/** Aluno: a pesquisa, um toque por questão errada; acertos no chute com observação opcional */
+function formComoFoi(d, depois) {
+  var det = d.resultado.detalhe, M = d.motivos, sel = {}, obs = {}, chute = {};
+  ((d.pesquisa || {}).itens || []).forEach(function (x) {
+    if (x.m === 'CHUTE') { chute[x.n] = true; obs[x.n] = x.obs || ''; } else sel[x.n] = x.m;
+  });
+  var num = function (x) { return x.nv || x.n; };
+  var pq = (det.porQuestao || []).slice().sort(function (a, b) { return num(a) - num(b); });
+  var erros = pq.filter(function (x) { return ['errada', 'branco', 'dupla'].indexOf(x.situacao) >= 0; });
+  var certas = pq.filter(function (x) { return x.situacao === 'certa'; });
+  var discs = function (l) { return l.map(function (x) { return x.disciplina; }).filter(function (v, i, a) { return a.indexOf(v) === i; }); };
+  var marcou = function (x) { return x.situacao === 'branco' ? 'deixou em branco' : x.situacao === 'dupla' ? 'marcou mais de uma' : 'marcou ' + x.marcada; };
+  var ops = function (x) {
+    return '<div class="motivo-ops" role="radiogroup" aria-label="Motivo da questão ' + num(x) + '">' + Object.keys(M.erro).filter(function (k) {
+      return k !== 'CONTA' || M.conta.indexOf(x.disciplina) >= 0;
+    }).map(function (k) {
+      return '<label class="motivo-op"><input type="radio" name="pm-' + x.n + '" value="' + k + '" data-n="' + x.n + '"' + (sel[x.n] === k ? ' checked' : '') + '>' +
+        '<span>' + esc(M.erro[k]) + '</span></label>';
+    }).join('') + '</div>';
+  };
+  var md = modal(topoModal('Como foi a prova?') +
+    '<p class="peq pesq-intro">Para cada questão, toque no motivo que mais pesou. Não lembra de alguma? Deixe sem resposta. ' +
+    'Seus professores veem as respostas para ajudar você.</p>' +
+    (erros.length ? discs(erros).map(function (disc) {
+      return '<h3 class="pesq-disc">' + esc(disc) + '</h3>' + erros.filter(function (x) { return x.disciplina === disc; }).map(function (x) {
+        return '<div class="pesq-q"><div class="pesq-q-tit"><b>Questão ' + num(x) + '</b> <span class="mut">· ' + esc(x.conteudo) + ' · você ' + marcou(x) + '</span></div>' + ops(x) + '</div>';
+      }).join('');
+    }).join('') : '<p class="peq">Você não errou nenhuma questão. Parabéns!</p>') +
+    (certas.length ? '<h3 class="pesq-disc">Acertou alguma no chute?</h3><p class="mut peq" style="margin-top:0">Toque no número da questão. Se quiser, escreva o que aconteceu.</p>' +
+      '<div class="pesq-chutes">' + discs(certas).map(function (disc) {
+        return '<div class="linha-chute"><span>' + esc(disc) + '</span>' + certas.filter(function (x) { return x.disciplina === disc; }).map(function (x) {
+          return '<label class="motivo-op num"><input type="checkbox" data-chute="' + x.n + '"' + (chute[x.n] ? ' checked' : '') + ' aria-label="Questão ' + num(x) + ' no chute">' +
+            '<span>' + num(x) + '</span></label>';
+        }).join('') + '</div>';
+      }).join('') + '</div><div id="pesq-obs"></div>' : '') +
+    '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:16px"><button class="btn fechar" style="flex:none">Cancelar</button>' +
+    '<button class="btn pri" id="pesq-ok" style="flex:none">Salvar respostas</button></div>', true);
+  var porN = {}; pq.forEach(function (x) { porN[x.n] = x; });
+  var desenharObs = function () {
+    var alvo = $('#pesq-obs', md.el); if (!alvo) return;
+    alvo.innerHTML = Object.keys(chute).filter(function (n) { return chute[n]; }).map(function (n) {
+      return '<label class="campo" style="margin:10px 0 0"><span>Questão ' + num(porN[n]) + ' (' + esc(porN[n].disciplina) + '): observação, se quiser</span>' +
+        '<input type="text" maxlength="300" data-obs="' + n + '" value="' + esc(obs[n] || '') + '" placeholder="Ex.: fiquei entre duas alternativas"></label>';
+    }).join('');
+    $$('[data-obs]', alvo).forEach(function (i) { i.oninput = function () { obs[i.getAttribute('data-obs')] = i.value; }; });
+  };
+  desenharObs();
+  // tocar de novo no motivo escolhido tira a resposta (é opcional)
+  $$('input[type=radio][data-n]', md.el).forEach(function (i) {
+    i.onclick = function () {
+      var n = i.getAttribute('data-n');
+      if (sel[n] === i.value) { i.checked = false; delete sel[n]; } else sel[n] = i.value;
+    };
+  });
+  $$('[data-chute]', md.el).forEach(function (i) {
+    i.onchange = function () { chute[i.getAttribute('data-chute')] = i.checked; desenharObs(); };
+  });
+  $('#pesq-ok', md.el).onclick = function () {
+    var itens = {};
+    Object.keys(sel).forEach(function (n) { itens[n] = { m: sel[n] }; });
+    Object.keys(chute).forEach(function (n) { if (chute[n]) itens[n] = { m: 'CHUTE', obs: String(obs[n] || '').trim() }; });
+    if (!Object.keys(itens).length) { toast('Escolha o motivo de pelo menos uma questão.', true); return; }
+    var primeira = !d.pesquisa;
+    ocupado(this, 'Salvando…', function () { return call('pesquisaProva', { resultadoId: d.resultado.id, itens: itens }); }).then(function (r) {
+      md.fechar();
+      toast((primeira ? 'Obrigado! +' + PONTOS_PESQUISA + ' pontos. ' : 'Respostas atualizadas. ') +
+        (r.missoes ? 'Suas missões ganharam dicas de estratégia de prova.' : ''));
+      if (depois) depois();
+    }).catch(function () {});
+  };
+}
+
+/** Mapa da turma: o que os alunos disseram sobre os erros (geral e por aluno) */
+function blocoComoFoiTurma(d) {
+  var p = d.pesquisa;
+  if (!p) return '';
+  var h = '<div class="card" id="mapa-pesq"><h2>Como foi a prova</h2>';
+  if (!p.respondentes) return h + '<p class="mut" style="margin:0">Nenhum aluno desta seleção respondeu a pesquisa ainda. Ela é opcional e fica aberta até o simulado ser encerrado.</p></div>';
+  var motivos = Object.keys(p.porMotivo).sort(function (a, b) { return p.porMotivo[b] - p.porMotivo[a]; });
+  var total = 0; motivos.forEach(function (k) { if (k !== 'CHUTE') total += p.porMotivo[k]; });
+  h += '<p class="mut peq" style="margin-top:0">' + p.respondentes + ' de ' + d.participantes + ' alunos contaram por que erraram cada questão.' +
+    (p.tempoTotal ? ' Das respostas "falta de tempo", ' + p.tempoNoFim + ' de ' + p.tempoTotal + ' estavam no último terço do caderno.' : '') + '</p>';
+  h += motivos.filter(function (k) { return k !== 'CHUTE'; }).map(function (k) {
+    var pct = total ? Math.round(100 * p.porMotivo[k] / total) : 0;
+    return barra(p.rotulos[k], pct, pct + '%', 'var(--marca-600)');
+  }).join('') + (p.chutes ? '<p class="peq" style="margin:8px 0 0"><b>Acertos no chute:</b> ' + p.chutes + ' questão(ões). Esses conteúdos ainda pedem reforço.</p>' : '');
+  var discs = Object.keys(p.porDisciplina);
+  if (discs.length) {
+    var cols = Object.keys(p.rotulos).filter(function (k) { return discs.some(function (dd) { return p.porDisciplina[dd][k]; }); });
+    h += '<div class="rolagem" style="margin-top:12px"><table class="tab"><tr><th>Disciplina</th>' + cols.map(function (k) { return '<th class="num">' + esc(p.rotulos[k]) + '</th>'; }).join('') + '</tr>' +
+      discs.map(function (dd) {
+        return '<tr><td>' + esc(dd) + '</td>' + cols.map(function (k) { return '<td class="num">' + (p.porDisciplina[dd][k] || '—') + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</table></div>';
+  }
+  h += '<details style="margin-top:12px"><summary>Ver aluno por aluno</summary><div class="rolagem"><table class="tab"><tr><th>Aluno</th><th>Turma</th><th>Motivo mais citado</th><th class="num">No chute</th></tr>' +
+    d.alunos.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt'); }).map(function (a) {
+      return '<tr><td><a href="#" data-pesq-al="' + esc(a.resultadoId) + '">' + esc(a.nome) + '</a></td><td>' + esc(a.turma) + '</td>' +
+        '<td>' + (a.pesquisa ? (a.pesquisa.motivo ? esc(a.pesquisa.motivo) + ' (' + a.pesquisa.vezes + ')' : '—') : '<span class="mut">Não respondeu</span>') + '</td>' +
+        '<td class="num">' + (a.pesquisa ? a.pesquisa.chutes : '—') + '</td></tr>';
+    }).join('') + '</table></div><p class="mut peq">Toque no nome para ver as respostas questão a questão no relatório do aluno.</p></details>';
+  return h + '</div>';
+}
 
 // ---------------------------------------------------------------- estratégias de estudo
 var STATUS_E = { SUGERIDA: ['Aguardando OK', 'ambar'], APROVADA: ['Aprovada', 'verde'] };
@@ -3878,6 +4046,7 @@ VIEWS.turmas = function (m, p) {
         '<div class="card"><h2>Alunos que precisam de mais atenção</h2>' + d.alunos.slice(0, 8).map(function (x, i) {
           return '<div class="clic al" data-id="' + x.resultadoId + '" style="cursor:pointer">' + barra(x.nome, x.nota) + '</div>';
         }).join('') + '<p class="mut peq">Ordenados da menor para a maior nota. Toque para abrir o relatório.</p></div></div>';
+      h += blocoComoFoiTurma(d);
       h += '<h2 style="margin:10px 0">O que trabalhar em sala</h2>' +
         (d.deficiencias.length ? d.deficiencias.slice(0, 12).map(function (x) {
           var pct = Math.round(100 * x.alunosAfetados / d.participantes);
@@ -3899,6 +4068,7 @@ VIEWS.turmas = function (m, p) {
         }).join('') + '</table></div></div>';
       alvo.innerHTML = h;
       $$('.al', alvo).forEach(function (x) { x.onclick = function () { ir('relatorio', { id: x.getAttribute('data-id') }); }; });
+      $$('[data-pesq-al]', alvo).forEach(function (x) { x.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: x.getAttribute('data-pesq-al') }); }; });
     }).catch(function (e) { alvo.innerHTML = caixaErro(e); });
   };
   $('#t-ger').onclick = gerar;
@@ -3913,6 +4083,7 @@ VIEWS.turmas = function (m, p) {
 // ---------------------------------------------------------------- missões (estratégias aprovadas, para o aluno)
 // pontos: o toque vale pouco; o que vale mais é o que o simulado comprova (estrelas no edital)
 var PONTOS_MISSAO = 5, BONUS_ESTRATEGIA = 10, PONTOS_ESTRELA = 20, PONTOS_NIVEL = 100, META_SEMANA = 3;
+var PONTOS_PESQUISA = 10; // "Como foi a prova?" respondida (uma vez por simulado; vale pouco de propósito)
 var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
 
 function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
@@ -3940,7 +4111,8 @@ function placarMissoes(todas, rs) {
     f.forEach(function (x) { dias[diaDe(x.feitaEm)] = 1; });
   });
   var ed = estadoEdital(rs || []);
-  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA;
+  var pesquisas = (rs || []).filter(function (r) { return r.pesquisaFeita; }).length;
+  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA + pesquisas * PONTOS_PESQUISA;
   var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
   var porSemana = {};
   Object.keys(dias).forEach(function (d) { var k = semanaDe(d); porSemana[k] = (porSemana[k] || 0) + 1; });
@@ -3997,7 +4169,7 @@ function placarHtml(p) {
         (c[0] === 'estrela' ? '<span class="conq-estrela" aria-hidden="true">★</span>' : icone(c[0])) + '<span>' + esc(c[1]) + '</span></span>';
     }).join('') + '</div>' +
     '<p class="mis-regras mut peq">Missão: +' + PONTOS_MISSAO + ' · Disciplina completa: +' + BONUS_ESTRATEGIA + ' · Cada ★ do edital: +' + PONTOS_ESTRELA +
-    ' (vem do simulado). Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
+    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + '. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
 }
 
 var MIS_ABERTA = null; // disciplina aberta na tela Missões (uma por vez)
@@ -4515,10 +4687,21 @@ VIEWS.missoes = function (m) {
     var es = r[0], rs = r[1];
     marcarEstrategiasVistas(es);
     m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, toque e ganhe pontos.') +
+      lembretePesquisa(rs) +
       '<div class="card missoes"><div id="mis-placar"></div></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div>';
     ligarTelaMissoes(m, es, rs);
+    $$('[data-pesq]', m).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: b.getAttribute('data-pesq'), pesquisa: 1 }); }; });
   });
 };
+/** Simulados ainda abertos em que o aluno não contou como foi a prova (pendência em lista) */
+function lembretePesquisa(rs) {
+  var pend = (rs || []).filter(function (r) { return r.pesquisaAberta && !r.pesquisaFeita; });
+  if (!pend.length) return '';
+  return '<div class="card"><h2>Como foi a prova?</h2><p class="mut peq" style="margin-top:0">Conte por que errou cada questão: suas missões ficam mais certeiras. ' +
+    'É opcional e vale +' + PONTOS_PESQUISA + ' pontos.</p><div class="ini-lista-at pesq-lista">' + pend.map(function (r) {
+      return '<a href="#" class="sit" data-pesq="' + esc(r.id) + '"><span>' + esc(r.simulado) + '</span><b>Responder</b></a>';
+    }).join('') + '</div></div>';
+}
 
 /** Edital: temas por disciplina, com "Já estudei", estrelas e Dominando */
 VIEWS.edital = function (m) {
@@ -4546,7 +4729,7 @@ function blocoEvolucao(rs) {
 VIEWS.meusres = function (m) { return VIEWS.meus(m); };
 
 /** Nota final (pesos do edital), mediana de cada disciplina e classificação no simulado */
-var STATUS_CORTE = { SIM: ['Atingiu', 'verde'], NAO: ['Abaixo', 'verm'], TODAS: ['Atingiu a mediana em todas', 'verde'], FORA: ['Abaixo da mediana', 'verm'],
+var STATUS_CORTE = { SIM: ['Atingiu', 'verde'], NAO: ['Abaixo', 'verm'], TODAS: ['Atingiu em todas', 'verde'], FORA: ['Abaixo em alguma', 'verm'],
   TODAS_C: ['Atingiu em todas', 'verde'], FORA_C: ['Abaixo em alguma', 'verm'] };
 /** Pesos do edital em texto, lidos da configuração do concurso: "Português e Matemática 2; Física e Inglês 1,5; as demais 1" */
 function textoPesos(k) {
