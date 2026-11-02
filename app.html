@@ -2143,7 +2143,7 @@ VIEWS.questoes = function (m, p) {
   var discs = disciplinasDe('ESPCEX');
   m.innerHTML = cabPag(adm ? 'Banco de questões' : 'Minhas questões',
     adm ? 'Questões enviadas pelos professores, curadoria, análise do professor e aprovação' : 'Cadastre questões no padrão da banca. A curadoria analisa cada uma, você confere o relatório e a coordenação aprova.',
-    (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button>' : '') +
+    (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' : '') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
@@ -2176,6 +2176,7 @@ VIEWS.questoes = function (m, p) {
   if (adm) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
+    $('#fml').onclick = function () { formulasLatex(); };
   }
   var APROVAVEIS = ['ANALISE_PROF', 'VALIDADA'];
   var marcadas = {}, ultimas = [];
@@ -2627,6 +2628,40 @@ function exportarLote() {
         $('#lt-txt', md.el).onclick = function () { this.select(); };
         $('#lt-cp', md.el).onclick = function () { $('#lt-txt', md.el).select(); copiar(r.texto, this); };
       }).catch(function () {});
+  };
+}
+
+/** Passar as fórmulas das questões que já existem para LaTeX: exporta um lote, o Claude reescreve só a forma, importa */
+function formulasLatex() {
+  var md = modal(topoModal('Fórmulas em LaTeX') +
+    '<p class="peq" style="margin-top:0">Para as questões que já estão no banco: o Claude reescreve as fórmulas em LaTeX ' +
+    '(enunciado, alternativas, resolução, erros e missões) sem mudar o conteúdo. A situação da questão não muda e o MIRA confere ' +
+    'que só a formatação mudou: se algum número ou palavra mudar, aquele campo fica como estava.</p>' +
+    '<h3 style="margin:14px 0 6px">1. Gerar o lote</h3>' +
+    '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="fl-n"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></label>' +
+    '<label class="campo" style="display:flex;align-items:flex-end;gap:8px"><input type="checkbox" id="fl-todas" style="width:auto"> <span style="margin:0;font-weight:400">Incluir as já formatadas</span></label></div>' +
+    '<button class="btn" id="fl-ger">Gerar lote</button><div id="fl-res"></div>' +
+    '<h3 style="margin:18px 0 6px">2. Colar a resposta do Claude</h3>' +
+    '<textarea id="fl-txt" rows="8" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;Q…&quot;, …}]"></textarea>' +
+    '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn pri" id="fl-ok">Importar fórmulas</button></div><div id="fl-imp"></div>', true);
+  $('#fl-ger', md.el).onclick = function () {
+    ocupado(this, 'Gerando…', function () { return call('exportarFormulas', { limite: $('#fl-n', md.el).value, todas: $('#fl-todas', md.el).checked }); })
+      .then(function (r) {
+        var alvo = $('#fl-res', md.el);
+        if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Todas as questões já passaram pela formatação.</div>'; return; }
+        alvo.innerHTML = '<p class="mut peq" style="margin:10px 0 6px">' + r.quantidade + ' de ' + r.total + ' questão(ões) neste lote. Copie e cole no chat do Claude.</p>' +
+          '<textarea id="fl-lote" rows="8" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
+          '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="fl-cp">Copiar texto</button></div>';
+        $('#fl-cp', md.el).onclick = function () { $('#fl-lote', md.el).select(); copiar(r.texto, this); };
+      }).catch(function () {});
+  };
+  $('#fl-ok', md.el).onclick = function () {
+    ocupado(this, 'Importando…', function () { return call('importarFormulas', { texto: $('#fl-txt', md.el).value }); }).then(function (r) {
+      $('#fl-imp', md.el).innerHTML =
+        (r.atualizadas.length ? '<div class="aviso verde" style="margin-top:12px">' + r.atualizadas.length + ' questão(ões) com as fórmulas em LaTeX.</div>' : '') +
+        (r.erros.length ? '<div class="aviso ambar">' + r.erros.map(esc).join('<br>') + '</div>' : '');
+      if (VIEWS.questoes.recarregar) VIEWS.questoes.recarregar();
+    }).catch(function () {});
   };
 }
 
