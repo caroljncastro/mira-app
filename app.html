@@ -2281,7 +2281,6 @@ VIEWS.questoes = function (m, p) {
     (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
       '<button class="btn" id="impq">Importar questões</button>' : '') +
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
-    (adm ? '' : '<button class="btn" id="enviar-arq">Enviar arquivo de questões</button>') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
@@ -2314,7 +2313,7 @@ VIEWS.questoes = function (m, p) {
   if ($('#temas')) $('#temas').onclick = function () { ir('temas'); };
   if ($('#enviar-arq')) $('#enviar-arq').onclick = function () { enviarArquivoQuestoes(desenharEnvios); };
   var desenharEnvios = function () { cardEnvios($('#envios'), adm, desenharEnvios); };
-  desenharEnvios();
+  if (adm) desenharEnvios();
   if (adm) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
