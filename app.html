@@ -2838,13 +2838,15 @@ function importarQuestoes() {
     leitor.onload = function () {
       try {
         var j = JSON.parse(leitor.result);
-        if (!j || j.formato !== 'mira-questoes-1' || !Array.isArray(j.questoes) || !j.questoes.length) throw new Error('formato');
+        if (!j || j.formato !== 'mira-questoes-1') throw new Error('formato');
+        j.questoes = Array.isArray(j.questoes) ? j.questoes : [];
+        if (!j.questoes.length && !(j.redacoes || []).length) throw new Error('formato');
         arq = j;
         var porDisc = {}, nr = (j.redacoes || []).length;
         j.questoes.forEach(function (q) { porDisc[q.disciplina] = (porDisc[q.disciplina] || 0) + 1; });
-        $('#iq-res', md.el).innerHTML = '<div class="aviso azul peq"><b>' + esc(j.titulo || 'Questões') + '</b>: ' + j.questoes.length + ' questões (' +
-          Object.keys(porDisc).map(function (d) { return esc(d) + ' ' + porDisc[d]; }).join(', ') + ')' +
-          (nr ? ' e ' + nr + (nr === 1 ? ' tema de redação' : ' temas de redação') : '') + '.</div>';
+        $('#iq-res', md.el).innerHTML = '<div class="aviso azul peq"><b>' + esc(j.titulo || 'Questões') + '</b>: ' +
+          (j.questoes.length ? j.questoes.length + ' questões (' + Object.keys(porDisc).map(function (d) { return esc(d) + ' ' + porDisc[d]; }).join(', ') + ')' : '') +
+          (nr ? (j.questoes.length ? ' e ' : '') + nr + (nr === 1 ? ' tema de redação' : ' temas de redação') : '') + '.</div>';
         $('#iq-ok', md.el).disabled = false;
       } catch (er) { $('#iq-res', md.el).innerHTML = '<div class="aviso verm peq">Este arquivo não é um arquivo de questões do MIRA.</div>'; }
     };
@@ -2868,7 +2870,7 @@ function importarQuestoes() {
     var passo = function (i) {
       if (i >= arq.questoes.length) {
         res.innerHTML = '<div class="aviso verde peq">' + (novas ? novas + ' questão(ões) nova(s). ' : '') + (atualizadas ? atualizadas + ' atualizada(s). ' : '') +
-          (ignoradas ? ignoradas + ' já em simulado ficaram como estavam. ' : '') + 'Elas estão em <b>Análise do professor</b>.' +
+          (ignoradas ? ignoradas + ' já em simulado ficaram como estavam. ' : '') + (arq.questoes.length ? 'Elas estão em <b>Análise do professor</b>.' : '') +
           (temas ? ' ' + temas + (temas === 1 ? ' tema de redação aguarda' : ' temas de redação aguardam') + ' a sua aprovação em <b>Temas de redação</b>.' : '') + '</div>' +
           (alertas ? '<div class="aviso ambar peq">' + alertas + ' questão(ões) com alertas da curadoria: vale abrir e ler antes de aprovar.</div>' : '') +
           (erros.length ? '<div class="aviso verm peq">' + erros.map(esc).join('<br>') + '</div>' : '');
