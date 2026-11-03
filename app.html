@@ -1212,6 +1212,18 @@ var OMR = (function () {
         (porQ[b.n] = porQ[b.n] || []).push({ l: b.l, v: v, c: c, r: rp });
       });
 
+      // versão do caderno (bolhas do cabeçalho, quando há mais de uma versão)
+      var versao = 0, versaoDuvida = false, vbs = (L.versoes || []).map(function (b) {
+        var c = ponto(H, b.x, b.y), rp = dist(c, ponto(H, b.x + L.raio, b.y));
+        var miolo = media(T, c[0], c[1], 0, rp * 0.55), volta = media(T, c[0], c[1], rp * 1.35, rp * 1.75);
+        return { v: b.v, val: 1 - miolo / Math.max(volta, 1), c: c, r: rp };
+      });
+      if (vbs.length) {
+        var ord = vbs.slice().sort(function (a, b) { return b.val - a.val; });
+        if (ord[0].val >= LIMIAR_MARCA && !(ord[1] && ord[1].val >= LIMIAR_MARCA)) versao = ord[0].v;
+        else versaoDuvida = ord[0].val >= LIMIAR_DUVIDA;
+      }
+
       var respostas = {}, duvidas = [];
       Object.keys(porQ).forEach(function (n) {
         var bs = porQ[n].slice().sort(function (a, b) { return b.v - a.v; });
@@ -1244,8 +1256,13 @@ var OMR = (function () {
           }
         });
       });
+      vbs.forEach(function (b) {
+        if (b.v !== versao) return;
+        ctx.fillStyle = 'rgba(31,122,77,.5)'; ctx.beginPath(); ctx.arc(b.c[0] * fv, b.c[1] * fv, b.r * fv * 1.25, 0, 7); ctx.fill();
+      });
       return {
         ok: true, alinhamento: melhorAl, respostas: respostas, duvidas: duvidas.sort(function (a, b) { return a - b; }),
+        versao: versao, versaoDuvida: versaoDuvida,
         orientado: m.orientado, conferencia: cv.toDataURL('image/jpeg', 0.8)
       };
     });
@@ -4110,11 +4127,12 @@ VIEWS.enviar = function (m, p) {
         h += '</div>';
         if (s.versoes > 1) {
           h += '<div class="card versao-envio"><h3 style="margin-bottom:6px">Versão do caderno de prova</h3>' +
-            (versaoFixa ? '<p style="margin:0">Seu cartão é da <b>versão ' + versaoFixa + '</b>. A correção usa o gabarito dessa versão.</p>'
-              : '<p class="mut peq" style="margin-top:0">A versão está impressa na capa do caderno e no cartão-resposta. Ela define o gabarito usado na correção.</p>' +
-                '<div class="versoes">' + Array.apply(null, Array(s.versoes)).map(function (x, i) {
-                  return '<button class="btn versao' + (st.versao === i + 1 ? ' on' : '') + '" data-ver="' + (i + 1) + '"><b>Versão ' + (i + 1) + '</b></button>';
-                }).join('') + '</div>') + '</div>';
+            '<p class="mut peq" style="margin-top:0">' + (st.versaoLida ? 'O MIRA leu no cartão a <b>versão ' + st.versaoLida + '</b>. Confira com a capa do caderno.'
+              : 'Não consegui ler a bolha da versão no cartão. Escolha a versão que está na capa do caderno.') +
+            ' Ela define o gabarito usado na correção.</p>' +
+            '<div class="versoes">' + Array.apply(null, Array(s.versoes)).map(function (x, i) {
+              return '<button class="btn versao' + (st.versao === i + 1 ? ' on' : '') + '" data-ver="' + (i + 1) + '"><b>Versão ' + (i + 1) + '</b></button>';
+            }).join('') + '</div></div>';
         }
         h += '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
           '<button class="btn" id="refazer">Refazer foto</button><button class="btn pri" id="enviar">Enviar e corrigir</button></div>';
@@ -4124,6 +4142,9 @@ VIEWS.enviar = function (m, p) {
 
       var aposLeitura = function (res) {
         st.respostas = res.respostas; st.lido = JSON.parse(JSON.stringify(res.respostas)); st.todas = false; st.duvidas = res.duvidas || []; st.conferencia = res.conferencia || ''; st.avisos = [];
+        st.versaoLida = res.versao || 0;
+        if (res.versao) st.versao = res.versao;
+        else if (s.versoes > 1) st.avisos.push(['ambar', 'Não consegui ler a bolha da versão do caderno. Escolha a versão abaixo, antes de enviar.']);
         if (st.duvidas.length) st.avisos.push(['ambar', 'Confira com atenção as questões ' + st.duvidas.join(', ') + ' (marca fraca, apagada ou dupla).']);
         else st.avisos.push(['verde', 'Cartão lido. Mesmo assim, confira as respostas antes de enviar.']);
         st.etapa = 2; desenhar();
