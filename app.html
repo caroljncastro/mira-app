@@ -2316,7 +2316,7 @@ VIEWS.questoes = function (m, p) {
   m.innerHTML = cabPag(adm ? 'Banco de questões' : 'Minhas questões',
     adm ? 'Questões enviadas pelos professores, curadoria, análise do professor e aprovação' : 'Cadastre questões no padrão da banca. A curadoria analisa cada uma, você confere o relatório e a coordenação aprova.',
     (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
-      '<button class="btn" id="impq">Importar questões</button>' : '') +
+      '<button class="btn" id="impq">Importar questões</button><button class="btn" id="enviar-arq">Enviar arquivo de questões</button>' : '') +
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
@@ -3054,23 +3054,34 @@ function importarQuestoes() {
 }
 
 // ---------------------------------------------------------------- arquivos de questões dos professores
-var STATUS_ENV = { RECEBIDO: ['Recebido', 'azul'], TRANSCRITO: ['Transcrito', 'verde'], PROBLEMA: ['Com problema', 'verm'] };
+var STATUS_ENV = { ARQUIVADO: ['Arquivado', ''], RECEBIDO: ['Recebido', 'azul'], TRANSCRITO: ['Transcrito', 'verde'], PROBLEMA: ['Com problema', 'verm'] };
 var MODELO_QUESTOES_URL = 'https://caroljncastro.github.io/mira-app/modelo-questoes.docx'; // fica no repositório mira-app
 /** Professor: envia o Word/PDF que já tem (ou o modelo do MIRA) para a coordenação transcrever com o Claude */
 function enviarArquivoQuestoes(depois) {
   var minhas = csv(S.user.disciplinas || ''), todas = disciplinasDe('ESPCEX').concat(['Redação']);
   var ds = minhas.length ? minhas : todas;
+  var admE = S.user.perfil === 'ADM';
   var md = modal(topoModal('Enviar arquivo de questões') +
-    '<p class="peq" style="margin-top:0">Envie o arquivo que você já tem, em Word, PDF ou foto, com as questões, as figuras e o gabarito. ' +
+    (admE ? '<p class="peq" style="margin-top:0">Envie o arquivo em Word, PDF ou foto, de preferência no <a href="' + MODELO_QUESTOES_URL + '" target="_blank" rel="noopener">modelo em Word</a>. ' +
+      'Ele vai para a pasta do MIRA no Drive. Depois, diga ao Claude no chat: <b>"chegaram arquivos"</b>. Ele transcreve, faz a curadoria e devolve o arquivo para <b>Importar questões</b>.</p>' +
+      '<label class="campo"><span>As questões são de</span><select id="ea-autor"><option value="">Coordenação (eu)</option></select>' +
+      '<small class="mut peq">Escolha um professor para as questões entrarem no nome dele, em Análise do professor.</small></label>'
+    : '<p class="peq" style="margin-top:0">Envie o arquivo que você já tem, em Word, PDF ou foto, com as questões, as figuras e o gabarito. ' +
     'A coordenação transcreve, faz a curadoria e as questões aparecem aqui em <b>Análise do professor</b>, no seu nome. ' +
-    'Para errar menos, use o <a href="' + MODELO_QUESTOES_URL + '" target="_blank" rel="noopener">modelo em Word</a>.</p>' +
+    'Para errar menos, use o <a href="' + MODELO_QUESTOES_URL + '" target="_blank" rel="noopener">modelo em Word</a>.</p>') +
     '<label class="campo"><span>Arquivo (até 10 MB)</span><input type="file" id="ea-arq" accept=".pdf,.doc,.docx,.odt,image/jpeg,image/png"></label>' +
     '<label class="campo"><span>Disciplina</span><select id="ea-disc">' + ds.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
-    campoOrigem('Autoral').replace('Origem da questão *', 'Origem das questões').replace('Autoral (criada por mim)', 'Autorais (criadas por mim)') +
-    '<label class="campo"><span>Observação para a coordenação (opcional)</span><input type="text" id="ea-obs" maxlength="500" placeholder="Ex.: questões 3 e 5 têm figura na página 2"></label>' +
+    campoOrigem('Autoral').replace('Origem da questão *', 'Origem das questões').replace('Autoral (criada por mim)', admE ? 'Autorais' : 'Autorais (criadas por mim)') +
+    '<label class="campo"><span>Observação ' + (admE ? 'para o Claude' : 'para a coordenação') + ' (opcional)</span><input type="text" id="ea-obs" maxlength="500" placeholder="Ex.: questões 3 e 5 têm figura na página 2"></label>' +
     '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button>' +
     '<button class="btn pri" id="ea-ok" style="flex:none">Enviar arquivo</button></div>');
   ligarOrigem(md.el);
+  if (admE) call('listarUsuarios').then(function (us) {
+    var s = $('#ea-autor', md.el); if (!s) return;
+    us.filter(function (x) { return x.perfil === 'PROFESSOR' && String(x.ativo) !== 'NAO'; })
+      .sort(function (a, b) { return a.nome < b.nome ? -1 : 1; })
+      .forEach(function (x) { s.insertAdjacentHTML('beforeend', '<option value="' + esc(x.id) + '">' + esc(x.nome) + (x.disciplinas ? ' · ' + esc(x.disciplinas) : '') + '</option>'); });
+  }).catch(function () {});
   $('#ea-ok', md.el).onclick = function () {
     var f = $('#ea-arq', md.el).files[0];
     if (!f) { toast('Escolha o arquivo.', true); return; }
@@ -3083,8 +3094,9 @@ function enviarArquivoQuestoes(depois) {
       var tipo = f.type || ({ pdf: 'application/pdf', doc: 'application/msword', odt: 'application/vnd.oasis.opendocument.text',
         docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })[(f.name.split('.').pop() || '').toLowerCase()] || '';
       ocupado(btn, 'Enviando…', function () {
-        return call('enviarArquivoQuestoes', { nome: f.name, mime: tipo, base64: b64, disciplina: $('#ea-disc', md.el).value, origem: o, observacao: $('#ea-obs', md.el).value });
-      }).then(function () { md.fechar(); toast('Arquivo enviado. A coordenação avisa quando as questões chegarem para a sua análise.'); if (depois) depois(); }).catch(function () {});
+        return call('enviarArquivoQuestoes', { nome: f.name, mime: tipo, base64: b64, disciplina: $('#ea-disc', md.el).value, origem: o, observacao: $('#ea-obs', md.el).value,
+          autorId: admE && $('#ea-autor', md.el) ? $('#ea-autor', md.el).value : '' });
+      }).then(function () { md.fechar(); toast(admE ? 'Arquivo enviado para a pasta do MIRA. Agora diga ao Claude: "chegaram arquivos".' : 'Arquivo enviado. A coordenação avisa quando as questões chegarem para a sua análise.'); if (depois) depois(); }).catch(function () {});
     };
     leitor.readAsDataURL(f);
   };
@@ -3095,9 +3107,12 @@ function cardEnvios(alvo, adm, recarregar) {
   call('listarEnvios', {}).then(function (es) {
     if (!es.length) { alvo.innerHTML = ''; return; }
     var novos = es.filter(function (e) { return e.status === 'RECEBIDO'; }).length;
+    var transcritos = es.filter(function (e) { return e.status === 'TRANSCRITO'; }).length;
     alvo.innerHTML = '<details class="card envios"' + (novos ? ' open' : '') + '><summary><h2>' + (adm ? 'Arquivos dos professores' : 'Seus arquivos enviados') + '</h2>' +
       '<span class="mut peq">' + (novos ? novos + (novos === 1 ? ' esperando transcrição' : ' esperando transcrição') : es.length + ' enviado(s)') + '</span></summary>' +
-      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos dos professores” e mande o código do envio.</p>' : '') +
+      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos”.</p>' : '') +
+      (adm && transcritos ? '<div class="linha" style="align-items:center;margin:0 0 8px"><p class="mut peq" style="margin:0;flex:1">Os transcritos já viraram questões no banco. Arquivar tira da lista e guarda os arquivos no Drive, em Envios dos professores › Transcritos.</p>' +
+        '<button class="btn peq" id="env-arq" style="flex:none">Arquivar transcritos (' + transcritos + ')</button></div>' : '') +
       '<ul class="env-lista">' + es.map(function (e) {
         return '<li><div><b>' + esc(e.arquivo) + '</b><small>' + (adm ? esc(e.autorNome) + ' · código ' + esc(e.id) + ' · ' : '') + esc(e.disciplina) + ' · ' + esc(e.origem) + ' · ' + dataBr(e.criadoEm) +
           (e.status === 'TRANSCRITO' && e.quantidade ? ' · ' + e.quantidade + (e.quantidade === 1 ? ' questão' : ' questões') : '') + '</small>' +
@@ -3105,6 +3120,10 @@ function cardEnvios(alvo, adm, recarregar) {
           tag(STATUS_ENV, e.status) +
           (adm && e.status !== 'PROBLEMA' ? '<button class="btn peq" data-env-prob="' + esc(e.id) + '">Marcar com problema</button>' : '') + '</li>';
       }).join('') + '</ul></details>';
+    if ($('#env-arq', alvo)) $('#env-arq', alvo).onclick = function () {
+      ocupado(this, 'Arquivando…', function () { return call('arquivarEnvios', {}); })
+        .then(function (r) { toast(r.arquivados + (r.arquivados === 1 ? ' envio arquivado' : ' envios arquivados') + ' no Drive (Envios dos professores › Transcritos).'); if (recarregar) recarregar(); }).catch(function () {});
+    };
     $$('[data-env-prob]', alvo).forEach(function (b) {
       b.onclick = function () {
         var md = modal(topoModal('Arquivo com problema') + '<label class="campo"><span>O que o professor precisa corrigir</span>' +
