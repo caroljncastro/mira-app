@@ -404,6 +404,16 @@
   .gab-badge b { font-family: var(--estreita); font-size: 20px; line-height: 1; }
   .gab-badge span { font-size: 12.5px; color: var(--n-500); }
   .tag.gab { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+  .alts .prof .alt-marca { color: var(--alerta); }
+
+  /* kit de correção: uma vaga por alternativa errada + a gêmea */
+  .kit-vagas { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 12px; }
+  .kit-vaga { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; font: inherit; color: var(--n-900);
+    background: #fff; border: 1px solid var(--n-200); border-radius: var(--r-ctl); padding: 8px 10px; cursor: pointer; min-height: 44px; }
+  .kit-vaga:hover { background: var(--marca-50); border-color: var(--marca-borda); }
+  .kit-vaga.falta { border-style: dashed; background: var(--n-50); }
+  .kit-vaga .kit-sub { font-size: 12.5px; color: var(--n-500); line-height: 1.3; }
+  .kit-falta { font-size: 13px; font-weight: 600; color: var(--marca-700); }
 
   /* formulário da questão */
   .dica { background: var(--n-100); border-radius: var(--r-ctl); padding: 10px 12px; margin: -6px 0 16px; color: var(--n-700); }
@@ -1911,7 +1921,7 @@ function ir(rota, params) {
   var menu = MENUS[S.user.perfil];
   $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' +
     (MENU_PERFIL[S.user.perfil] ? '<span class="menu-perfil">' + MENU_PERFIL[S.user.perfil] + '</span>' : '') + menu.map(function (m) {
-    var ativo = m[0] === rota || (rota === 'temas' && m[0] === 'questoes') || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
+    var ativo = m[0] === rota || ((rota === 'temas' || rota === 'kit') && m[0] === 'questoes') || (rota === 'relatorio' && (m[0] === 'resultados' || (S.user.perfil === 'ALUNO' && m[0] === 'meus'))) ||
       (rota === 'enviar' && (m[0] === 'meus' || m[0] === 'simulados'));
     var ic = m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
     return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ic) + '<span>' + esc(m[1]) + '</span></button>';
@@ -2335,6 +2345,7 @@ VIEWS.questoes = function (m, p) {
     (adm ? '<button class="btn" id="exp">Exportar lote p/ curadoria</button><button class="btn" id="imp">Importar curadoria</button><button class="btn" id="fml">Fórmulas em LaTeX</button>' +
       '<button class="btn" id="impq">Importar questões</button><button class="btn" id="enviar-arq">Enviar arquivo de questões</button>' : '') +
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
+    '<button class="btn" id="kit">Kit de correção</button>' +
     '<button class="btn pri" id="nova">+ Nova questão</button>') +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
@@ -2343,7 +2354,7 @@ VIEWS.questoes = function (m, p) {
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Tema</span><select id="f-tema" disabled><option value="">Escolha a disciplina</option></select></label>' +
     '<label class="campo" style="margin:0"><span>Subtema</span><select id="f-sub" disabled><option value="">Escolha o tema</option></select></label></div></div>' +
-    '<div id="aviso-an"></div><div id="envios"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
+    '<div id="aviso-an"></div><div id="aviso-kit"></div><div id="envios"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
   if (p.status) $('#f-status').value = p.status;
   call('temasUltimoSimulado', {}).then(function (dados) {
     var minhasD = !adm && S.user.disciplinas ? csv(S.user.disciplinas) : discs;
@@ -2368,6 +2379,15 @@ VIEWS.questoes = function (m, p) {
   if (ler(chaveRascunhoQuestao())) $('#nova').textContent = 'Continuar rascunho';
   $('#nova').onclick = function () { formQuestao(null); };
   if ($('#temas')) $('#temas').onclick = function () { ir('temas'); };
+  $('#kit').onclick = function () { ir('kit'); };
+  // kit de correção: o professor confere o que o Claude escreveu; a coordenação aprova o que foi validado
+  call('listarKit', { resumo: true }).then(function (r) {
+    var n = adm ? r.resumo.validadas : r.resumo.analise, alvo = $('#aviso-kit');
+    if (!n || !alvo) return;
+    alvo.innerHTML = '<div class="aviso azul"><b>' + n + (n === 1 ? ' questão do kit de correção espera ' : ' questões do kit de correção esperam ') +
+      (adm ? 'a sua aprovação.' : 'a sua análise.') + '</b> <a href="#" id="ver-kit">Ver agora</a></div>';
+    $('#ver-kit').onclick = function (e) { e.preventDefault(); ir('kit', { mostrar: 'acao' }); };
+  }).catch(function () {});
   if ($('#enviar-arq')) $('#enviar-arq').onclick = function () { enviarArquivoQuestoes(desenharEnvios); };
   var desenharEnvios = function () { cardEnvios($('#envios'), adm, desenharEnvios); };
   if (adm) desenharEnvios();
@@ -3443,6 +3463,338 @@ function verQuestao(q, aoMudar) {
     };
   }
 }
+// ---------------------------------------------------------------- kit de correção
+// Cada questão aprovada ganha uma questão para cada alternativa errada (treina aquele erro) e uma gêmea (teste final).
+// O Claude escreve (Copiar para o Claude › Importar o kit), o professor autor da questão confere e a coordenação aprova.
+var KIT_POR_PAGINA = 30;
+function rotuloVagaKit(tipo, l) { return tipo === 'GEMEA' ? 'Gêmea' : 'Erro (' + l + ')'; }
+VIEWS.kit = function (m, p) {
+  var adm = S.user.perfil === 'ADM';
+  var discs = adm || !S.user.disciplinas ? disciplinasDe('ESPCEX') : csv(S.user.disciplinas);
+  m.innerHTML = cabPag('Kit de correção',
+    'Para cada questão aprovada: uma questão para cada alternativa errada, que treina aquele erro, e uma <b>gêmea</b>, com a mesma ideia em outro contexto, para o teste final. ' +
+      (adm ? 'O Claude escreve, o professor confere e você aprova.' : 'O Claude escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
+    '<button class="btn" id="kt-voltar">Voltar ao banco de questões</button>' +
+    (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o Claude</button>' : '')) +
+    '<div class="card nao-imprimir"><div class="linha">' +
+    '<label class="campo" style="margin:0"><span>Disciplina</span><select id="kt-disc"><option value="">Todas</option>' +
+    discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="campo" style="margin:0"><span>Mostrar</span><select id="kt-most">' +
+    '<option value="acao">' + (adm ? 'Esperando a sua aprovação' : 'Esperando a sua análise') + '</option>' +
+    '<option value="ajuste">Com pedido de ajuste</option><option value="faltam">Faltam questões</option>' +
+    '<option value="completos">Kit completo</option><option value="">Todas as questões</option></select></label></div></div>' +
+    '<div id="kt-aviso"></div><div id="kt-lista"></div>';
+  $('#kt-most').value = p.mostrar !== undefined ? p.mostrar : '';
+  $('#kt-voltar').onclick = function () { ir('questoes'); };
+  if (adm) { $('#kt-exp').onclick = exportarKit; $('#kt-imp').onclick = function () { importarKit(carregar); }; }
+  var dados = null, mostrando = KIT_POR_PAGINA;
+  // o que "precisa de você": professor confere o que o Claude escreveu; coordenação aprova o que foi conferido
+  var acaoDe = adm ? ['VALIDADA', 'ANALISE_PROF'] : ['ANALISE_PROF'];
+  var filtrar = function (ms) {
+    var f = $('#kt-most').value;
+    return ms.filter(function (x) {
+      if (f === 'acao') return x.itens.some(function (k) { return acaoDe.indexOf(k.status) >= 0; });
+      if (f === 'ajuste') return x.itens.some(function (k) { return k.status === 'AJUSTE'; });
+      if (f === 'faltam') return x.faltam > 0;
+      if (f === 'completos') return x.aprovadas === x.vagas;
+      return true;
+    });
+  };
+  var desenhar = function () {
+    var l = $('#kt-lista'), r = dados.resumo, ms = filtrar(dados.maes);
+    var validadas = [];
+    ms.forEach(function (x) { x.itens.forEach(function (k) { if (k.status === 'VALIDADA') validadas.push(k.id); }); });
+    $('#kt-aviso').innerHTML = !r.maes ? '' : '<div class="lote"><span class="peq">' + r.maes + (r.maes === 1 ? ' questão aprovada' : ' questões aprovadas') +
+      ' · ' + r.completas + ' com o kit completo' + (r.faltam ? ' · faltam ' + r.faltam + (r.faltam === 1 ? ' questão do kit' : ' questões do kit') : '') +
+      (r.analise ? ' · ' + r.analise + ' na análise do professor' : '') + (r.ajuste ? ' · ' + r.ajuste + ' com pedido de ajuste' : '') + '</span>' +
+      (adm && validadas.length ? '<button class="btn ok" id="kt-apr">Aprovar as validadas (' + validadas.length + ')</button>' : '') + '</div>';
+    if ($('#kt-apr')) $('#kt-apr').onclick = function () {
+      ocupado(this, 'Aprovando…', function () { return call('decidirKit', { ids: validadas, decisao: 'APROVADA' }); }).then(function (x) {
+        toast(x.aprovadas.length + (x.aprovadas.length === 1 ? ' questão do kit aprovada.' : ' questões do kit aprovadas.'));
+        if (x.erros.length) toast('Não aprovadas: ' + x.erros.join(' · '), true);
+        carregar();
+      }).catch(function () {});
+    };
+    if (!dados.maes.length) {
+      l.innerHTML = '<div class="card vazio">' + icone('biblioteca', 'ic-vazio') + (adm ? 'Nenhuma questão aprovada com o diagnóstico das alternativas ainda. O kit é feito a partir delas.'
+        : 'Você ainda não tem questões aprovadas. O kit é feito a partir delas.') + '</div>';
+      return;
+    }
+    if (!ms.length) { l.innerHTML = '<div class="card vazio">Nada para mostrar com este filtro.</div>'; return; }
+    var cartao = function (x, i) {
+      var vagas = x.erros.map(function (lt) { return { tipo: 'ERRO', l: lt }; }).concat([{ tipo: 'GEMEA', l: '' }]);
+      return '<div class="card kit-mae" data-i="' + i + '"><div class="q-meta"><span class="meta">' + esc(x.disciplina) + (x.conteudo ? ' · ' + esc(x.conteudo) : '') +
+        (x.subtema ? ' › ' + esc(x.subtema) : '') + ' · ' + esc(x.id) + (x.emSimulado ? ' · já usada em simulado' : '') + (adm ? ' · ' + esc(x.autorNome) : '') + '</span>' +
+        '<span class="dir">' + x.aprovadas + ' de ' + x.vagas + ' aprovadas</span></div>' +
+        '<div class="q-trecho">' + esc(semFiguras(x.trecho)) + '</div><div class="kit-vagas">' +
+        vagas.map(function (v) {
+          var k = x.itens.filter(function (y) { return y.tipo === v.tipo && (y.alternativa || '') === v.l; })[0];
+          var sub = v.tipo === 'GEMEA' ? 'Mesma ideia, outro contexto' : (x.conceitos[v.l] || '');
+          return '<button class="kit-vaga' + (k ? '' : ' falta') + '" data-t="' + v.tipo + '" data-l="' + v.l + '"' + (k ? ' data-id="' + esc(k.id) + '"' : '') + '>' +
+            '<b>' + rotuloVagaKit(v.tipo, v.l) + '</b><span class="kit-sub">' + esc(sub) + '</span>' +
+            (k ? tag(STATUS_Q, k.status) : '<span class="kit-falta">+ Escrever</span>') + '</button>';
+        }).join('') + '</div></div>';
+    };
+    l.innerHTML = '<p class="mut peq">' + ms.length + (ms.length === 1 ? ' questão' : ' questões') + '</p>' + ms.slice(0, mostrando).map(cartao).join('') +
+      (ms.length > mostrando ? '<div style="text-align:center"><button class="btn" id="kt-mais">Mostrar mais ' + Math.min(KIT_POR_PAGINA, ms.length - mostrando) + '</button></div>' : '');
+    if ($('#kt-mais')) $('#kt-mais').onclick = function () { mostrando += KIT_POR_PAGINA; desenhar(); };
+    $$('.kit-mae', l).forEach(function (c) {
+      var x = ms[+c.getAttribute('data-i')];
+      $$('.kit-vaga', c).forEach(function (b) {
+        b.onclick = function () {
+          var id = b.getAttribute('data-id');
+          if (id) verItemKit(id, carregar);
+          else formKit({ maeId: x.id, tipo: b.getAttribute('data-t'), alternativa: b.getAttribute('data-l') }, null, carregar);
+        };
+      });
+    });
+  };
+  var carregar = function () {
+    var l = $('#kt-lista'); if (!l) return;
+    carregando(l);
+    call('listarKit', { disciplina: $('#kt-disc').value }).then(function (r) {
+      dados = r; mostrando = KIT_POR_PAGINA;
+      // sem nada esperando, abre direto em "Todas"
+      if ($('#kt-most').value === 'acao' && !filtrar(r.maes).length && p.mostrar === undefined) $('#kt-most').value = '';
+      desenhar();
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
+  };
+  $('#kt-disc').onchange = carregar;
+  $('#kt-most').onchange = function () { mostrando = KIT_POR_PAGINA; if (dados) desenhar(); };
+  carregar();
+};
+
+/** A questão original, recolhida: enunciado, alternativas (a correta e a do erro marcadas) e resolução */
+function maeKitHtml(mae, letraErro) {
+  var c = conc('ESPCEX');
+  return '<details class="orig"><summary>Ver a questão original (' + esc(mae.id) + ')</summary><div class="card" style="margin-top:8px">' +
+    '<div class="enun peq">' + esc(semFiguras(mae.enunciado)) + '</div><div class="alts peq">' +
+    c.alternativas.map(function (l) {
+      return '<div class="' + (l === mae.gabarito ? 'certa' : l === letraErro ? 'prof' : '') + '"><b>(' + l + ')</b> ' + esc((mae.alternativas || {})[l] || '') +
+        (l === mae.gabarito ? '<span class="alt-marca">✔ Gabarito</span>' : l === letraErro ? '<span class="alt-marca">o erro treinado</span>' : '') + '</div>';
+    }).join('') + '</div>' +
+    (mae.resolucao ? '<p class="peq" style="margin-bottom:0"><b>Resolução:</b> ' + esc(mae.resolucao) + '</p>' : '') + '</div></details>';
+}
+function contextoKitHtml(tipo, mae) {
+  if (tipo === 'GEMEA') return '<div class="aviso azul peq"><b>Questão gêmea (teste final).</b> Mesma estrutura, mesmo conceito e mesma dificuldade da questão original, ' +
+    'com outro contexto e outros números. O aluno faz cerca de uma semana antes do próximo simulado.</div>';
+  var e = mae.erro || {};
+  return '<div class="aviso azul peq"><b>Erro que ela treina:</b> ' + esc(e.conceito || '') + (e.erro ? '. ' + esc(e.erro) : '') +
+    '<br><span class="mut">Só o aluno que marcou essa alternativa na questão original recebe esta questão.</span></div>';
+}
+
+/** Uma questão do kit: conferir (professor), aprovar ou pedir ajuste (coordenação), editar */
+function verItemKit(id, depois) {
+  var adm = S.user.perfil === 'ADM';
+  var md = modal(topoModal('Kit de correção') + '<div class="carregando"><div class="giro"></div>Carregando…</div>', true);
+  call('itemKit', { id: id }).then(function (k) {
+    var c = conc('ESPCEX'), mae = k.mae, autorMae = mae.autorId === S.user.id;
+    var analisar = k.status === 'ANALISE_PROF' && (autorMae || adm);
+    var pa = k.parecer || {};
+    var h = topoModal((k.tipo === 'GEMEA' ? 'Questão gêmea' : 'Questão do erro (' + k.alternativa + ')') + ' · ' + mae.id) +
+      '<div class="q-meta">' + tag(STATUS_Q, k.status) + '<span class="tag azul">' + esc(mae.disciplina) + '</span>' +
+      (mae.conteudo ? '<span class="tag">' + esc(mae.conteudo) + '</span>' : '') +
+      '<span class="mut peq" style="margin-left:auto">' + (k.origem === 'CLAUDE' ? 'Escrita pelo Claude' : 'Escrita por ' + esc(k.autorNome)) + ' · ' + dataBr(k.atualizadoEm) + '</span></div>' +
+      contextoKitHtml(k.tipo, mae);
+    if (k.status === 'AJUSTE' && pa.comentario) h += '<div class="aviso ambar"><b>Ajuste pedido por ' + esc(pa.por) + ' (' + dataBr(pa.em) + '):</b> ' + esc(pa.comentario) +
+      '<br><span class="peq">' + (adm ? 'Ela entra no próximo texto para o Claude, ou edite você mesma.' : 'Ela volta para o Claude reescrever. Se preferir, edite você mesmo(a).') + '</span></div>';
+    if (pa.decisao === 'ATENDIDO' && pa.pedido) h += '<div class="aviso azul peq"><b>Esta versão respondeu ao pedido:</b> "' + esc(pa.pedido.comentario) + '"</div>';
+    if (k.status === 'VALIDADA') h += '<div class="aviso verde peq">' + (pa.decisao === 'OK' ? '<b>Conferida por ' + esc(pa.por) + '</b> em ' + dataBr(pa.em) + '. ' : '') +
+      (adm ? 'Falta a sua aprovação.' : 'Aguardando a aprovação da coordenação.') + '</div>';
+    if (analisar && autorMae) h += '<div class="aviso azul"><b>Sua análise é necessária.</b> Confira a questão e a resolução e, no fim da página, clique em <b>De acordo</b> ou escreva o que mudar.</div>';
+    h += maeKitHtml(mae, k.tipo === 'ERRO' ? k.alternativa : '') +
+      '<div class="gab-badge" style="margin-top:12px">Gabarito: <b>' + esc(k.gabarito) + '</b></div>' +
+      '<div id="kv-enun">' + enunciadoHtml(k.enunciado, [], k.nFiguras) + '</div><div class="alts">' +
+      c.alternativas.map(function (l) {
+        var ok = l === k.gabarito;
+        return '<div class="' + (ok ? 'certa' : '') + '"><b>(' + l + ')</b> ' + esc((k.alternativas || {})[l] || '') + (ok ? '<span class="alt-marca">✔ Gabarito</span>' : '') + '</div>';
+      }).join('') + '</div>' +
+      '<div class="card" style="margin-top:12px"><h3>Resolução comentada</h3><div class="enun peq">' + esc(k.resolucao) + '</div></div>';
+    if (analisar) h += '<div class="card parecer"><h3 style="margin-top:0">' + (autorMae ? 'Sua análise' : 'Análise do professor (' + esc(mae.autorNome) + ')') + '</h3>' +
+      (!autorMae ? '<p class="mut peq" style="margin-top:0">Como coordenação, você pode registrar a análise no lugar do professor.</p>' : '') +
+      '<p class="peq" style="margin-top:0">A questão ' + (k.tipo === 'GEMEA' ? 'tem a mesma ideia da original, em outro contexto' : 'treina o erro indicado') +
+      ', o gabarito está certo e a resolução ajuda o aluno a estudar sozinho? Se sim, clique em <b>De acordo</b>. Se algo precisa mudar, descreva abaixo.</p>' +
+      '<label class="campo"><span>O que deve ser alterado (só se não estiver de acordo)</span><textarea id="kv-com" rows="3"></textarea></label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="kv-aj">Pedir alteração</button><button class="btn ok" id="kv-ok">De acordo</button></div></div>';
+    if (adm) h += '<div class="card" style="margin-top:16px;background:var(--n-50)"><h3>Decisão da coordenação</h3>' +
+      '<label class="campo"><span>O que mudar (para pedir ajuste)</span><input type="text" id="kv-obs"></label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="kv-edit">Editar</button><button class="btn perigo" id="kv-exc">Excluir</button>' +
+      (k.status !== 'AJUSTE' ? '<button class="btn" id="kv-paj">Pedir ajuste</button>' : '') +
+      (k.status === 'ANALISE_PROF' || k.status === 'VALIDADA' ? '<button class="btn ok" id="kv-apr" style="margin-left:auto">Aprovar</button>' : '') + '</div></div>';
+    else if (autorMae && k.status !== 'APROVADA') h += '<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="kv-edit">Editar eu mesmo(a)</button></div>';
+    else if (k.status === 'APROVADA') h += '<p class="mut peq" style="text-align:right;margin-top:12px">Já aprovada. Para mudar, fale com a coordenação.</p>';
+    md.el.querySelector('.janela').innerHTML = h;
+    religarFechar(md);
+    if (k.nFiguras) call('figurasKit', { id: k.id }).then(function (l) {
+      if ($('#kv-enun', md.el)) $('#kv-enun', md.el).innerHTML = enunciadoHtml(k.enunciado, (l || []).map(function (f) { return f.url; }), k.nFiguras);
+    }).catch(function () {});
+    var fim = function (msg) { md.fechar(); toast(msg); if (depois) depois(); };
+    if ($('#kv-edit', md.el)) $('#kv-edit', md.el).onclick = function () { md.fechar(); formKit({ maeId: mae.id, tipo: k.tipo, alternativa: k.alternativa, mae: mae }, k, depois); };
+    if (analisar) {
+      $('#kv-ok', md.el).onclick = function () {
+        if ($('#kv-com', md.el).value.trim()) { toast('Você escreveu um pedido de alteração. Use "Pedir alteração" ou apague o texto.', true); return; }
+        ocupado(this, 'Registrando…', function () { return call('parecerKit', { id: k.id, decisao: 'OK' }); }).then(function () { fim('De acordo registrado.'); }).catch(function () {});
+      };
+      $('#kv-aj', md.el).onclick = function () {
+        var t = $('#kv-com', md.el).value.trim();
+        if (!t) { toast('Escreva o que deve ser alterado.', true); $('#kv-com', md.el).focus(); return; }
+        ocupado(this, 'Enviando…', function () { return call('parecerKit', { id: k.id, decisao: 'AJUSTE', comentario: t }); }).then(function () { fim('Pedido registrado.'); }).catch(function () {});
+      };
+    }
+    if ($('#kv-apr', md.el)) $('#kv-apr', md.el).onclick = function () {
+      ocupado(this, 'Aprovando…', function () { return call('decidirKit', { ids: [k.id], decisao: 'APROVADA' }); }).then(function () { fim('Questão do kit aprovada.'); }).catch(function () {});
+    };
+    if ($('#kv-paj', md.el)) $('#kv-paj', md.el).onclick = function () {
+      var t = $('#kv-obs', md.el).value.trim();
+      if (!t) { toast('Escreva o que deve mudar.', true); $('#kv-obs', md.el).focus(); return; }
+      ocupado(this, 'Enviando…', function () { return call('decidirKit', { ids: [k.id], decisao: 'AJUSTE', comentario: t }); }).then(function () { fim('Pedido de ajuste registrado.'); }).catch(function () {});
+    };
+    if ($('#kv-exc', md.el)) $('#kv-exc', md.el).onclick = function () {
+      confirmar('Excluir esta questão do kit? A vaga fica livre para outra.', 'Excluir').then(function (sim) {
+        if (!sim) return;
+        call('excluirKit', { id: k.id }).then(function () { fim('Questão do kit excluída.'); }).catch(function (e) { toast(msgErro(e), true); });
+      });
+    };
+  }).catch(function (e) { md.el.querySelector('.janela').innerHTML = topoModal('Kit de correção') + caixaErro(e); religarFechar(md); });
+}
+
+/** Escrever ou editar uma questão do kit. vaga: { maeId, tipo, alternativa, mae? }; k: a questão (na edição) */
+function formKit(vaga, k, depois) {
+  var c = conc('ESPCEX');
+  k = k || { enunciado: '', alternativas: {}, gabarito: '', resolucao: '' };
+  var md = modal(topoModal('Kit de correção') + '<div class="carregando"><div class="giro"></div>Carregando…</div>', true);
+  var pronto = vaga.mae ? Promise.resolve(vaga.mae) : call('maeKit', { id: vaga.maeId, alternativa: vaga.alternativa });
+  pronto.then(function (mae) {
+    var h = topoModal((k.id ? 'Editar · ' : 'Escrever · ') + (vaga.tipo === 'GEMEA' ? 'questão gêmea' : 'questão do erro (' + vaga.alternativa + ')') + ' · ' + mae.id) +
+      contextoKitHtml(vaga.tipo, mae) + maeKitHtml(mae, vaga.tipo === 'ERRO' ? vaga.alternativa : '') +
+      '<label class="campo" style="margin-top:12px"><span>Enunciado *</span><textarea id="kf-enun" rows="7">' + esc(k.enunciado) + '</textarea></label>' +
+      '<p class="mut peq" style="margin:-6px 0 12px">Fórmulas entre cifrões, em LaTeX (ex.: $v = \\dfrac{\\Delta s}{\\Delta t}$). Escreva <b>[FIGURA 1]</b> onde a figura entra.</p>' +
+      c.alternativas.map(function (l) {
+        return '<label class="campo"><span>Alternativa ' + l + ' *</span><input type="text" id="kf-alt-' + l + '" value="' + esc((k.alternativas || {})[l] || '') + '"></label>';
+      }).join('') +
+      '<label class="campo" style="max-width:220px"><span>Gabarito *</span><select id="kf-gab"><option value="">Escolha</option>' +
+      c.alternativas.map(function (l) { return '<option' + (l === k.gabarito ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label>' +
+      '<label class="campo"><span>Resolução comentada *</span><textarea id="kf-res" rows="7">' + esc(k.resolucao) + '</textarea></label>' +
+      '<p class="mut peq" style="margin:-6px 0 12px">O aluno lê a resolução depois de tentar sozinho: explique passo a passo' + (vaga.tipo === 'ERRO' ? ' e mostre onde está a armadilha.' : '.') + '</p>' +
+      '<div class="campo"><span class="mut peq" style="font-weight:600">Figuras</span><div id="kf-figs" class="figs"></div>' +
+      '<label class="btn peq" style="margin-top:6px">+ Adicionar figura<input type="file" id="kf-fig" accept="image/*" hidden></label></div>' +
+      '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px"><button class="btn fechar" style="flex:none">Cancelar</button>' +
+      '<button class="btn pri" id="kf-ok" style="flex:none">Salvar</button></div>';
+    md.el.querySelector('.janela').innerHTML = h;
+    religarFechar(md);
+    var figs = [];
+    var desenharFigs = function () {
+      $('#kf-figs', md.el).innerHTML = figs.length ? figs.map(function (f, i) {
+        return '<div class="fig-card"><img src="' + imgSrc(f.url) + '" alt="Figura ' + (i + 1) + '"><div style="flex:1"><b>Figura ' + (i + 1) + '</b></div>' +
+          '<button class="btn peq" data-rm="' + i + '">Remover</button></div>';
+      }).join('') : '<p class="mut peq" style="margin:4px 0">Nenhuma figura.</p>';
+      $$('[data-rm]', md.el).forEach(function (b) { b.onclick = function () { figs.splice(+b.getAttribute('data-rm'), 1); desenharFigs(); }; });
+    };
+    desenharFigs();
+    if (k.id && k.nFiguras) call('figurasKit', { id: k.id }).then(function (l) { figs = l.map(function (f) { return { id: f.id, url: f.url }; }); desenharFigs(); });
+    $('#kf-fig', md.el).onchange = function (e) {
+      var f = e.target.files[0]; if (!f) return;
+      if (figs.length >= 4) { toast('No máximo 4 figuras.', true); e.target.value = ''; return; }
+      lerImagem(f, 1400, 0.85).then(function (img) { figs.push({ base64: img.base64, mime: img.mime, url: 'data:' + img.mime + ';base64,' + img.base64 }); desenharFigs(); })
+        .catch(function (er) { toast(msgErro(er), true); });
+      e.target.value = '';
+    };
+    $('#kf-ok', md.el).onclick = function () {
+      var alts = {};
+      c.alternativas.forEach(function (l) { alts[l] = $('#kf-alt-' + l, md.el).value; });
+      var d = { id: k.id || null, questaoId: mae.id, tipo: vaga.tipo, alternativa: vaga.alternativa, enunciado: $('#kf-enun', md.el).value, alternativas: alts,
+        gabarito: $('#kf-gab', md.el).value, resolucao: $('#kf-res', md.el).value,
+        figuras: figs.map(function (f) { return f.id ? { id: f.id } : { base64: f.base64, mime: f.mime }; }) };
+      ocupado(this, 'Salvando…', function () { return call('salvarKit', d); }).then(function (r) {
+        md.fechar();
+        toast(r.status === 'APROVADA' ? 'Questão do kit salva e aprovada.' : r.status === 'VALIDADA' ? 'Questão do kit salva. Ela aguarda a aprovação da coordenação.' : 'Questão do kit salva.');
+        if (depois) depois();
+      }).catch(function () {});
+    };
+  }).catch(function (e) { md.el.querySelector('.janela').innerHTML = topoModal('Kit de correção') + caixaErro(e); religarFechar(md); });
+}
+
+/** Coordenação: texto para o Claude escrever o que falta no kit */
+function exportarKit() {
+  var md = modal(topoModal('Copiar para o Claude') +
+    '<p class="peq">Gera um texto com as questões aprovadas que ainda não têm o kit completo (e as que têm pedido de ajuste), já com as instruções. ' +
+    'Cole no chat do Claude, receba o arquivo de volta e use <b>Importar o kit</b>. As questões que já estão em simulado vêm primeiro.</p>' +
+    '<div class="linha"><label class="campo"><span>Disciplina</span><select id="ke-disc"><option value="">Todas</option>' +
+    disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="campo"><span>Questões por vez</span><select id="ke-n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label></div>' +
+    '<label class="peq" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="ke-sim"> Só questões que já estão em algum simulado</label>' +
+    '<button class="btn pri" id="ke-ger">Gerar texto</button><div id="ke-res"></div>', true);
+  $('#ke-ger', md.el).onclick = function () {
+    var d = { disciplina: $('#ke-disc', md.el).value, limite: $('#ke-n', md.el).value, soSimulado: $('#ke-sim', md.el).checked };
+    ocupado(this, 'Gerando…', function () { return call('exportarKit', d); }).then(function (r) {
+      var alvo = $('#ke-res', md.el);
+      if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Nada a fazer: todas as questões aprovadas deste filtro já têm o kit completo.</div>'; return; }
+      alvo.innerHTML = '<div class="aviso azul" style="margin-top:12px">' + r.quantidade + ' de ' + r.total + (r.total === 1 ? ' questão' : ' questões') + ' neste texto · ' +
+        r.itens + (r.itens === 1 ? ' questão do kit para escrever.' : ' questões do kit para escrever.') + '</div>' +
+        (r.figuras.length ? '<div class="aviso ambar"><b>Questões com figura:</b> baixe e anexe junto no chat. ' + r.figuras.map(function (f) {
+          return '<a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.id) + '</a>';
+        }).join(' · ') + '</div>' : '') +
+        '<textarea id="ke-txt" rows="12" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
+        '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn pri" id="ke-cp">Copiar texto</button></div>';
+      $('#ke-txt', md.el).onclick = function () { this.select(); };
+      $('#ke-cp', md.el).onclick = function () { $('#ke-txt', md.el).select(); copiar(r.texto, this); };
+    }).catch(function () {});
+  };
+}
+
+/** Lê o arquivo do kit (aceita o JSON dentro de um bloco de código) */
+function lerKit(texto) {
+  var t = String(texto || '').trim(), m = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (m) t = m[1].trim();
+  var o;
+  try { o = JSON.parse(t); } catch (e) { throw new Error('O texto não é um arquivo do kit válido. Cole exatamente o bloco que o Claude devolveu.'); }
+  if (Array.isArray(o)) o = { formato: 'mira-kit-1', itens: o };
+  if (!o || o.formato !== 'mira-kit-1' || !Array.isArray(o.itens)) throw new Error('Este não é um arquivo do kit de correção.');
+  return o;
+}
+/** Coordenação: importa o arquivo do Claude, uma questão por vez (com as figuras) */
+function importarKit(depois) {
+  var md = modal(topoModal('Importar o kit') +
+    '<p class="peq">Cole o bloco que o Claude devolveu ou escolha o arquivo <b>.json</b>. As questões entram na análise do professor autor de cada questão original.</p>' +
+    '<label class="campo"><span>Arquivo</span><input type="file" id="ki-arq" accept=".json,application/json,text/plain"></label>' +
+    '<label class="campo"><span>Ou cole aqui</span><textarea id="ki-txt" rows="8" style="font-family:monospace;font-size:12px"></textarea></label>' +
+    '<div style="display:flex;justify-content:flex-end"><button class="btn pri" id="ki-ok">Importar</button></div><div id="ki-res"></div>', true);
+  $('#ki-arq', md.el).onchange = function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { $('#ki-txt', md.el).value = r.result; };
+    r.readAsText(f);
+  };
+  $('#ki-ok', md.el).onclick = function () {
+    var arq;
+    try { arq = lerKit($('#ki-txt', md.el).value); } catch (e) { toast(e.message, true); return; }
+    if (!arq.itens.length) { toast('O arquivo não tem questões.', true); return; }
+    var btn = this, res = $('#ki-res', md.el), novas = 0, trocadas = 0, ignoradas = 0, erros = [];
+    btn.disabled = true;
+    var passo = function (i) {
+      if (i >= arq.itens.length) {
+        btn.disabled = false;
+        res.innerHTML = '<div class="aviso ' + (erros.length ? 'ambar' : 'verde') + '" style="margin-top:12px"><b>' + (novas + trocadas) + ' de ' + arq.itens.length + ' importadas</b>' +
+          (trocadas ? ' (' + trocadas + ' substituíram uma versão anterior)' : '') + '.' +
+          (ignoradas ? ' ' + ignoradas + ' já estavam aprovadas e ficaram como estavam.' : '') +
+          (erros.length ? '<ul style="margin:6px 0 0;padding-left:18px">' + erros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+        if (novas + trocadas && depois) depois();
+        return;
+      }
+      res.innerHTML = '<div class="carregando"><div class="giro"></div>Importando ' + (i + 1) + ' de ' + arq.itens.length + '…</div>';
+      var x = arq.itens[i] || {}, item = {};
+      Object.keys(x).forEach(function (c) { if (c !== 'figuras') item[c] = x[c]; });
+      call('importarItemKit', { item: item, figuras: x.figuras || [] }).then(function (r) {
+        if (r.ignorado) ignoradas++; else if (r.atualizado) trocadas++; else novas++;
+      }).catch(function (e) {
+        erros.push('Item ' + (i + 1) + (x.questao ? ' (' + x.questao + ', ' + (String(x.tipo).toUpperCase() === 'ERRO' ? 'erro ' + x.alternativa : 'gêmea') + ')' : '') + ': ' + msgErro(e));
+      }).then(function () { passo(i + 1); });
+    };
+    passo(0);
+  };
+}
+/** Depois de trocar o conteúdo de uma janela, os botões "Fechar"/"Cancelar" novos também fecham */
+function religarFechar(md) { $$('.fechar', md.el).forEach(function (b) { b.addEventListener('click', md.fechar); }); }
 </script>
 
   <script>
