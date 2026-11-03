@@ -3659,6 +3659,30 @@ function analiseParaClaude(s) {
       '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn pri" id="an-cp">Copiar texto</button></div>';
     $('#an-cp', md.el).onclick = function () { $('#an-txt', md.el).select(); copiar(r.texto, this); };
   }).catch(function (e) { $('#an-corpo', md.el).innerHTML = caixaErro(e); });
+  // a volta: o bloco que o Claude entregou fica guardado no simulado
+  var volta = document.createElement('div');
+  volta.innerHTML = '<h3 style="margin:22px 0 6px">Importar a análise</h3>' +
+    '<p class="peq" style="margin-top:0">Quando o Claude responder, cole aqui o bloco que ele entregou no fim (começa com <code>{</code>). ' +
+    'A análise fica no simulado: os professores veem no Mapa da turma e na Avaliação da turma impressa, cada um a parte geral e a da sua disciplina.</p>' +
+    (s.analiseEm ? '<div class="aviso verde peq">Este simulado já tem uma análise, importada em ' + esc(dataBr(s.analiseEm)) + '. Importar de novo substitui. ' +
+      '<button class="btn peq" id="an-rem" style="margin-left:6px">Tirar a análise</button></div>' : '') +
+    '<textarea id="an-volta" rows="6" placeholder="Cole aqui o bloco da análise" style="font-family:monospace;font-size:12px"></textarea>' +
+    '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="an-imp">Importar a análise</button></div>';
+  md.el.querySelector('.janela').appendChild(volta);
+  $('#an-imp', md.el).onclick = function () {
+    var t = $('#an-volta', md.el).value;
+    if (!t.trim()) return toast('Cole o bloco que o Claude entregou.', true);
+    ocupado(this, 'Importando…', function () { return call('importarAnalise', { simuladoId: s.id, texto: t }); }).then(function (r) {
+      s.analiseEm = r.em;
+      toast('Análise importada: ' + r.itens + (r.itens === 1 ? ' item' : ' itens') + '.' + (r.erros.length ? ' ' + r.erros.length + ' item(ns) ignorado(s).' : ''));
+      md.fechar();
+    }).catch(function () {});
+  };
+  if ($('#an-rem', md.el)) $('#an-rem', md.el).onclick = function () {
+    ocupado(this, 'Tirando…', function () { return call('importarAnalise', { simuladoId: s.id, remover: true }); }).then(function () {
+      s.analiseEm = ''; toast('Análise retirada do simulado.'); md.fechar();
+    }).catch(function () {});
+  };
 }
 
 /**
@@ -4248,6 +4272,22 @@ function proximoPasso(porDisciplina, estrategias, aluno) {
     '<button class="btn pri" data-ir-ancora="' + (temEst ? 'rel-est' : 'rel-questoes') + '">' + (temEst ? (aluno ? 'Ver missões' : 'Ver estratégia') : 'Ver as questões') + '</button></div>';
 }
 
+/** Relatório impresso (turma ou individual), montado pelo servidor, numa janela com Imprimir */
+function verRelatorioImpresso(titulo, dados) {
+  var md = modal(topoModal(titulo) +
+    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn pri" id="imp" disabled>Imprimir</button>' +
+    '<span class="aviso azul peq" style="margin:0">Para PDF, use "Imprimir" e escolha "Salvar como PDF".</span></div>' +
+    '<div id="area"><div class="carregando"><div class="giro"></div>Montando relatório…</div></div>', true);
+  call('relatorioImpresso', dados).then(function (r) {
+    var f = document.createElement('iframe');
+    $('#area', md.el).innerHTML = ''; $('#area', md.el).appendChild(f);
+    f.onload = function () { formulasNoImpresso(f); };
+    f.srcdoc = r.html;
+    $('#imp', md.el).disabled = false;
+    $('#imp', md.el).onclick = function () { f.contentWindow.focus(); f.contentWindow.print(); };
+  }).catch(function (e) { $('#area', md.el).innerHTML = caixaErro(e); });
+}
+
 VIEWS.relatorio = function (m, p) {
   carregando(m, 'Montando relatório…');
   return call('relatorio', { id: p.id }).then(function (d) {
@@ -4348,7 +4388,8 @@ VIEWS.relatorio = function (m, p) {
     if (aluno && p.pesquisa && d.pesquisaAberta && !d.pesquisa) formComoFoi(d, function () { ir('relatorio', { id: p.id }); });
     if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
-    $('#imprimir').onclick = function () { window.print(); };
+    $('#imprimir').onclick = aluno ? function () { window.print(); }
+      : function () { verRelatorioImpresso('Relatório de ' + a.nome + ' · ' + s.codigo, { tipo: 'aluno', resultadoId: r.id }); };
     var abrirCartao = function () { verCartao(r.id, (aluno ? 'Meu cartão' : 'Cartão de ' + a.nome) + ' · ' + s.codigo); };
     $('#ver-cartao').onclick = abrirCartao;
     if ($('#ver-cartao2')) $('#ver-cartao2').onclick = abrirCartao;
@@ -4735,7 +4776,41 @@ VIEWS.resultados = function (m, p) {
   $('#r-sim').onchange = carregar;
   $('#r-tur').onchange = carregar;
   $('#r-alu').onchange = carregar;
+  cardPlanilhaAno(m);
 };
+
+/** Planilha do ano (para a análise estatística): baixa em CSV; a coordenação também grava no Google Planilhas */
+function cardPlanilhaAno(m) {
+  var ano = new Date().getFullYear(), adm = S.user.perfil === 'ADM';
+  var c = document.createElement('div');
+  c.className = 'card nao-imprimir';
+  c.innerHTML = '<h2>Planilha do ano</h2><p class="mut peq" style="margin-top:0">O desenvolvimento dos alunos simulado a simulado, para fazer gráficos e médias no Google Planilhas. ' +
+    (adm ? 'Tem todas as disciplinas.' : 'Tem só ' + (S.user.disciplinas ? 'as suas disciplinas' : 'os alunos que você vê') + '.') + ' Vale a turma escolhida acima (ou todas).</p>' +
+    '<div class="linha" style="align-items:flex-end"><label class="campo" style="margin:0;flex:none;min-width:120px"><span>Ano</span><select id="pl-ano">' +
+    [ano, ano - 1].map(function (a) { return '<option>' + a + '</option>'; }).join('') + '</select></label>' +
+    '<button class="btn" id="pl-sim" style="flex:none">Baixar: por simulado</button><button class="btn" id="pl-tema" style="flex:none">Baixar: por tema</button>' +
+    (adm ? '<button class="btn" id="pl-drive" style="flex:none">Gravar no Google Planilhas</button>' : '') + '</div>' +
+    '<p class="mut peq" style="margin-bottom:0">O arquivo baixado abre no Google Planilhas em <b>Arquivo › Importar</b>' + (adm ? '. "Gravar no Google Planilhas" cria (ou atualiza) a planilha na pasta do MIRA no Drive, em <b>Planilhas</b>.' : '.') + '</p>';
+  m.appendChild(c);
+  var pedir = function (btn, destino) {
+    return ocupado(btn, destino === 'drive' ? 'Gravando…' : 'Montando…', function () {
+      return call('planilhaAno', { ano: $('#pl-ano', c).value, turma: ($('#r-tur') || {}).value || '', destino: destino });
+    });
+  };
+  var baixar = function (btn, campo, sufixo) {
+    pedir(btn, 'csv').then(function (r) {
+      var url = URL.createObjectURL(new Blob([r[campo]], { type: 'text/csv;charset=utf-8' }));
+      var a = document.createElement('a'); a.href = url; a.download = r.nome + ' - ' + sufixo + '.csv';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      toast('Planilha baixada: ' + r.linhas + (r.linhas === 1 ? ' linha' : ' linhas') + ' de resultados.');
+    }).catch(function () {});
+  };
+  $('#pl-sim', c).onclick = function () { baixar(this, 'porSimulado', 'por simulado'); };
+  $('#pl-tema', c).onclick = function () { baixar(this, 'porTema', 'por tema'); };
+  if ($('#pl-drive', c)) $('#pl-drive', c).onclick = function () {
+    pedir(this, 'drive').then(function (r) { toast('"' + r.nome + '" vai aparecer no Drive do MIRA, em Planilhas, em alguns segundos.'); }).catch(function () {});
+  };
+}
 
 // ---------------------------------------------------------------- mapa da turma
 VIEWS.turmas = function (m, p) {
@@ -4760,7 +4835,10 @@ VIEWS.turmas = function (m, p) {
     var alvo = $('#mapa'); carregando(alvo, 'Cruzando os resultados da turma…');
     call('relatorioTurma', { simuladoId: $('#t-sim').value, turma: $('#t-tur').value.trim(), disciplina: $('#t-disc').value }).then(function (d) {
       if (!d.participantes) { alvo.innerHTML = '<div class="card vazio">Nenhum aluno desta seleção enviou o cartão ainda.</div>'; return; }
-      var h = '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
+      var h = '<div class="card nao-imprimir"><div class="linha" style="align-items:center"><div style="flex:1;min-width:200px"><b>Relatórios para imprimir</b>' +
+        '<div class="mut peq">Com a seleção acima' + ($('#t-disc').value ? ' (só ' + esc($('#t-disc').value) + ')' : '') + '. A avaliação da turma não tem nomes de alunos.</div></div>' +
+        '<button class="btn" id="imp-tur" style="flex:none">Avaliação da turma</button><button class="btn" id="imp-alu" style="flex:none">Relatórios individuais (' + d.participantes + ')</button></div></div>';
+      h += '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
         '<div class="kpi"><small>Média geral</small><b>' + d.media + '%</b></div>' +
         '<div class="kpi"><small>Turma</small><b style="font-size:20px">' + esc(d.turma) + '</b></div></div>';
       h += '<div class="grade-2"><div class="card"><h2>Aproveitamento por disciplina</h2>' +
@@ -4769,6 +4847,17 @@ VIEWS.turmas = function (m, p) {
           return '<div class="clic al" data-id="' + x.resultadoId + '" style="cursor:pointer">' + barra(x.nome, x.nota) + '</div>';
         }).join('') + '<p class="mut peq">Ordenados da menor para a maior nota. Toque para abrir o relatório.</p></div></div>';
       h += blocoComoFoiTurma(d);
+      if (d.analise && d.analise.itens.length) {
+        var TIPOS = { FORTE: 'Ponto forte', RETOMAR: 'Retomar em sala', CONFERIR: 'Conferir', NOVAS: 'Questões novas sugeridas', OBS: 'Observação' };
+        h += '<div class="card"><h2>Análise do Claude</h2>' + (d.analise.resumo ? '<p style="margin-top:0">' + esc(d.analise.resumo) + '</p>' : '') +
+          ['FORTE', 'RETOMAR', 'CONFERIR', 'NOVAS', 'OBS'].map(function (t) {
+            var xs = d.analise.itens.filter(function (x) { return x.tipo === t; });
+            return xs.length ? '<h3 style="margin:12px 0 4px">' + TIPOS[t] + '</h3><ul style="margin:0;padding-left:18px">' + xs.map(function (x) {
+              return '<li style="margin:4px 0">' + (x.titulo ? '<b>' + esc(x.titulo) + ':</b> ' : '') + esc(x.texto) +
+                (x.disciplina || (x.questoes || []).length ? ' <span class="mut peq">(' + esc([x.disciplina, (x.questoes || []).length ? 'questão ' + x.questoes.join(', ') : ''].filter(String).join(' · ')) + ')</span>' : '') + '</li>';
+            }).join('') + '</ul>' : '';
+          }).join('') + '<p class="mut peq" style="margin-bottom:0">Importada em ' + esc(dataBr(d.analise.em)) + '. Feita só com os números da turma, sem nomes de alunos.</p></div>';
+      }
       h += '<h2 style="margin:10px 0">O que trabalhar em sala</h2>' +
         (d.deficiencias.length ? d.deficiencias.slice(0, 12).map(function (x) {
           var pct = Math.round(100 * x.alunosAfetados / d.participantes);
@@ -4790,6 +4879,10 @@ VIEWS.turmas = function (m, p) {
         }).join('') + '</table></div></div>';
       alvo.innerHTML = h;
       $$('.al', alvo).forEach(function (x) { x.onclick = function () { ir('relatorio', { id: x.getAttribute('data-id') }); }; });
+      var sel = { simuladoId: $('#t-sim').value, turma: $('#t-tur').value.trim(), disciplina: $('#t-disc').value };
+      var rotulo = (sel.turma ? 'Turma ' + sel.turma : 'Todas as turmas') + (sel.disciplina ? ' · ' + sel.disciplina : '');
+      $('#imp-tur', alvo).onclick = function () { verRelatorioImpresso('Avaliação da turma · ' + rotulo, { tipo: 'turma', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
+      $('#imp-alu', alvo).onclick = function () { verRelatorioImpresso('Relatórios individuais · ' + rotulo, { tipo: 'alunos', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
       $$('[data-pesq-al]', alvo).forEach(function (x) { x.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: x.getAttribute('data-pesq-al') }); }; });
     }).catch(function (e) { alvo.innerHTML = caixaErro(e); });
   };
