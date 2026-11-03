@@ -4295,7 +4295,8 @@ VIEWS.relatorio = function (m, p) {
     var aluno = S.user.perfil === 'ALUNO';
     var h = cabPag(aluno ? 'Meu relatório' : a.nome,
       esc(s.titulo) + ' · ' + esc(s.concursoNome) + ' ' + esc(s.provaTitulo) + (aluno ? '' : ' · Turma ' + esc(a.turma)) + ' · ' + dataBr(r.criadoEm),
-      '<button class="btn" id="voltar">Voltar</button><button class="btn" id="ver-cartao">' + (aluno ? 'Ver meu cartão' : 'Ver cartão') + '</button><button class="btn" id="imprimir">Imprimir</button>');
+      '<button class="btn" id="voltar">Voltar</button><button class="btn" id="ver-cartao">' + (aluno ? 'Ver meu cartão' : 'Ver cartão') + '</button><button class="btn" id="imprimir">Imprimir</button>' +
+        (aluno ? '' : '<button class="btn" id="imp-ano">Relatório anual</button>'));
 
     // destaque: nota final (EsPCEx) ou aproveitamento, com classificação e mediana
     var c = d.corte && d.corte.participantes ? d.corte : null;
@@ -4390,6 +4391,10 @@ VIEWS.relatorio = function (m, p) {
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = aluno ? function () { window.print(); }
       : function () { verRelatorioImpresso('Relatório de ' + a.nome + ' · ' + s.codigo, { tipo: 'aluno', resultadoId: r.id }); };
+    if ($('#imp-ano')) $('#imp-ano').onclick = function () {
+      var ano = String(r.criadoEm || '').slice(0, 4);
+      verRelatorioImpresso('Relatório anual ' + ano + ' de ' + a.nome, { tipo: 'anoAluno', alunoId: a.id, ano: ano });
+    };
     var abrirCartao = function () { verCartao(r.id, (aluno ? 'Meu cartão' : 'Cartão de ' + a.nome) + ' · ' + s.codigo); };
     $('#ver-cartao').onclick = abrirCartao;
     if ($('#ver-cartao2')) $('#ver-cartao2').onclick = abrirCartao;
@@ -4824,8 +4829,11 @@ VIEWS.turmas = function (m, p) {
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="t-disc"><option value="">' + (prof && S.user.disciplinas ? 'As minhas' : 'Todas') + '</option>' +
     disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     '<button class="btn pri" id="t-ger" style="flex:none;align-self:flex-end">Gerar mapa</button></div></div><div id="mapa"></div>';
+  var simsMapa = {};
+  var anoSel = function () { var s = simsMapa[$('#t-sim').value] || {}; return String(s.dataAplicacao || s.criadoEm || new Date().getFullYear()).slice(0, 4); };
   call('listarSimulados').then(function (ss) {
     ss = ss.filter(function (s) { return s.status !== 'RASCUNHO'; });
+    ss.forEach(function (s) { simsMapa[s.id] = s; });
     $('#t-sim').innerHTML = ss.length ? ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.codigo + ' · ' + s.titulo) + '</option>'; }).join('')
       : '<option value="">Nenhum simulado aplicado</option>';
     if (p.simuladoId) $('#t-sim').value = p.simuladoId;
@@ -4837,7 +4845,9 @@ VIEWS.turmas = function (m, p) {
       if (!d.participantes) { alvo.innerHTML = '<div class="card vazio">Nenhum aluno desta seleção enviou o cartão ainda.</div>'; return; }
       var h = '<div class="card nao-imprimir"><div class="linha" style="align-items:center"><div style="flex:1;min-width:200px"><b>Relatórios para imprimir</b>' +
         '<div class="mut peq">Com a seleção acima' + ($('#t-disc').value ? ' (só ' + esc($('#t-disc').value) + ')' : '') + '. A avaliação da turma não tem nomes de alunos.</div></div>' +
-        '<button class="btn" id="imp-tur" style="flex:none">Avaliação da turma</button><button class="btn" id="imp-alu" style="flex:none">Relatórios individuais (' + d.participantes + ')</button></div></div>';
+        '<button class="btn" id="imp-tur" style="flex:none">Avaliação da turma</button><button class="btn" id="imp-alu" style="flex:none">Relatórios individuais (' + d.participantes + ')</button></div>' +
+        '<div class="linha" style="align-items:center;margin-top:10px"><div style="flex:1;min-width:200px"><b>Relatório anual</b><div class="mut peq">Todos os simulados de ' + anoSel() + ', com a curva do ano.</div></div>' +
+        '<button class="btn" id="imp-ano-tur" style="flex:none">Anual da turma</button><button class="btn" id="imp-ano-alu" style="flex:none">Anuais individuais</button></div></div>';
       h += '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
         '<div class="kpi"><small>Média geral</small><b>' + d.media + '%</b></div>' +
         '<div class="kpi"><small>Turma</small><b style="font-size:20px">' + esc(d.turma) + '</b></div></div>';
@@ -4882,6 +4892,8 @@ VIEWS.turmas = function (m, p) {
       var sel = { simuladoId: $('#t-sim').value, turma: $('#t-tur').value.trim(), disciplina: $('#t-disc').value };
       var rotulo = (sel.turma ? 'Turma ' + sel.turma : 'Todas as turmas') + (sel.disciplina ? ' · ' + sel.disciplina : '');
       $('#imp-tur', alvo).onclick = function () { verRelatorioImpresso('Avaliação da turma · ' + rotulo, { tipo: 'turma', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
+      $('#imp-ano-tur', alvo).onclick = function () { verRelatorioImpresso('Relatório anual ' + anoSel() + ' · ' + rotulo, { tipo: 'anoTurma', ano: anoSel(), turma: sel.turma, disciplina: sel.disciplina }); };
+      $('#imp-ano-alu', alvo).onclick = function () { verRelatorioImpresso('Relatórios anuais ' + anoSel() + ' · ' + rotulo, { tipo: 'anoAlunos', ano: anoSel(), turma: sel.turma, disciplina: sel.disciplina }); };
       $('#imp-alu', alvo).onclick = function () { verRelatorioImpresso('Relatórios individuais · ' + rotulo, { tipo: 'alunos', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
       $$('[data-pesq-al]', alvo).forEach(function (x) { x.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: x.getAttribute('data-pesq-al') }); }; });
     }).catch(function (e) { alvo.innerHTML = caixaErro(e); });
