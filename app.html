@@ -4812,7 +4812,7 @@ VIEWS.relatorio = function (m, p) {
     if (aluno && p.pesquisa && d.pesquisaAberta && !d.pesquisa) formComoFoi(d, function () { ir('relatorio', { id: p.id }); });
     if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
-    $('#imprimir').onclick = aluno ? function () { window.print(); }
+    $('#imprimir').onclick = aluno ? function () { verRelatorioImpresso('Meu relatório · ' + s.titulo, { resultadoId: r.id }, 'meuRelatorio'); }
       : function () { verRelatorioImpresso('Relatório de ' + a.nome + ' · ' + s.codigo, { tipo: 'aluno', resultadoId: r.id }); };
     if ($('#imp-ano')) $('#imp-ano').onclick = function () {
       var ano = String(r.criadoEm || '').slice(0, 4);
