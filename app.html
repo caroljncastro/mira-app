@@ -4442,8 +4442,18 @@ function escolherAluno(s) {
 
 // ---------------------------------------------------------------- aluno: simulados
 VIEWS.meus = function (m) {
-  m.innerHTML = cabPag('Simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="lista"></div><div id="cal"></div><div id="evolucao"></div>';
+  m.innerHTML = cabPag('Simulados', 'Depois de fazer a prova, fotografe seu cartão-resposta aqui para receber a correção e o relatório.') + '<div id="anual"></div><div id="lista"></div><div id="cal"></div><div id="evolucao"></div>';
   cardCalendario($('#cal'), false);
+  call('meuAnual', {}).then(function (r) {
+    if (!r.anos.length) return;
+    var a = $('#anual');
+    a.innerHTML = '<div class="card"><div class="linha" style="align-items:center"><div style="flex:1;min-width:200px"><b>Relatório anual</b>' +
+      '<div class="mut peq">Como foram os seus simulados do ano, o que você conquistou e o próximo passo.</div></div>' +
+      r.anos.map(function (ano, i) { return '<button class="btn' + (i ? '' : ' pri') + '" data-ano="' + esc(ano) + '" style="flex:none">Ver ' + esc(ano) + '</button>'; }).join('') + '</div></div>';
+    $$('[data-ano]', a).forEach(function (b) {
+      b.onclick = function () { var ano = b.getAttribute('data-ano'); verRelatorioImpresso('Meu relatório de ' + ano, { ano: ano }, 'meuAnual'); };
+    });
+  }).catch(function () { /* o resto da tela continua */ });
   var l = $('#lista'); carregando(l);
   return Promise.all([call('listarSimulados'), call('resultados')]).then(function (rr) {
     var ss = rr[0], rs = rr[1], notaDe = {};
@@ -4685,12 +4695,12 @@ function proximoPasso(porDisciplina, estrategias, aluno) {
 }
 
 /** Relatório impresso (turma ou individual), montado pelo servidor, numa janela com Imprimir */
-function verRelatorioImpresso(titulo, dados) {
+function verRelatorioImpresso(titulo, dados, acao) {
   var md = modal(topoModal(titulo) +
     '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn pri" id="imp" disabled>Imprimir</button>' +
     '<span class="aviso azul peq" style="margin:0">Para PDF, use "Imprimir" e escolha "Salvar como PDF".</span></div>' +
     '<div id="area"><div class="carregando"><div class="giro"></div>Montando relatório…</div></div>', true);
-  call('relatorioImpresso', dados).then(function (r) {
+  call(acao || 'relatorioImpresso', dados).then(function (r) {
     var f = document.createElement('iframe');
     $('#area', md.el).innerHTML = ''; $('#area', md.el).appendChild(f);
     f.onload = function () { formulasNoImpresso(f); };
@@ -4708,7 +4718,8 @@ VIEWS.relatorio = function (m, p) {
     var h = cabPag(aluno ? 'Meu relatório' : a.nome,
       esc(s.titulo) + ' · ' + esc(s.concursoNome) + ' ' + esc(s.provaTitulo) + (aluno ? '' : ' · Turma ' + esc(a.turma)) + ' · ' + dataBr(r.criadoEm),
       '<button class="btn" id="voltar">Voltar</button><button class="btn" id="ver-cartao">' + (aluno ? 'Ver meu cartão' : 'Ver cartão') + '</button><button class="btn" id="imprimir">Imprimir</button>' +
-        (aluno ? '' : '<button class="btn" id="imp-ano">Relatório anual</button>'));
+        (aluno ? '' : '<button class="btn" id="imp-ano">Relatório anual</button>') +
+        (S.user.perfil === 'ADM' ? '<button class="btn" id="env-ano">Enviar anual à família</button>' : ''));
 
     // destaque: nota final (EsPCEx) ou aproveitamento, com classificação e mediana
     var c = d.corte && d.corte.participantes ? d.corte : null;
@@ -4806,6 +4817,17 @@ VIEWS.relatorio = function (m, p) {
     if ($('#imp-ano')) $('#imp-ano').onclick = function () {
       var ano = String(r.criadoEm || '').slice(0, 4);
       verRelatorioImpresso('Relatório anual ' + ano + ' de ' + a.nome, { tipo: 'anoAluno', alunoId: a.id, ano: ano });
+    };
+    if ($('#env-ano')) $('#env-ano').onclick = function () {
+      var b = this, ano = String(r.criadoEm || '').slice(0, 4);
+      confirmar('Enviar o relatório anual de ' + ano + ' de ' + a.nome + ' por e-mail ao aluno e ao responsável (se tiver consentimento)? A versão para imprimir também fica liberada para o aluno em Simulados.', 'Enviar').then(function () {
+        b.disabled = true;
+        call('enviarAnual', { ano: ano, alunoId: a.id }).then(function (x) {
+          b.disabled = false;
+          toast(x.aluno || x.responsavel ? 'Relatório anual enviado' + (x.aluno ? ' ao aluno' : '') + (x.aluno && x.responsavel ? ' e' : '') + (x.responsavel ? ' ao responsável' : '') + '.' +
+            (x.semConsentimento ? ' O responsável não recebeu: falta o consentimento.' : '') : 'Nenhum e-mail enviado: confira os e-mails do aluno e do responsável. A versão para imprimir já está liberada para o aluno.');
+        }).catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
+      });
     };
     var abrirCartao = function () { verCartao(r.id, (aluno ? 'Meu cartão' : 'Cartão de ' + a.nome) + ' · ' + s.codigo); };
     $('#ver-cartao').onclick = abrirCartao;
@@ -5259,7 +5281,10 @@ VIEWS.turmas = function (m, p) {
         '<div class="mut peq">Com a seleção acima' + ($('#t-disc').value ? ' (só ' + esc($('#t-disc').value) + ')' : '') + '. A avaliação da turma não tem nomes de alunos.</div></div>' +
         '<button class="btn" id="imp-tur" style="flex:none">Avaliação da turma</button><button class="btn" id="imp-alu" style="flex:none">Relatórios individuais (' + d.participantes + ')</button></div>' +
         '<div class="linha" style="align-items:center;margin-top:10px"><div style="flex:1;min-width:200px"><b>Relatório anual</b><div class="mut peq">Todos os simulados de ' + anoSel() + ', com a curva do ano.</div></div>' +
-        '<button class="btn" id="imp-ano-tur" style="flex:none">Anual da turma</button><button class="btn" id="imp-ano-alu" style="flex:none">Anuais individuais</button></div></div>';
+        '<button class="btn" id="imp-ano-tur" style="flex:none">Anual da turma</button><button class="btn" id="imp-ano-alu" style="flex:none">Anuais individuais</button></div>' +
+        (S.user.perfil === 'ADM' ? '<div class="linha" style="align-items:center;margin-top:10px"><div style="flex:1;min-width:200px"><b>Relatório anual para as famílias</b>' +
+          '<div class="mut peq">Sem a parte de uso interno. O aluno recebe por e-mail e vê em Simulados; o responsável recebe por e-mail se tiver consentimento.</div></div>' +
+          '<button class="btn" id="ano-fam-ver" style="flex:none">Ver a versão da família</button><button class="btn" id="ano-fam-env" style="flex:none">Enviar às famílias</button></div>' : '') + '</div>';
       h += '<div class="grade"><div class="kpi"><small>Participantes</small><b>' + d.participantes + '</b></div>' +
         '<div class="kpi"><small>Média geral</small><b>' + d.media + '%</b></div>' +
         '<div class="kpi"><small>Turma</small><b style="font-size:20px">' + esc(d.turma) + '</b></div></div>';
@@ -5306,6 +5331,22 @@ VIEWS.turmas = function (m, p) {
       $('#imp-tur', alvo).onclick = function () { verRelatorioImpresso('Avaliação da turma · ' + rotulo, { tipo: 'turma', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
       $('#imp-ano-tur', alvo).onclick = function () { verRelatorioImpresso('Relatório anual ' + anoSel() + ' · ' + rotulo, { tipo: 'anoTurma', ano: anoSel(), turma: sel.turma, disciplina: sel.disciplina }); };
       $('#imp-ano-alu', alvo).onclick = function () { verRelatorioImpresso('Relatórios anuais ' + anoSel() + ' · ' + rotulo, { tipo: 'anoAlunos', ano: anoSel(), turma: sel.turma, disciplina: sel.disciplina }); };
+      if ($('#ano-fam-ver', alvo)) {
+        $('#ano-fam-ver', alvo).onclick = function () { verRelatorioImpresso('Relatório anual ' + anoSel() + ' para as famílias · ' + rotulo, { tipo: 'anoAlunos', ano: anoSel(), turma: sel.turma, publico: 'RESPONSAVEL' }); };
+        $('#ano-fam-env', alvo).onclick = function () {
+          var b = this;
+          confirmar('Enviar o relatório anual de ' + anoSel() + ' (' + (sel.turma ? 'turma ' + sel.turma : 'todas as turmas') + ') por e-mail aos alunos e aos responsáveis com consentimento? ' +
+            'A versão para imprimir também fica liberada para os alunos em Simulados.', 'Enviar').then(function () {
+            b.disabled = true;
+            call('enviarAnual', { ano: anoSel(), turma: sel.turma }).then(function (r) {
+              b.disabled = false;
+              toast('Relatório anual enviado: ' + r.aluno + (r.aluno === 1 ? ' aluno' : ' alunos') + ' e ' + r.responsavel + (r.responsavel === 1 ? ' responsável' : ' responsáveis') + '.' +
+                (r.semEmail ? ' ' + r.semEmail + ' sem e-mail.' : '') + (r.semConsentimento ? ' ' + r.semConsentimento + ' responsável(is) sem consentimento.' : '') +
+                (r.semCota ? ' ' + r.semCota + ' ficaram para amanhã (limite diário de e-mails).' : ''));
+            }).catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
+          });
+        };
+      }
       $('#imp-alu', alvo).onclick = function () { verRelatorioImpresso('Relatórios individuais · ' + rotulo, { tipo: 'alunos', simuladoId: sel.simuladoId, turma: sel.turma, disciplina: sel.disciplina }); };
       $$('[data-pesq-al]', alvo).forEach(function (x) { x.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: x.getAttribute('data-pesq-al') }); }; });
     }).catch(function (e) { alvo.innerHTML = caixaErro(e); });
