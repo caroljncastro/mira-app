@@ -5366,6 +5366,8 @@ var PONTOS_MISSAO = 5, BONUS_ESTRATEGIA = 10, PONTOS_ESTRELA = 20, PONTOS_NIVEL 
 var PONTOS_PESQUISA = 10; // "Como foi a prova?" respondida (uma vez por simulado; vale pouco de propósito)
 // questão de correção: +5 por resolver e +5 por contar como foi (acertei sozinho, com ajuda ou errei)
 var PONTOS_CORRECAO = 5, PONTOS_COMO_FOI_CORRECAO = 5;
+// teste final (gêmeas): +5 por responder e +5 se acertar
+var PONTOS_TESTE = 5, PONTOS_ACERTO_TESTE = 5;
 var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
 
 function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
@@ -5396,8 +5398,10 @@ function placarMissoes(todas, rs) {
   var pesquisas = (rs || []).filter(function (r) { return r.pesquisaFeita; }).length;
   var correcoes = 0;
   (rs || []).forEach(function (r) { (r.correcaoEm || []).forEach(function (em) { correcoes++; if (em) dias[diaDe(em)] = 1; }); });
+  var testes = 0, testesCertos = 0;
+  (rs || []).forEach(function (r) { (r.testeEm || []).forEach(function (t) { testes++; if (t.ok) testesCertos++; if (t.em) dias[diaDe(t.em)] = 1; }); });
   var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA + pesquisas * PONTOS_PESQUISA +
-    correcoes * (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO);
+    correcoes * (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + testes * PONTOS_TESTE + testesCertos * PONTOS_ACERTO_TESTE;
   var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
   var porSemana = {};
   Object.keys(dias).forEach(function (d) { var k = semanaDe(d); porSemana[k] = (porSemana[k] || 0) + 1; });
@@ -5405,7 +5409,7 @@ function placarMissoes(todas, rs) {
   var semanasNaMeta = Object.keys(porSemana).filter(function (k) { return porSemana[k] >= META_SEMANA; }).length;
   return {
     pontos: pontos, nivel: nivel, nomeNivel: NIVEIS[Math.min(nivel, NIVEIS.length) - 1],
-    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas, correcoes: correcoes,
+    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas, correcoes: correcoes, testes: testes,
     semana: Math.min(estaSemana, META_SEMANA), metaOk: estaSemana >= META_SEMANA, semanasNaMeta: semanasNaMeta,
     estrelas: ed.estrelas, dominando: ed.dominando,
     conquistas: [
@@ -5454,7 +5458,7 @@ function placarHtml(p) {
         (c[0] === 'estrela' ? '<span class="conq-estrela" aria-hidden="true">★</span>' : icone(c[0])) + '<span>' + esc(c[1]) + '</span></span>';
     }).join('') + '</div>' +
     '<p class="mis-regras mut peq">Missão: +' + PONTOS_MISSAO + ' · Disciplina completa: +' + BONUS_ESTRATEGIA + ' · Cada ★ do edital: +' + PONTOS_ESTRELA +
-    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + ' · Questão de correção: +' + PONTOS_CORRECAO + ', e +' + PONTOS_COMO_FOI_CORRECAO + ' por dizer se acertou ou errou. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
+    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + ' · Questão de correção: +' + PONTOS_CORRECAO + ', e +' + PONTOS_COMO_FOI_CORRECAO + ' por dizer se acertou ou errou · Teste final: +' + PONTOS_TESTE + ', e +' + PONTOS_ACERTO_TESTE + ' se acertar. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
 }
 
 // ---------------------------------------------------------------- tempo de estudo (Sua semana)
@@ -6085,24 +6089,31 @@ function cardCorrecao(alvo) {
   call('minhaCorrecao', {}).then(function (gs) {
     if (!gs.length) { alvo.innerHTML = ''; return; }
     alvo.innerHTML = gs.slice(0, 3).map(function (g, gi) {
-      var feitas = g.itens.filter(function (x) { return x.feita; }).length;
-      return '<div class="card"><h2>Questões de correção · ' + esc(g.simulado) + '</h2>' +
-        '<p class="mut peq" style="margin-top:0">Uma questão para cada erro seu neste simulado. Resolva sozinho, marque como foi e só depois veja o gabarito comentado. ' +
-        '<b>' + feitas + ' de ' + g.itens.length + '</b> feitas. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
-        (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
-        '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
-        '<div class="ini-lista-at">' + g.itens.map(function (x, i) {
-          return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
-            ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span></span>' +
-            (x.feita ? tag(AUTOAVALIACAO, x.feita)
-              : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
-                return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
-              }).join('') + '</span>') + '</div>';
-        }).join('') + '</div></div>';
+      var feitas = g.itens.filter(function (x) { return x.feita; }).length, voltaram = g.itens.filter(function (x) { return x.volta; }).length;
+      var html = '<div class="card"><h2>Questões de correção · ' + esc(g.simulado) + '</h2>';
+      if (g.itens.length) {
+        html += '<p class="mut peq" style="margin-top:0">' + (voltaram ? (voltaram === 1 ? 'Uma questão voltou' : voltaram + ' questões voltaram') + ' porque você errou a gêmea no teste final. ' : 'Uma questão para cada erro seu neste simulado. ') +
+          'Resolva sozinho, marque como foi e só depois veja o gabarito comentado. ' +
+          '<b>' + feitas + ' de ' + g.itens.length + '</b> feitas. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+          (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
+          '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas || g.itens.some(function (x) { return x.volta; }) ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
+          '<div class="ini-lista-at">' + g.itens.map(function (x, i) {
+            return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
+              ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span>' + (x.volta ? ' ' + tag({ V: ['Voltou', 'ambar'] }, 'V') : '') + '</span>' +
+              (x.feita ? tag(AUTOAVALIACAO, x.feita)
+                : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
+                  return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
+                }).join('') + '</span>') + '</div>';
+          }).join('') + '</div>';
+      }
+      if (g.teste) html += blocoTesteFinal(g, gi);
+      return html + '</div>';
     }).join('');
     $$('[data-corr-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Questões de correção', { resultadoId: b.getAttribute('data-corr-lista'), parte: 'lista' }, 'listaCorrecao'); }; });
     $$('[data-corr-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito comentado das questões de correção', { resultadoId: b.getAttribute('data-corr-gab'), parte: 'gabarito' }, 'listaCorrecao'); }; });
+    $$('[data-teste-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Teste final', { resultadoId: b.getAttribute('data-teste-lista'), parte: 'lista', teste: true }, 'listaCorrecao'); }; });
+    $$('[data-teste-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito do teste final', { resultadoId: b.getAttribute('data-teste-gab'), parte: 'gabarito', teste: true }, 'listaCorrecao'); }; });
     $$('[data-corr-a]', alvo).forEach(function (b) {
       b.onclick = function () {
         b.disabled = true;
@@ -6111,7 +6122,51 @@ function cardCorrecao(alvo) {
           .catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
       };
     });
+    $$('[data-teste-r]', alvo).forEach(function (b) {
+      b.onclick = function () {
+        var letra = b.getAttribute('data-teste-r');
+        confirmar('Marcar a letra ' + letra + '? Depois de marcar, não dá para trocar.', 'Marcar ' + letra).then(function () {
+          $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = true; });
+          call('responderTeste', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), r: letra })
+            .then(function (res) {
+              toast(res.ok ? 'Acertou! +' + (PONTOS_TESTE + PONTOS_ACERTO_TESTE) + ' pontos.'
+                : 'Não foi desta vez (gabarito ' + res.gabarito + '). +' + PONTOS_TESTE + ' pontos por responder.' + (res.volta ? ' A questão de correção deste erro voltou.' : ''));
+              ir('missoes');
+            })
+            .catch(function (e) { $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = false; }); toast(e.message || String(e), true); });
+        });
+      };
+    });
   }).catch(function () { alvo.innerHTML = ''; });
+}
+
+/** Teste final (gêmeas): fechado com a data em que abre, ou aberto com as letras para marcar */
+function blocoTesteFinal(g, gi) {
+  var t = g.teste, resp = t.itens.filter(function (x) { return x.resposta; }).length, certas = t.itens.filter(function (x) { return x.ok; }).length;
+  var html = '<h3 class="sec-tit" style="margin-top:14px">Teste final</h3>';
+  if (!t.liberado) {
+    return html + '<p class="mut peq" style="margin-top:0">' + t.itens.length + (t.itens.length === 1 ? ' questão gêmea' : ' questões gêmeas') +
+      ': a mesma ideia das questões que você errou, em outro contexto. ' +
+      (t.em ? 'Abre em <b>' + dataBr(t.em) + '</b>' + (t.faltam ? ', ou 2 dias depois que você terminar as questões de correção.' : '.')
+        : 'Abre 2 dias depois que você terminar as questões de correção.') + '</p>';
+  }
+  html += '<p class="mut peq" style="margin-top:0">A mesma ideia das questões que você errou, em outro contexto. Resolva no papel, sem consulta, e marque a letra: o MIRA corrige na hora. ' +
+    '<b>' + resp + ' de ' + t.itens.length + '</b> respondidas' + (resp ? ', ' + certas + (certas === 1 ? ' certa' : ' certas') : '') +
+    '. Cada uma vale +' + PONTOS_TESTE + ', e +' + PONTOS_ACERTO_TESTE + ' se acertar.</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+    (resp < t.itens.length ? '<button class="btn' + (gi || g.itens.some(function (x) { return !x.feita; }) ? '' : ' pri') + '" style="flex:none" data-teste-lista="' + esc(g.resultadoId) + '">Ver o teste final</button>' : '') +
+    '<button class="btn" style="flex:none" data-teste-gab="' + esc(g.resultadoId) + '"' + (resp ? '' : ' disabled title="Responda uma questão primeiro"') + '>Ver a correção</button></div>' +
+    '<div class="ini-lista-at">' + t.itens.map(function (x, i) {
+      var dir = x.resposta
+        ? tag({ S: ['Acertou (' + x.resposta + ')', 'verde'], N: ['Errou (' + x.resposta + ')', 'ambar'] }, x.ok ? 'S' : 'N')
+        : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + t.alternativas.map(function (l) {
+          return '<button class="btn peq" style="flex:none;min-width:36px" data-teste-r="' + l + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '" aria-label="Marcar a letra ' + l + '">' + l + '</button>';
+        }).join('') + '</span>';
+      return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
+        ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span></span>' + dir +
+        (x.estudar && x.estudar.length ? '<span class="mut peq" style="flex-basis:100%">Para rever antes do próximo simulado: ' + x.estudar.map(esc).join(' · ') + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
+  return html;
 }
 
 /** Simulados ainda abertos em que o aluno não contou como foi a prova (pendência em lista) */
