@@ -2944,7 +2944,7 @@ function copiar(texto, btn) {
 function exportarLote() {
   var md = modal(topoModal('Exportar lote para curadoria') +
     '<p class="peq">Gera um texto com as questões que aguardam curadoria, já com as instruções. ' +
-    'Cole no chat do Claude, receba a resposta e use <b>Importar curadoria</b>.</p>' +
+    'Cole no chat do MIRA, receba a resposta e use <b>Importar curadoria</b>.</p>' +
     '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="lt-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label></div>' +
     '<p class="mut peq" style="margin-top:0">Cada questão volta com o kit de correção (uma questão para cada erro e a gêmea). Por isso os lotes são menores.</p>' +
     '<button class="btn pri" id="lt-ger">Gerar lote</button><div id="lt-res"></div>', true);
@@ -2968,14 +2968,14 @@ function exportarLote() {
 /** Passar as fórmulas das questões que já existem para LaTeX: exporta um lote, o Claude reescreve só a forma, importa */
 function formulasLatex() {
   var md = modal(topoModal('Fórmulas em LaTeX') +
-    '<p class="peq" style="margin-top:0">Para as questões que já estão no banco: o Claude reescreve as fórmulas em LaTeX ' +
+    '<p class="peq" style="margin-top:0">Para as questões que já estão no banco: o MIRA reescreve as fórmulas em LaTeX ' +
     '(enunciado, alternativas, resolução, erros e missões) sem mudar o conteúdo. A situação da questão não muda e o MIRA confere ' +
     'que só a formatação mudou: se algum número ou palavra mudar, aquele campo fica como estava.</p>' +
     '<h3 style="margin:14px 0 6px">1. Gerar o lote</h3>' +
     '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="fl-n"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></label>' +
     '<label class="campo" style="display:flex;align-items:flex-end;gap:8px"><input type="checkbox" id="fl-todas" style="width:auto"> <span style="margin:0;font-weight:400">Incluir as já formatadas</span></label></div>' +
     '<button class="btn" id="fl-ger">Gerar lote</button><div id="fl-res"></div>' +
-    '<h3 style="margin:18px 0 6px">2. Colar a resposta do Claude</h3>' +
+    '<h3 style="margin:18px 0 6px">2. Colar a resposta do MIRA</h3>' +
     '<textarea id="fl-txt" rows="8" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;Q…&quot;, …}]"></textarea>' +
     '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn pri" id="fl-ok">Importar fórmulas</button></div><div id="fl-imp"></div>', true);
   $('#fl-ger', md.el).onclick = function () {
@@ -2983,7 +2983,7 @@ function formulasLatex() {
       .then(function (r) {
         var alvo = $('#fl-res', md.el);
         if (!r.quantidade) { alvo.innerHTML = '<div class="aviso verde" style="margin-top:12px">Todas as questões já passaram pela formatação.</div>'; return; }
-        alvo.innerHTML = '<p class="mut peq" style="margin:10px 0 6px">' + r.quantidade + ' de ' + r.total + ' questão(ões) neste lote. Copie e cole no chat do Claude.</p>' +
+        alvo.innerHTML = '<p class="mut peq" style="margin:10px 0 6px">' + r.quantidade + ' de ' + r.total + ' questão(ões) neste lote. Copie e cole no chat do MIRA.</p>' +
           '<textarea id="fl-lote" rows="8" readonly style="font-family:monospace;font-size:12px">' + esc(r.texto) + '</textarea>' +
           '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="fl-cp">Copiar texto</button></div>';
         $('#fl-cp', md.el).onclick = function () { $('#fl-lote', md.el).select(); copiar(r.texto, this); };
@@ -3001,7 +3001,7 @@ function formulasLatex() {
 
 function importarCuradoria() {
   var md = modal(topoModal('Importar curadoria') +
-    '<p class="peq">Cole aqui a resposta do Claude (o bloco JSON que começa com <code>[</code>). Cada questão curada gera um relatório para o professor autor analisar.</p>' +
+    '<p class="peq">Cole aqui a resposta do MIRA (o bloco JSON que começa com <code>[</code>). Cada questão curada gera um relatório para o professor autor analisar.</p>' +
     '<textarea id="ic-txt" rows="12" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;Q…&quot;, …}]"></textarea>' +
     '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Fechar</button><button class="btn pri" id="ic-ok">Importar</button></div><div id="ic-res"></div>', true);
   $('#ic-ok', md.el).onclick = function () {
@@ -3022,7 +3022,7 @@ function importarCuradoria() {
  */
 function importarQuestoes() {
   var md = modal(topoModal('Importar questões') +
-    '<p class="peq" style="margin-top:0">Escolha o arquivo de questões preparado pelo Claude (termina em <b>.json</b>). ' +
+    '<p class="peq" style="margin-top:0">Escolha o arquivo de questões preparado pelo MIRA (termina em <b>.json</b>). ' +
     'Cada questão entra com a curadoria pronta e vai para a análise do professor, como qualquer curadoria. ' +
     'Importar o mesmo arquivo de novo atualiza as questões que ainda não foram aprovadas.</p>' +
     '<label class="campo"><span>Arquivo</span><input type="file" id="iq-arq" accept=".json,application/json"></label>' +
@@ -3105,7 +3105,7 @@ function enviarArquivoQuestoes(depois) {
   var admE = S.user.perfil === 'ADM';
   var md = modal(topoModal('Enviar arquivo de questões') +
     (admE ? '<p class="peq" style="margin-top:0">Envie o arquivo em Word, PDF ou foto, de preferência no <a href="' + MODELO_QUESTOES_URL + '" target="_blank" rel="noopener">modelo em Word</a>. ' +
-      'Ele vai para a pasta do MIRA no Drive. Depois, diga ao Claude no chat: <b>"chegaram arquivos"</b>. Ele transcreve, faz a curadoria e devolve o arquivo para <b>Importar questões</b>.</p>' +
+      'Ele vai para a pasta do MIRA no Drive. Depois, diga ao MIRA no chat: <b>"chegaram arquivos"</b>. Ele transcreve, faz a curadoria e devolve o arquivo para <b>Importar questões</b>.</p>' +
       '<label class="campo"><span>As questões são de</span><select id="ea-autor"><option value="">Coordenação (eu)</option></select>' +
       '<small class="mut peq">Escolha um professor para as questões entrarem no nome dele, em Análise do professor.</small></label>'
     : '<p class="peq" style="margin-top:0">Envie o arquivo que você já tem, em Word, PDF ou foto, com as questões, as figuras e o gabarito. ' +
@@ -3114,7 +3114,7 @@ function enviarArquivoQuestoes(depois) {
     '<label class="campo"><span>Arquivo (até 10 MB)</span><input type="file" id="ea-arq" accept=".pdf,.doc,.docx,.odt,image/jpeg,image/png"></label>' +
     '<label class="campo"><span>Disciplina</span><select id="ea-disc">' + ds.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     campoOrigem('Autoral').replace('Origem da questão *', 'Origem das questões').replace('Autoral (criada por mim)', admE ? 'Autorais' : 'Autorais (criadas por mim)') +
-    '<label class="campo"><span>Observação ' + (admE ? 'para o Claude' : 'para a coordenação') + ' (opcional)</span><input type="text" id="ea-obs" maxlength="500" placeholder="Ex.: questões 3 e 5 têm figura na página 2"></label>' +
+    '<label class="campo"><span>Observação ' + (admE ? 'para o MIRA' : 'para a coordenação') + ' (opcional)</span><input type="text" id="ea-obs" maxlength="500" placeholder="Ex.: questões 3 e 5 têm figura na página 2"></label>' +
     '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button>' +
     '<button class="btn pri" id="ea-ok" style="flex:none">Enviar arquivo</button></div>');
   ligarOrigem(md.el);
@@ -3138,7 +3138,7 @@ function enviarArquivoQuestoes(depois) {
       ocupado(btn, 'Enviando…', function () {
         return call('enviarArquivoQuestoes', { nome: f.name, mime: tipo, base64: b64, disciplina: $('#ea-disc', md.el).value, origem: o, observacao: $('#ea-obs', md.el).value,
           autorId: admE && $('#ea-autor', md.el) ? $('#ea-autor', md.el).value : '' });
-      }).then(function () { md.fechar(); toast(admE ? 'Arquivo enviado para a pasta do MIRA. Agora diga ao Claude: "chegaram arquivos".' : 'Arquivo enviado. A coordenação avisa quando as questões chegarem para a sua análise.'); if (depois) depois(); }).catch(function () {});
+      }).then(function () { md.fechar(); toast(admE ? 'Arquivo enviado para a pasta do MIRA. Agora diga ao MIRA: "chegaram arquivos".' : 'Arquivo enviado. A coordenação avisa quando as questões chegarem para a sua análise.'); if (depois) depois(); }).catch(function () {});
     };
     leitor.readAsDataURL(f);
   };
@@ -3152,7 +3152,7 @@ function cardEnvios(alvo, adm, recarregar) {
     var transcritos = es.filter(function (e) { return e.status === 'TRANSCRITO'; }).length;
     alvo.innerHTML = '<details class="card envios"' + (novos ? ' open' : '') + '><summary><h2>' + (adm ? 'Arquivos dos professores' : 'Seus arquivos enviados') + '</h2>' +
       '<span class="mut peq">' + (novos ? novos + (novos === 1 ? ' esperando transcrição' : ' esperando transcrição') : es.length + ' enviado(s)') + '</span></summary>' +
-      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao Claude: “chegaram arquivos”.</p>' : '') +
+      (adm && novos ? '<p class="mut peq" style="margin:0 0 8px">Os arquivos estão no seu Drive, na pasta do MIRA › Envios dos professores. Diga ao MIRA: “chegaram arquivos”.</p>' : '') +
       (adm && transcritos ? '<div class="linha" style="align-items:center;margin:0 0 8px"><p class="mut peq" style="margin:0;flex:1">Os transcritos já viraram questões no banco. Arquivar tira da lista e guarda os arquivos no Drive, em Envios dos professores › Transcritos.</p>' +
         '<button class="btn peq" id="env-arq" style="flex:none">Arquivar transcritos (' + transcritos + ')</button></div>' : '') +
       '<ul class="env-lista">' + es.map(function (e) {
@@ -3481,9 +3481,9 @@ VIEWS.kit = function (m, p) {
   var discs = adm || !S.user.disciplinas ? disciplinasDe('ESPCEX') : csv(S.user.disciplinas);
   m.innerHTML = cabPag('Kit de correção',
     'Para cada questão aprovada: uma questão para cada alternativa errada, que treina aquele erro, e uma <b>gêmea</b>, com a mesma ideia em outro contexto, para o teste final. ' +
-      (adm ? 'O Claude escreve, o professor confere e você aprova.' : 'O Claude escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
+      (adm ? 'O MIRA escreve, o professor confere e você aprova.' : 'O MIRA escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
     '<button class="btn" id="kt-voltar">Voltar ao banco de questões</button>' +
-    (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o Claude</button>' : '')) +
+    (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o MIRA</button>' : '')) +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="kt-disc"><option value="">Todas</option>' +
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
@@ -3618,7 +3618,7 @@ function kitNaQuestao(q, cur, md, recarregar) {
         '<div class="alts peq">' + c.alternativas.map(function (x) {
           return '<div class="' + (x === k.gabarito ? 'certa' : '') + '"><b>(' + x + ')</b> ' + esc((k.alternativas || {})[x] || '') + (x === k.gabarito ? '<span class="alt-marca">✔ Gabarito</span>' : '') + '</div>';
         }).join('') + '</div><p class="peq" style="margin:8px 0 0"><b>Resolução:</b> ' + esc(k.resolucao) + '</p>' +
-        (alt ? '<details class="peq" style="margin-top:8px"><summary>Ver a versão original do Claude</summary><div class="enun" style="margin-top:6px">' + esc(semFiguras(alt.original.enunciado)) + '</div>' +
+        (alt ? '<details class="peq" style="margin-top:8px"><summary>Ver a versão original do MIRA</summary><div class="enun" style="margin-top:6px">' + esc(semFiguras(alt.original.enunciado)) + '</div>' +
           '<p style="margin:4px 0 0">' + c.alternativas.map(function (x) { return '(' + x + ') ' + esc((alt.original.alternativas || {})[x] || ''); }).join(' · ') +
           ' · gabarito ' + esc(alt.original.gabarito) + '</p></details>' : '') +
         (pode ? '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">' +
@@ -3629,7 +3629,7 @@ function kitNaQuestao(q, cur, md, recarregar) {
       vaga.mae.erro = gem ? null : (cur.distratores || {})[l];
       $('[data-ked]', el).onclick = function () { formKit(vaga, k, recarregar); };
       if ($('[data-kaj]', el)) $('[data-kaj]', el).onclick = function () {
-        var m2 = modal(topoModal('Pedir para refazer') + '<p class="peq">Escreva o que mudar nesta questão do kit. Ela volta para o Claude; o resto da questão segue normalmente.</p>' +
+        var m2 = modal(topoModal('Pedir para refazer') + '<p class="peq">Escreva o que mudar nesta questão do kit. Ela volta para o MIRA; o resto da questão segue normalmente.</p>' +
           '<label class="campo"><span>O que mudar *</span><textarea id="kaj-t" rows="3"></textarea></label>' +
           '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button><button class="btn pri" id="kaj-ok" style="flex:none">Enviar pedido</button></div>');
         $('#kaj-ok', m2.el).onclick = function () {
@@ -3654,10 +3654,10 @@ function verItemKit(id, depois) {
     var h = topoModal((k.tipo === 'GEMEA' ? 'Questão gêmea' : 'Questão do erro (' + k.alternativa + ')') + ' · ' + mae.id) +
       '<div class="q-meta">' + tag(STATUS_Q, k.status) + (pa.alterada ? '<span class="tag">Alterada por ' + esc(pa.alterada.por) + '</span>' : '') + '<span class="tag azul">' + esc(mae.disciplina) + '</span>' +
       (mae.conteudo ? '<span class="tag">' + esc(mae.conteudo) + '</span>' : '') +
-      '<span class="mut peq" style="margin-left:auto">' + (k.origem === 'CLAUDE' ? 'Escrita pelo Claude' : 'Escrita por ' + esc(k.autorNome)) + ' · ' + dataBr(k.atualizadoEm) + '</span></div>' +
+      '<span class="mut peq" style="margin-left:auto">' + (k.origem === 'CLAUDE' ? 'Escrita pelo MIRA' : 'Escrita por ' + esc(k.autorNome)) + ' · ' + dataBr(k.atualizadoEm) + '</span></div>' +
       contextoKitHtml(k.tipo, mae);
     if (k.status === 'AJUSTE' && pa.comentario) h += '<div class="aviso ambar"><b>Ajuste pedido por ' + esc(pa.por) + ' (' + dataBr(pa.em) + '):</b> ' + esc(pa.comentario) +
-      '<br><span class="peq">' + (adm ? 'Ela entra no próximo texto para o Claude, ou edite você mesma.' : 'Ela volta para o Claude reescrever. Se preferir, edite você mesmo(a).') + '</span></div>';
+      '<br><span class="peq">' + (adm ? 'Ela entra no próximo texto para o MIRA, ou edite você mesma.' : 'Ela volta para o MIRA reescrever. Se preferir, edite você mesmo(a).') + '</span></div>';
     if (pa.decisao === 'ATENDIDO' && pa.pedido) h += '<div class="aviso azul peq"><b>Esta versão respondeu ao pedido:</b> "' + esc(pa.pedido.comentario) + '"</div>';
     if (k.status === 'VALIDADA') h += '<div class="aviso verde peq">' + (pa.decisao === 'OK' ? '<b>Conferida por ' + esc(pa.por) + '</b> em ' + dataBr(pa.em) + '. ' : '') +
       (adm ? 'Falta a sua aprovação.' : 'Aguardando a aprovação da coordenação.') + '</div>';
@@ -3776,9 +3776,9 @@ function formKit(vaga, k, depois) {
 
 /** Coordenação: texto para o Claude escrever o que falta no kit */
 function exportarKit() {
-  var md = modal(topoModal('Copiar para o Claude') +
+  var md = modal(topoModal('Copiar para o MIRA') +
     '<p class="peq">Gera um texto com as questões aprovadas que ainda não têm o kit completo (e as que têm pedido de ajuste), já com as instruções. ' +
-    'Cole no chat do Claude, receba o arquivo de volta e use <b>Importar o kit</b>. As questões que já estão em simulado vêm primeiro.</p>' +
+    'Cole no chat do MIRA, receba o arquivo de volta e use <b>Importar o kit</b>. As questões que já estão em simulado vêm primeiro.</p>' +
     '<div class="linha"><label class="campo"><span>Disciplina</span><select id="ke-disc"><option value="">Todas</option>' +
     disciplinasDe('ESPCEX').map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo"><span>Questões por vez</span><select id="ke-n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label></div>' +
@@ -3807,7 +3807,7 @@ function lerKit(texto) {
   var t = String(texto || '').trim(), m = t.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (m) t = m[1].trim();
   var o;
-  try { o = JSON.parse(t); } catch (e) { throw new Error('O texto não é um arquivo do kit válido. Cole exatamente o bloco que o Claude devolveu.'); }
+  try { o = JSON.parse(t); } catch (e) { throw new Error('O texto não é um arquivo do kit válido. Cole exatamente o bloco que o MIRA devolveu.'); }
   if (Array.isArray(o)) o = { formato: 'mira-kit-1', itens: o };
   if (!o || o.formato !== 'mira-kit-1' || !Array.isArray(o.itens)) throw new Error('Este não é um arquivo do kit de correção.');
   return o;
@@ -3815,7 +3815,7 @@ function lerKit(texto) {
 /** Coordenação: importa o arquivo do Claude, uma questão por vez (com as figuras) */
 function importarKit(depois) {
   var md = modal(topoModal('Importar o kit') +
-    '<p class="peq">Cole o bloco que o Claude devolveu ou escolha o arquivo <b>.json</b>. As questões entram na análise do professor autor de cada questão original.</p>' +
+    '<p class="peq">Cole o bloco que o MIRA devolveu ou escolha o arquivo <b>.json</b>. As questões entram na análise do professor autor de cada questão original.</p>' +
     '<label class="campo"><span>Arquivo</span><input type="file" id="ki-arq" accept=".json,application/json,text/plain"></label>' +
     '<label class="campo"><span>Ou cole aqui</span><textarea id="ki-txt" rows="8" style="font-family:monospace;font-size:12px"></textarea></label>' +
     '<div style="display:flex;justify-content:flex-end"><button class="btn pri" id="ki-ok">Importar</button></div><div id="ki-res"></div>', true);
@@ -4001,7 +4001,7 @@ VIEWS.simulados = function (m, p) {
             '<button class="btn peq" data-a="mapa" data-i="' + i + '">Mapa da turma</button>' : '') +
           (adm ? '<button class="btn peq" data-a="lancar" data-i="' + i + '">Lançar cartão de aluno</button>' +
             '<button class="btn peq" data-a="ajustar" data-i="' + i + '">Anular ou trocar gabarito</button>' +
-            '<button class="btn peq" data-a="analise" data-i="' + i + '">Análise para o Claude</button>' +
+            '<button class="btn peq" data-a="analise" data-i="' + i + '">Análise para o MIRA</button>' +
             '<select data-a="status" data-i="' + i + '" style="width:auto;margin-left:auto;padding:5px 8px">' +
             Object.keys(STATUS_S).map(function (k) { return '<option value="' + k + '"' + (k === s.status ? ' selected' : '') + '>' + STATUS_S[k][0] + '</option>'; }).join('') +
             '</select>' : '') + '</div>' +
@@ -4060,8 +4060,8 @@ VIEWS.simulados = function (m, p) {
  * Só números agregados, sem nome de aluno.
  */
 function analiseParaClaude(s) {
-  var md = modal(topoModal('Análise para o Claude · ' + s.codigo) +
-    '<p class="peq" style="margin-top:0">Copie o texto e cole no chat do Claude com a frase "o simulado terminou". ' +
+  var md = modal(topoModal('Análise para o MIRA · ' + s.codigo) +
+    '<p class="peq" style="margin-top:0">Copie o texto e cole no chat do MIRA com a frase "o simulado terminou". ' +
     'Ele avalia cada disciplina e questão, aponta possíveis erros de gabarito e sugere o que retomar em sala. ' +
     'O texto não tem nome, matrícula nem e-mail de aluno: só os números da turma.</p>' +
     '<div id="an-corpo"><div class="carregando"><div class="giro"></div>Montando a análise…</div></div>', true);
@@ -4074,7 +4074,7 @@ function analiseParaClaude(s) {
   // a volta: o bloco que o Claude entregou fica guardado no simulado
   var volta = document.createElement('div');
   volta.innerHTML = '<h3 style="margin:22px 0 6px">Importar a análise</h3>' +
-    '<p class="peq" style="margin-top:0">Quando o Claude responder, cole aqui o bloco que ele entregou no fim (começa com <code>{</code>). ' +
+    '<p class="peq" style="margin-top:0">Quando o MIRA responder, cole aqui o bloco que ele entregou no fim (começa com <code>{</code>). ' +
     'A análise fica no simulado: os professores veem no Mapa da turma e na Avaliação da turma impressa, cada um a parte geral e a da sua disciplina.</p>' +
     (s.analiseEm ? '<div class="aviso verde peq">Este simulado já tem uma análise, importada em ' + esc(dataBr(s.analiseEm)) + '. Importar de novo substitui. ' +
       '<button class="btn peq" id="an-rem" style="margin-left:6px">Tirar a análise</button></div>' : '') +
@@ -4083,7 +4083,7 @@ function analiseParaClaude(s) {
   md.el.querySelector('.janela').appendChild(volta);
   $('#an-imp', md.el).onclick = function () {
     var t = $('#an-volta', md.el).value;
-    if (!t.trim()) return toast('Cole o bloco que o Claude entregou.', true);
+    if (!t.trim()) return toast('Cole o bloco que o MIRA entregou.', true);
     ocupado(this, 'Importando…', function () { return call('importarAnalise', { simuladoId: s.id, texto: t }); }).then(function (r) {
       s.analiseEm = r.em;
       toast('Análise importada: ' + r.itens + (r.itens === 1 ? ' item' : ' itens') + '.' + (r.erros.length ? ' ' + r.erros.length + ' item(ns) ignorado(s).' : ''));
@@ -5105,7 +5105,7 @@ VIEWS.estrategias = function (m, p) {
 function exportarEstrategias() {
   var md = modal(topoModal('Exportar estratégias para a IA') +
     '<p class="peq">Gera um texto com as sugestões automáticas que ainda esperam o OK, <b>sem o nome dos alunos</b>. ' +
-    'Cole no chat do Claude, receba a resposta e use <b>Importar da IA</b>. Depois, os professores conferem e dão o OK.</p>' +
+    'Cole no chat do MIRA, receba a resposta e use <b>Importar da IA</b>. Depois, os professores conferem e dão o OK.</p>' +
     '<button class="btn pri" id="xe-ger">Gerar lote</button><div id="xe-res"></div>', true);
   $('#xe-ger', md.el).onclick = function () {
     ocupado(this, 'Gerando…', function () { return call('exportarEstrategias', { limite: 30 }); }).then(function (r) {
@@ -5122,7 +5122,7 @@ function exportarEstrategias() {
 
 function importarEstrategias(aoFim) {
   var md = modal(topoModal('Importar estratégias da IA') +
-    '<p class="peq">Cole aqui a resposta do Claude (o bloco JSON que começa com <code>[</code>). As sugestões continuam aguardando o OK dos professores.</p>' +
+    '<p class="peq">Cole aqui a resposta do MIRA (o bloco JSON que começa com <code>[</code>). As sugestões continuam aguardando o OK dos professores.</p>' +
     '<textarea id="ie-txt" rows="12" style="font-family:monospace;font-size:12px" placeholder="[{&quot;id&quot;:&quot;E…&quot;, &quot;texto&quot;:&quot;…&quot;}]"></textarea>' +
     '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button class="btn fechar">Fechar</button><button class="btn pri" id="ie-ok">Importar</button></div><div id="ie-res"></div>', true);
   $('#ie-ok', md.el).onclick = function () {
@@ -5271,7 +5271,7 @@ VIEWS.turmas = function (m, p) {
       h += blocoComoFoiTurma(d);
       if (d.analise && d.analise.itens.length) {
         var TIPOS = { FORTE: 'Ponto forte', RETOMAR: 'Retomar em sala', CONFERIR: 'Conferir', NOVAS: 'Questões novas sugeridas', OBS: 'Observação' };
-        h += '<div class="card"><h2>Análise do Claude</h2>' + (d.analise.resumo ? '<p style="margin-top:0">' + esc(d.analise.resumo) + '</p>' : '') +
+        h += '<div class="card"><h2>Análise do MIRA</h2>' + (d.analise.resumo ? '<p style="margin-top:0">' + esc(d.analise.resumo) + '</p>' : '') +
           ['FORTE', 'RETOMAR', 'CONFERIR', 'NOVAS', 'OBS'].map(function (t) {
             var xs = d.analise.itens.filter(function (x) { return x.tipo === t; });
             return xs.length ? '<h3 style="margin:12px 0 4px">' + TIPOS[t] + '</h3><ul style="margin:0;padding-left:18px">' + xs.map(function (x) {
@@ -6120,7 +6120,7 @@ VIEWS.config = function (m) {
       '<div class="card"><h2>Modo de funcionamento</h2>' +
       (c.iaConfigurada
         ? '<div class="aviso verde"><b>Modo com IA automática.</b> A curadoria acontece ao salvar a questão. A leitura do cartão continua no celular, com a IA como reserva.</div>'
-        : '<div class="aviso azul"><b>Modo gratuito.</b> A leitura do cartão é feita no próprio celular e a curadoria é feita por lotes no chat do Claude ' +
+        : '<div class="aviso azul"><b>Modo gratuito.</b> A leitura do cartão é feita no próprio celular e a curadoria é feita por lotes no chat do MIRA ' +
           '(Banco de questões › Exportar lote). Nenhum custo de uso.</div>') +
       '<p class="peq">As estratégias de estudo são montadas com as missões que a curadoria escreve para cada erro e que o professor valida na questão: vão direto para o aluno, sem custo.</p>' +
       '<p class="peq">Opcional: com uma chave da API (<a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, cobrada por uso), a curadoria fica automática.</p>' +
