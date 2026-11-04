@@ -414,6 +414,10 @@
   .kit-vaga.falta { border-style: dashed; background: var(--n-50); }
   .kit-vaga .kit-sub { font-size: 12.5px; color: var(--n-500); line-height: 1.3; }
   .kit-falta { font-size: 13px; font-weight: 600; color: var(--marca-700); }
+  .kit-q { margin: 4px 0 14px; border: 1px dashed var(--marca-borda); border-radius: var(--r-ctl); padding: 8px 12px; background: var(--marca-50); }
+  .kit-q > summary { cursor: pointer; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .kit-q .alts div { background: #fff; }
+  .kit-sem { margin: 2px 0 12px; }
 
   /* formulário da questão */
   .dica { background: var(--n-100); border-radius: var(--r-ctl); padding: 10px 12px; margin: -6px 0 16px; color: var(--n-700); }
@@ -2941,7 +2945,8 @@ function exportarLote() {
   var md = modal(topoModal('Exportar lote para curadoria') +
     '<p class="peq">Gera um texto com as questões que aguardam curadoria, já com as instruções. ' +
     'Cole no chat do Claude, receba a resposta e use <b>Importar curadoria</b>.</p>' +
-    '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="lt-n"><option>10</option><option selected>15</option><option>20</option><option>30</option></select></label></div>' +
+    '<div class="linha"><label class="campo"><span>Quantidade por lote</span><select id="lt-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label></div>' +
+    '<p class="mut peq" style="margin-top:0">Cada questão volta com o kit de correção (uma questão para cada erro e a gêmea). Por isso os lotes são menores.</p>' +
     '<button class="btn pri" id="lt-ger">Gerar lote</button><div id="lt-res"></div>', true);
   $('#lt-ger', md.el).onclick = function () {
     ocupado(this, 'Gerando…', function () { return call('exportarLote', { limite: $('#lt-n', md.el).value }); })
@@ -3350,8 +3355,9 @@ function verQuestao(q, aoMudar) {
         (d.recomendacao ? '<p><b>O que estudar:</b> ' + esc(d.recomendacao) + '</p>' : '') +
         (d.missoes && d.missoes.length ? '<p style="margin-bottom:2px"><b>Missões para o aluno que errar aqui:</b></p><ul class="d-mis-lista">' +
           d.missoes.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
-      return '<div class="diag' + (certa ? ' certa' : '') + (mudou ? ' mudou' : '') + '">' + esq + dir + '</div>';
-    }).join('');
+      return '<div class="diag' + (certa ? ' certa' : '') + (mudou ? ' mudou' : '') + '">' + esq + dir + '</div>' +
+        (certa ? '' : '<div class="kit-slot" data-kl="' + l + '"></div>');
+    }).join('') + '<div class="kit-slot" data-kl="GEMEA"></div>';
 
     var orig = ad ? { enunciado: q.enunciado, alternativas: q.alternativas, gab: q.gabaritoProfessor }
       : adFeita && adFeita.original ? { enunciado: adFeita.original.enunciado, alternativas: adFeita.original.alternativas, gab: adFeita.original.gabaritoProfessor } : null;
@@ -3368,8 +3374,9 @@ function verQuestao(q, aoMudar) {
   if (analisar) {
     h += '<div class="card parecer"><h3 style="margin-top:0">' + (autor ? 'Sua análise' : 'Análise do professor (' + esc(q.autorNome) + ')') + '</h3>' +
       (!autor ? '<p class="mut peq" style="margin-top:0">Como coordenação, você pode registrar a análise no lugar do professor.</p>' : '') +
-      '<p class="peq" style="margin-top:0">Concorda com ' + (ad ? 'a adaptação, ' : '') + 'o gabarito, os diagnósticos e as missões? Se sim, clique em <b>De acordo</b>' +
-      (ad ? ' e a versão adaptada passa a valer' : '') + '. As missões vão direto para os alunos que errarem esta questão. Se algo precisa mudar, descreva abaixo: o pedido vai para a próxima curadoria.</p>' +
+      '<p class="peq" style="margin-top:0">Concorda com ' + (ad ? 'a adaptação, ' : '') + 'o gabarito, os diagnósticos, as missões e o kit de correção? Se sim, clique em <b>De acordo</b>' +
+      (ad ? ' e a versão adaptada passa a valer' : '') + '. As missões e as questões do kit vão para os alunos que errarem esta questão. ' +
+      'Uma questão do kit você pode editar ou pedir para refazer ali mesmo, sem segurar o resto. Se algo da questão precisa mudar, descreva abaixo: o pedido vai para a próxima curadoria.</p>' +
       '<label class="campo"><span>O que deve ser alterado (só se não estiver de acordo)</span>' +
       '<textarea id="p-com" rows="3" placeholder="Ex.: na alternativa D, prefiro um erro de sinal no calor do gelo; manter o valor 20 °C."></textarea></label>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' +
@@ -3402,6 +3409,7 @@ function verQuestao(q, aoMudar) {
       if ($('#v-enun', md.el)) $('#v-enun', md.el).innerHTML = enunciadoHtml(cur && cur.adaptacao && !cur.adaptacao.aplicada && cur.adaptacao.enunciado ? cur.adaptacao.enunciado : q.enunciado, urls, nFig);
     });
   }
+  if (cur) kitNaQuestao(q, cur, md, function () { md.fechar(); verQuestao(q, aoMudar); });
   var depois = function (nova, msg) {
     md.fechar(); toast(msg);
     if (aoMudar) aoMudar();
@@ -3583,6 +3591,58 @@ function contextoKitHtml(tipo, mae) {
     '<br><span class="mut">Só o aluno que marcou essa alternativa na questão original recebe esta questão.</span></div>';
 }
 
+/** O kit de correção dentro do relatório da curadoria: a questão de cada erro embaixo da alternativa, a gêmea no fim */
+function kitNaQuestao(q, cur, md, recarregar) {
+  var adm = S.user.perfil === 'ADM', autor = q.autorId === S.user.id, c = conc(q.concurso);
+  var ad = cur.adaptacao && !cur.adaptacao.aplicada ? cur.adaptacao : null;
+  var mae = { id: q.id, disciplina: q.disciplina, conteudo: q.conteudo, enunciado: ad && ad.enunciado ? ad.enunciado : q.enunciado,
+    alternativas: ad ? ad.alternativas : q.alternativas, gabarito: ad ? ad.gabarito : (q.gabaritoFinal || cur.gabarito), resolucao: cur.resolucao, autorId: q.autorId, autorNome: q.autorNome };
+  call('kitDaQuestao', { id: q.id }).then(function (ks) {
+    var slots = $$('.kit-slot', md.el);
+    if (!slots.length) return;
+    if (!ks.length) {
+      var g = $('.kit-slot[data-kl="GEMEA"]', md.el);
+      if (g) g.innerHTML = '<p class="mut peq">Esta questão ainda não tem kit de correção. Ele vem na curadoria ou em Banco de questões › Kit de correção.</p>';
+      return;
+    }
+    slots.forEach(function (el) {
+      var l = el.getAttribute('data-kl'), gem = l === 'GEMEA';
+      var k = ks.filter(function (x) { return gem ? x.tipo === 'GEMEA' : x.tipo === 'ERRO' && x.alternativa === l; })[0];
+      if (!k) { el.innerHTML = '<p class="mut peq kit-sem">' + (gem ? 'Sem questão gêmea no kit.' : 'Sem questão do kit para este erro.') + '</p>'; return; }
+      var alt = (k.parecer || {}).alterada, pa = k.parecer || {};
+      var pode = (autor || adm) && (k.status !== 'APROVADA' || adm);
+      el.innerHTML = '<details class="kit-q"><summary><b>' + (gem ? 'Kit de correção · questão gêmea (teste final)' : 'Kit de correção · questão para quem marcou ' + l) + '</b> ' +
+        tag(STATUS_Q, k.status) + (alt ? ' <span class="tag">Alterada por ' + esc(alt.por) + '</span>' : '') + '</summary>' +
+        (k.status === 'AJUSTE' && pa.comentario ? '<div class="aviso ambar peq"><b>Pedido de ' + esc(pa.por) + ':</b> ' + esc(pa.comentario) + '</div>' : '') +
+        '<div class="enun peq" style="margin-top:8px">' + esc(semFiguras(k.enunciado)) + (k.nFiguras ? ' <span class="mut">(com figura)</span>' : '') + '</div>' +
+        '<div class="alts peq">' + c.alternativas.map(function (x) {
+          return '<div class="' + (x === k.gabarito ? 'certa' : '') + '"><b>(' + x + ')</b> ' + esc((k.alternativas || {})[x] || '') + (x === k.gabarito ? '<span class="alt-marca">✔ Gabarito</span>' : '') + '</div>';
+        }).join('') + '</div><p class="peq" style="margin:8px 0 0"><b>Resolução:</b> ' + esc(k.resolucao) + '</p>' +
+        (alt ? '<details class="peq" style="margin-top:8px"><summary>Ver a versão original do Claude</summary><div class="enun" style="margin-top:6px">' + esc(semFiguras(alt.original.enunciado)) + '</div>' +
+          '<p style="margin:4px 0 0">' + c.alternativas.map(function (x) { return '(' + x + ') ' + esc((alt.original.alternativas || {})[x] || ''); }).join(' · ') +
+          ' · gabarito ' + esc(alt.original.gabarito) + '</p></details>' : '') +
+        (pode ? '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">' +
+          (k.status !== 'AJUSTE' ? '<button class="btn peq" data-kaj>Pedir para refazer</button>' : '') + '<button class="btn peq" data-ked>Editar</button></div>' : '') + '</details>';
+      if (!pode) return;
+      var vaga = { maeId: q.id, tipo: k.tipo, alternativa: k.alternativa, mae: {} };
+      Object.keys(mae).forEach(function (c2) { vaga.mae[c2] = mae[c2]; });
+      vaga.mae.erro = gem ? null : (cur.distratores || {})[l];
+      $('[data-ked]', el).onclick = function () { formKit(vaga, k, recarregar); };
+      if ($('[data-kaj]', el)) $('[data-kaj]', el).onclick = function () {
+        var m2 = modal(topoModal('Pedir para refazer') + '<p class="peq">Escreva o que mudar nesta questão do kit. Ela volta para o Claude; o resto da questão segue normalmente.</p>' +
+          '<label class="campo"><span>O que mudar *</span><textarea id="kaj-t" rows="3"></textarea></label>' +
+          '<div class="linha" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn fechar" style="flex:none">Cancelar</button><button class="btn pri" id="kaj-ok" style="flex:none">Enviar pedido</button></div>');
+        $('#kaj-ok', m2.el).onclick = function () {
+          var t = $('#kaj-t', m2.el).value.trim();
+          if (!t) { toast('Escreva o que deve mudar.', true); return; }
+          ocupado(this, 'Enviando…', function () { return call('parecerKit', { id: k.id, decisao: 'AJUSTE', comentario: t }); })
+            .then(function () { m2.fechar(); toast('Pedido registrado.'); recarregar(); }).catch(function () {});
+        };
+      };
+    });
+  }).catch(function () {});
+}
+
 /** Uma questão do kit: conferir (professor), aprovar ou pedir ajuste (coordenação), editar */
 function verItemKit(id, depois) {
   var adm = S.user.perfil === 'ADM';
@@ -3592,7 +3652,7 @@ function verItemKit(id, depois) {
     var analisar = k.status === 'ANALISE_PROF' && (autorMae || adm);
     var pa = k.parecer || {};
     var h = topoModal((k.tipo === 'GEMEA' ? 'Questão gêmea' : 'Questão do erro (' + k.alternativa + ')') + ' · ' + mae.id) +
-      '<div class="q-meta">' + tag(STATUS_Q, k.status) + '<span class="tag azul">' + esc(mae.disciplina) + '</span>' +
+      '<div class="q-meta">' + tag(STATUS_Q, k.status) + (pa.alterada ? '<span class="tag">Alterada por ' + esc(pa.alterada.por) + '</span>' : '') + '<span class="tag azul">' + esc(mae.disciplina) + '</span>' +
       (mae.conteudo ? '<span class="tag">' + esc(mae.conteudo) + '</span>' : '') +
       '<span class="mut peq" style="margin-left:auto">' + (k.origem === 'CLAUDE' ? 'Escrita pelo Claude' : 'Escrita por ' + esc(k.autorNome)) + ' · ' + dataBr(k.atualizadoEm) + '</span></div>' +
       contextoKitHtml(k.tipo, mae);
