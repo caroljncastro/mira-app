@@ -5364,6 +5364,8 @@ VIEWS.turmas = function (m, p) {
 // pontos: o toque vale pouco; o que vale mais é o que o simulado comprova (estrelas no edital)
 var PONTOS_MISSAO = 5, BONUS_ESTRATEGIA = 10, PONTOS_ESTRELA = 20, PONTOS_NIVEL = 100, META_SEMANA = 3;
 var PONTOS_PESQUISA = 10; // "Como foi a prova?" respondida (uma vez por simulado; vale pouco de propósito)
+// questão de correção: +5 por resolver e +5 por contar como foi (acertei sozinho, com ajuda ou errei)
+var PONTOS_CORRECAO = 5, PONTOS_COMO_FOI_CORRECAO = 5;
 var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
 
 function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
@@ -5392,7 +5394,10 @@ function placarMissoes(todas, rs) {
   });
   var ed = estadoEdital(rs || []);
   var pesquisas = (rs || []).filter(function (r) { return r.pesquisaFeita; }).length;
-  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA + pesquisas * PONTOS_PESQUISA;
+  var correcoes = 0;
+  (rs || []).forEach(function (r) { (r.correcaoEm || []).forEach(function (em) { correcoes++; if (em) dias[diaDe(em)] = 1; }); });
+  var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA + pesquisas * PONTOS_PESQUISA +
+    correcoes * (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO);
   var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
   var porSemana = {};
   Object.keys(dias).forEach(function (d) { var k = semanaDe(d); porSemana[k] = (porSemana[k] || 0) + 1; });
@@ -5400,7 +5405,7 @@ function placarMissoes(todas, rs) {
   var semanasNaMeta = Object.keys(porSemana).filter(function (k) { return porSemana[k] >= META_SEMANA; }).length;
   return {
     pontos: pontos, nivel: nivel, nomeNivel: NIVEIS[Math.min(nivel, NIVEIS.length) - 1],
-    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas,
+    noNivel: pontos % PONTOS_NIVEL, feitas: feitas, total: total, completas: completas, correcoes: correcoes,
     semana: Math.min(estaSemana, META_SEMANA), metaOk: estaSemana >= META_SEMANA, semanasNaMeta: semanasNaMeta,
     estrelas: ed.estrelas, dominando: ed.dominando,
     conquistas: [
@@ -5449,7 +5454,7 @@ function placarHtml(p) {
         (c[0] === 'estrela' ? '<span class="conq-estrela" aria-hidden="true">★</span>' : icone(c[0])) + '<span>' + esc(c[1]) + '</span></span>';
     }).join('') + '</div>' +
     '<p class="mis-regras mut peq">Missão: +' + PONTOS_MISSAO + ' · Disciplina completa: +' + BONUS_ESTRATEGIA + ' · Cada ★ do edital: +' + PONTOS_ESTRELA +
-    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + '. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
+    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + ' · Questão de correção: +' + PONTOS_CORRECAO + ', e +' + PONTOS_COMO_FOI_CORRECAO + ' por dizer se acertou ou errou. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
 }
 
 // ---------------------------------------------------------------- tempo de estudo (Sua semana)
@@ -6067,11 +6072,48 @@ VIEWS.missoes = function (m) {
     marcarEstrategiasVistas(es);
     m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, toque e ganhe pontos.') +
       lembretePesquisa(rs) +
-      '<div class="card missoes"><div id="mis-placar"></div></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div>';
+      '<div class="card missoes"><div id="mis-placar"></div></div><div id="mis-corr"></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div>';
     ligarTelaMissoes(m, es, rs);
+    cardCorrecao($('#mis-corr', m));
     $$('[data-pesq]', m).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: b.getAttribute('data-pesq'), pesquisa: 1 }); }; });
   });
 };
+/** Questões de correção: uma questão para cada erro do simulado, com a lista, a autoavaliação e o gabarito comentado */
+var AUTOAVALIACAO = { SOZINHO: ['Acertei sozinho', 'verde'], AJUDA: ['Acertei com ajuda', 'azul'], ERREI: ['Errei', 'ambar'] };
+function cardCorrecao(alvo) {
+  if (!alvo) return;
+  call('minhaCorrecao', {}).then(function (gs) {
+    if (!gs.length) { alvo.innerHTML = ''; return; }
+    alvo.innerHTML = gs.slice(0, 3).map(function (g, gi) {
+      var feitas = g.itens.filter(function (x) { return x.feita; }).length;
+      return '<div class="card"><h2>Questões de correção · ' + esc(g.simulado) + '</h2>' +
+        '<p class="mut peq" style="margin-top:0">Uma questão para cada erro seu neste simulado. Resolva sozinho, marque como foi e só depois veja o gabarito comentado. ' +
+        '<b>' + feitas + ' de ' + g.itens.length + '</b> feitas. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
+        '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
+        '<div class="ini-lista-at">' + g.itens.map(function (x, i) {
+          return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
+            ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span></span>' +
+            (x.feita ? tag(AUTOAVALIACAO, x.feita)
+              : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
+                return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
+              }).join('') + '</span>') + '</div>';
+        }).join('') + '</div></div>';
+    }).join('');
+    $$('[data-corr-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Questões de correção', { resultadoId: b.getAttribute('data-corr-lista'), parte: 'lista' }, 'listaCorrecao'); }; });
+    $$('[data-corr-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito comentado das questões de correção', { resultadoId: b.getAttribute('data-corr-gab'), parte: 'gabarito' }, 'listaCorrecao'); }; });
+    $$('[data-corr-a]', alvo).forEach(function (b) {
+      b.onclick = function () {
+        b.disabled = true;
+        call('autoavaliarCorrecao', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), a: b.getAttribute('data-corr-a') })
+          .then(function () { toast('+' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos! O gabarito comentado desta questão já está liberado.'); ir('missoes'); })
+          .catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
+      };
+    });
+  }).catch(function () { alvo.innerHTML = ''; });
+}
+
 /** Simulados ainda abertos em que o aluno não contou como foi a prova (pendência em lista) */
 function lembretePesquisa(rs) {
   var pend = (rs || []).filter(function (r) { return r.pesquisaAberta && !r.pesquisaFeita; });
