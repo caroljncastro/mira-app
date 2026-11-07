@@ -490,6 +490,36 @@
   details.orig { margin: 8px 0 12px; }
   details.orig summary { cursor: pointer; color: var(--marca-600); font-size: 13.5px; font-weight: 600; }
   .parecer { margin-top: 16px; border-color: var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
+  /* atividades do aluno (questões de correção e teste final) no jeito dos documentos designtop:
+     olho com o traço da mira, título "frase: número." e itens numerados 01, 02 em roxo */
+  .cx-olho { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--marca-600); }
+  .cx-olho::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--grad-mira); flex: none; }
+  .cx-tit { margin: 0 0 6px; font-size: 21px; letter-spacing: -.02em; line-height: 1.2; color: var(--n-900); }
+  h3.cx-tit { font-size: 19px; }
+  .cx-tit .n { color: var(--marca-700); }
+  .cx-tit .pt { color: var(--verde-marca); }
+  .cx-sep { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--n-200); }
+  .cx-lista { margin-top: 6px; }
+  .cx-item { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--n-200); }
+  .cx-item:last-child { border-bottom: 0; }
+  .cx-item > div { min-width: 0; }
+  .teste-cert .btn { overflow: hidden; text-overflow: ellipsis; }
+  .cx-num { font-size: 22px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; color: var(--marca-600); }
+  .cx-item.feita .cx-num { opacity: .45; }
+  .cx-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .cx-mat { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--marca-100); color: var(--marca-700); font-size: 12px; font-weight: 700; }
+  .cx-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
+  .cx-letra { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--marca-100); color: var(--marca-700); font-weight: 700; font-size: 13px; }
+  .teste-alts .btn:hover .cx-letra { background: var(--marca-700); color: #fff; }
+  /* teste final: a questão inteira na tela, certeza numa linha e alternativas como botões */
+  .teste-q { margin-top: 10px; padding: 14px; background: var(--marca-50); border-left: 4px solid var(--marca-700); border-radius: var(--r-ctl); }
+  .teste-cert { display: flex; gap: 6px; flex-wrap: nowrap; margin: 4px 0 10px; max-width: 520px; }
+  .teste-cert .btn { flex: 1 1 auto; min-width: 0; justify-content: center; padding: 6px 4px; white-space: nowrap; font-size: 13px; }
+  .cx-item > .teste-q { grid-column: 1 / -1; }
+  .teste-alts { display: flex; flex-direction: column; gap: 6px; max-width: 720px; }
+  .teste-alts .btn { justify-content: flex-start; gap: 10px; text-align: left; font-weight: 400; white-space: normal; height: auto; background: #fff; }
   .figura { max-width: 100%; max-height: 320px; display: block; margin: 12px 0; border: 1px solid var(--n-200); border-radius: var(--r-ctl); }
 
   /* cartão (aluno) */
@@ -5367,7 +5397,9 @@ var PONTOS_PESQUISA = 10; // "Como foi a prova?" respondida (uma vez por simulad
 // questão de correção: +5 por resolver e +5 por contar como foi (acertei sozinho, com ajuda ou errei)
 var PONTOS_CORRECAO = 5, PONTOS_COMO_FOI_CORRECAO = 5;
 // teste final (gêmeas): +5 por responder e +5 se acertar
-var PONTOS_TESTE = 5, PONTOS_ACERTO_TESTE = 5;
+var PONTOS_TESTE = 5, PONTOS_ACERTO_TESTE = 5, PONTOS_CERTEZA = 2;
+// teste final: quanta certeza o aluno tinha (opcional; o ponto vem por responder, qualquer que seja a opção)
+var CERTEZAS = { CERTEZA: 'Tenho certeza', ACHO: 'Acho que sim', CHUTEI: 'Chutei' };
 var NIVEIS = ['Primeiros passos', 'Em movimento', 'Focado', 'Determinado', 'Estrategista', 'Mira afiada', 'Alta performance', 'Na mira da aprovação'];
 
 function diaDe(dataHora) { return String(dataHora || '').slice(0, 10); }
@@ -5398,10 +5430,10 @@ function placarMissoes(todas, rs) {
   var pesquisas = (rs || []).filter(function (r) { return r.pesquisaFeita; }).length;
   var correcoes = 0;
   (rs || []).forEach(function (r) { (r.correcaoEm || []).forEach(function (em) { correcoes++; if (em) dias[diaDe(em)] = 1; }); });
-  var testes = 0, testesCertos = 0;
-  (rs || []).forEach(function (r) { (r.testeEm || []).forEach(function (t) { testes++; if (t.ok) testesCertos++; if (t.em) dias[diaDe(t.em)] = 1; }); });
+  var testes = 0, testesCertos = 0, certezas = 0;
+  (rs || []).forEach(function (r) { (r.testeEm || []).forEach(function (t) { testes++; if (t.ok) testesCertos++; if (t.c) certezas++; if (t.em) dias[diaDe(t.em)] = 1; }); });
   var pontos = feitas * PONTOS_MISSAO + completas * BONUS_ESTRATEGIA + ed.estrelas * PONTOS_ESTRELA + pesquisas * PONTOS_PESQUISA +
-    correcoes * (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + testes * PONTOS_TESTE + testesCertos * PONTOS_ACERTO_TESTE;
+    correcoes * (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + testes * PONTOS_TESTE + testesCertos * PONTOS_ACERTO_TESTE + certezas * PONTOS_CERTEZA;
   var nivel = Math.floor(pontos / PONTOS_NIVEL) + 1;
   var porSemana = {};
   Object.keys(dias).forEach(function (d) { var k = semanaDe(d); porSemana[k] = (porSemana[k] || 0) + 1; });
@@ -5458,7 +5490,7 @@ function placarHtml(p) {
         (c[0] === 'estrela' ? '<span class="conq-estrela" aria-hidden="true">★</span>' : icone(c[0])) + '<span>' + esc(c[1]) + '</span></span>';
     }).join('') + '</div>' +
     '<p class="mis-regras mut peq">Missão: +' + PONTOS_MISSAO + ' · Disciplina completa: +' + BONUS_ESTRATEGIA + ' · Cada ★ do edital: +' + PONTOS_ESTRELA +
-    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + ' · Questão de correção: +' + PONTOS_CORRECAO + ', e +' + PONTOS_COMO_FOI_CORRECAO + ' por dizer se acertou ou errou · Teste final: +' + PONTOS_TESTE + ', e +' + PONTOS_ACERTO_TESTE + ' se acertar. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
+    ' (vem do simulado) · Como foi a prova: +' + PONTOS_PESQUISA + ' · Questão de correção: +' + PONTOS_CORRECAO + ', e +' + PONTOS_COMO_FOI_CORRECAO + ' por dizer se acertou ou errou · Teste final: +' + PONTOS_TESTE + ', +' + PONTOS_ACERTO_TESTE + ' se acertar e +' + PONTOS_CERTEZA + ' por dizer quanta certeza tinha. Meta: missões em ' + META_SEMANA + ' dias da semana. A cada ' + PONTOS_NIVEL + ' pontos, um nível.</p>';
 }
 
 // ---------------------------------------------------------------- tempo de estudo (Sua semana)
@@ -6090,21 +6122,21 @@ function cardCorrecao(alvo) {
     if (!gs.length) { alvo.innerHTML = ''; return; }
     alvo.innerHTML = gs.slice(0, 3).map(function (g, gi) {
       var feitas = g.itens.filter(function (x) { return x.feita; }).length, voltaram = g.itens.filter(function (x) { return x.volta; }).length;
-      var html = '<div class="card"><h2>Questões de correção · ' + esc(g.simulado) + '</h2>';
+      var html = '<div class="card cx">' + olhoCx('Questões de correção · ' + g.simulado);
       if (g.itens.length) {
-        html += '<p class="mut peq" style="margin-top:0">' + (voltaram ? (voltaram === 1 ? 'Uma questão voltou' : voltaram + ' questões voltaram') + ' porque você errou a gêmea no teste final. ' : 'Uma questão para cada erro seu neste simulado. ') +
-          'Resolva sozinho, marque como foi e só depois veja o gabarito comentado. ' +
-          '<b>' + feitas + ' de ' + g.itens.length + '</b> feitas. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        var todas = feitas === g.itens.length;
+        html += tituloCx(todas ? 'Correções feitas' : 'Corrija o que errou', feitas + ' de ' + g.itens.length, 'h2') +
+          '<p class="mut peq" style="margin-top:0">' + (voltaram ? (voltaram === 1 ? 'Uma questão voltou' : voltaram + ' questões voltaram') + ' porque você errou a gêmea no teste final. ' : 'Uma questão para cada erro seu neste simulado. ') +
+          'Resolva sozinho, marque como foi e só depois veja o gabarito comentado. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
           (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
           '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas || g.itens.some(function (x) { return x.volta; }) ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
-          '<div class="ini-lista-at">' + g.itens.map(function (x, i) {
-            return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
-              ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span>' + (x.volta ? ' ' + tag({ V: ['Voltou', 'ambar'] }, 'V') : '') + '</span>' +
-              (x.feita ? tag(AUTOAVALIACAO, x.feita)
-                : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
+          '<div class="cx-lista">' + g.itens.map(function (x, i) {
+            return itemCx(i, x, x.feita, (x.volta ? tag({ V: ['Voltou', 'ambar'] }, 'V') : ''),
+              x.feita ? tag(AUTOAVALIACAO, x.feita)
+                : '<span class="mut peq" style="flex-basis:100%">Depois de resolver no papel:</span>' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
                   return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
-                }).join('') + '</span>') + '</div>';
+                }).join(''), '');
           }).join('') + '</div>';
       }
       if (g.teste) html += blocoTesteFinal(g, gi);
@@ -6122,15 +6154,30 @@ function cardCorrecao(alvo) {
           .catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
       };
     });
+    $$('[data-teste-enun]', alvo).forEach(function (el) {
+      var f = TESTE_FIGURAS[el.getAttribute('data-teste-enun')];
+      if (!f) return;
+      call('figurasTeste', { resultadoId: f.r, kitId: el.getAttribute('data-teste-enun') }).then(function (l) {
+        el.innerHTML = enunciadoHtml(f.enunciado, l.map(function (x) { return x.url; }), f.n);
+      }).catch(function () {});
+    });
+    $$('[data-teste-c]', alvo).forEach(function (b) {
+      b.onclick = function () {
+        var ja = b.classList.contains('pri');
+        $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c]', alvo).forEach(function (x) { x.classList.remove('pri'); x.setAttribute('aria-pressed', 'false'); });
+        if (!ja) { b.classList.add('pri'); b.setAttribute('aria-pressed', 'true'); }
+      };
+    });
     $$('[data-teste-r]', alvo).forEach(function (b) {
       b.onclick = function () {
         var letra = b.getAttribute('data-teste-r');
         confirmar('Marcar a letra ' + letra + '? Depois de marcar, não dá para trocar.', 'Marcar ' + letra).then(function () {
           $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = true; });
-          call('responderTeste', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), r: letra })
+          var cz = $('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c].pri', alvo), c = cz ? cz.getAttribute('data-teste-c') : '', extra = c ? PONTOS_CERTEZA : 0;
+          call('responderTeste', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), r: letra, c: c })
             .then(function (res) {
-              toast(res.ok ? 'Acertou! +' + (PONTOS_TESTE + PONTOS_ACERTO_TESTE) + ' pontos.'
-                : 'Não foi desta vez (gabarito ' + res.gabarito + '). +' + PONTOS_TESTE + ' pontos por responder.' + (res.volta ? ' A questão de correção deste erro voltou.' : ''));
+              toast(res.ok ? 'Acertou! +' + (PONTOS_TESTE + PONTOS_ACERTO_TESTE + extra) + ' pontos.'
+                : 'Não foi desta vez (gabarito ' + res.gabarito + '). +' + (PONTOS_TESTE + extra) + ' pontos por responder.' + (res.volta ? ' A questão de correção deste erro voltou.' : ''));
               ir('missoes');
             })
             .catch(function (e) { $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = false; }); toast(e.message || String(e), true); });
@@ -6140,32 +6187,63 @@ function cardCorrecao(alvo) {
   }).catch(function () { alvo.innerHTML = ''; });
 }
 
-/** Teste final (gêmeas): fechado com a data em que abre, ou aberto com as letras para marcar */
+/** Estilo das atividades (designtop na tela): olho com o traço da mira, título "frase: número." e itens numerados 01, 02 */
+function olhoCx(t) { return '<div class="cx-olho">' + esc(t) + '</div>'; }
+function tituloCx(frase, num, tagH) {
+  return '<' + tagH + ' class="cx-tit">' + esc(frase) + ': <span class="n">' + esc(num) + '</span><span class="pt">.</span></' + tagH + '>';
+}
+function itemCx(i, x, apagado, extraCab, acoes, depois, cheio) {
+  return '<div class="cx-item' + (apagado ? ' feita' : '') + '"><div class="cx-num">' + (i < 9 ? '0' : '') + (i + 1) + '</div><div>' +
+    '<div class="cx-cab"><span class="cx-mat">' + esc(x.disciplina) + '</span><b>' + esc(x.conteudo) + '</b>' +
+    '<span class="mut peq">questão ' + x.n + ' do simulado, ' + esc(x.motivo) + '</span>' + extraCab + '</div>' +
+    (acoes ? '<div class="cx-acoes">' + acoes + '</div>' : '') + (depois || '') + '</div>' + (cheio || '') + '</div>';
+}
+
+/** Teste final: a questão inteira (enunciado, figuras, alternativas como botões) e a certeza numa linha só, antes de marcar */
+var TESTE_FIGURAS = {};
+function questaoDoTeste(x, letras, resultadoId) {
+  var alts = x.alternativas || {}, k = esc(x.kitId), r = esc(resultadoId);
+  if (x.nFiguras) TESTE_FIGURAS[x.kitId] = { r: resultadoId, enunciado: x.enunciado, n: x.nFiguras };
+  var botoes = letras.filter(function (l) { return x.enunciado === undefined || (alts[l] !== undefined && alts[l] !== ''); }).map(function (l) {
+    return '<button class="btn" data-teste-r="' + l + '" data-r="' + r + '" data-k="' + k + '" aria-label="Marcar a letra ' + l + '"><span class="cx-letra">' + l + '</span>' +
+      (alts[l] !== undefined ? '<span>' + esc(alts[l]) + '</span>' : '') + '</button>';
+  }).join('');
+  return '<div class="teste-q">' +
+    (x.enunciado !== undefined ? '<div data-teste-enun="' + k + '">' + enunciadoHtml(x.enunciado, null, x.nFiguras) + '</div>' : '') +
+    '<p class="mut peq" style="margin:12px 0 0">Antes de marcar: quanta certeza você tem? (opcional, +' + PONTOS_CERTEZA + ')</p>' +
+    '<div class="teste-cert" role="group" aria-label="Quanta certeza você tem? (opcional)">' + Object.keys(CERTEZAS).map(function (c) {
+      return '<button class="btn peq" aria-pressed="false" data-teste-c="' + c + '" data-k="' + k + '">' + CERTEZAS[c] + '</button>';
+    }).join('') + '</div>' +
+    '<div class="teste-alts">' + botoes + '</div></div>';
+}
+
+/** Teste final (gêmeas): fechado com a data em que abre, ou aberto com as questões para marcar */
 function blocoTesteFinal(g, gi) {
   var t = g.teste, resp = t.itens.filter(function (x) { return x.resposta; }).length, certas = t.itens.filter(function (x) { return x.ok; }).length;
-  var html = '<h3 class="sec-tit" style="margin-top:14px">Teste final</h3>';
+  var html = '<div class="cx-sep">' + olhoCx('Teste final');
+  var nq = t.itens.length + (t.itens.length === 1 ? ' questão' : ' questões');
   if (!t.liberado) {
-    return html + '<p class="mut peq" style="margin-top:0">' + t.itens.length + (t.itens.length === 1 ? ' questão gêmea' : ' questões gêmeas') +
-      ': a mesma ideia das questões que você errou, em outro contexto. ' +
-      (t.em ? 'Abre em <b>' + dataBr(t.em) + '</b>' + (t.faltam ? ', ou 2 dias depois que você terminar as questões de correção.' : '.')
-        : 'Abre 2 dias depois que você terminar as questões de correção.') + '</p>';
+    return html + tituloCx('Teste final', t.em ? 'abre em ' + dataBr(t.em) : 'em breve', 'h3') +
+      '<p class="mut peq" style="margin-top:0">' + nq + ' gêmeas: a mesma ideia das questões que você errou, em outro contexto. ' +
+      (t.em ? (t.faltam ? 'Abre antes, 2 dias depois que você terminar as questões de correção.' : '')
+        : 'Abre 2 dias depois que você terminar as questões de correção.') + '</p></div>';
   }
-  html += '<p class="mut peq" style="margin-top:0">A mesma ideia das questões que você errou, em outro contexto. Resolva no papel, sem consulta, e marque a letra: o MIRA corrige na hora. ' +
-    '<b>' + resp + ' de ' + t.itens.length + '</b> respondidas' + (resp ? ', ' + certas + (certas === 1 ? ' certa' : ' certas') : '') +
-    '. Cada uma vale +' + PONTOS_TESTE + ', e +' + PONTOS_ACERTO_TESTE + ' se acertar.</p>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
-    (resp < t.itens.length ? '<button class="btn' + (gi || g.itens.some(function (x) { return !x.feita; }) ? '' : ' pri') + '" style="flex:none" data-teste-lista="' + esc(g.resultadoId) + '">Ver o teste final</button>' : '') +
+  html += tituloCx(resp === t.itens.length ? 'Teste final feito' : 'Prove que aprendeu', resp + ' de ' + t.itens.length, 'h3') +
+    '<p class="mut peq" style="margin-top:0">A mesma ideia das questões que você errou, em outro contexto. Resolva sem consulta (use papel para as contas) e toque na alternativa: o MIRA corrige na hora' +
+    (resp ? '. Até agora, ' + certas + (certas === 1 ? ' certa' : ' certas') : '') +
+    '. Cada uma vale +' + PONTOS_TESTE + ', +' + PONTOS_ACERTO_TESTE + ' se acertar e +' + PONTOS_CERTEZA + ' se você disser quanta certeza tem.</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
+    (resp < t.itens.length ? '<button class="btn" style="flex:none" data-teste-lista="' + esc(g.resultadoId) + '">Imprimir o teste final</button>' : '') +
     '<button class="btn" style="flex:none" data-teste-gab="' + esc(g.resultadoId) + '"' + (resp ? '' : ' disabled title="Responda uma questão primeiro"') + '>Ver a correção</button></div>' +
-    '<div class="ini-lista-at">' + t.itens.map(function (x, i) {
-      var dir = x.resposta
-        ? tag({ S: ['Acertou (' + x.resposta + ')', 'verde'], N: ['Errou (' + x.resposta + ')', 'ambar'] }, x.ok ? 'S' : 'N')
-        : '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + t.alternativas.map(function (l) {
-          return '<button class="btn peq" style="flex:none;min-width:36px" data-teste-r="' + l + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '" aria-label="Marcar a letra ' + l + '">' + l + '</button>';
-        }).join('') + '</span>';
-      return '<div class="sit" style="flex-wrap:wrap"><span>' + (i + 1) + '. ' + esc(x.disciplina) + ' · ' + esc(x.conteudo) +
-        ' <span class="mut peq">(questão ' + x.n + ', ' + esc(x.motivo) + ')</span></span>' + dir +
-        (x.estudar && x.estudar.length ? '<span class="mut peq" style="flex-basis:100%">Para rever antes do próximo simulado: ' + x.estudar.map(esc).join(' · ') + '</span>' : '') + '</div>';
-    }).join('') + '</div>';
+    '<div class="cx-lista">' + t.itens.map(function (x, i) {
+      var cab = '', acoes = '', depois = '';
+      if (x.resposta) {
+        acoes = tag({ S: ['Acertou (' + x.resposta + ')', 'verde'], N: ['Errou (' + x.resposta + ')', 'ambar'] }, x.ok ? 'S' : 'N') +
+          (CERTEZAS[x.certeza] ? '<span class="mut peq">' + CERTEZAS[x.certeza] + '</span>' : '');
+        if (x.estudar && x.estudar.length) depois = '<p class="mut peq" style="margin:6px 0 0">Para rever antes do próximo simulado: ' + x.estudar.map(esc).join(' · ') + '</p>';
+      } else return itemCx(i, x, false, cab, '', '', questaoDoTeste(x, t.alternativas, g.resultadoId));
+      return itemCx(i, x, !!x.resposta, cab, acoes, depois);
+    }).join('') + '</div></div>';
   return html;
 }
 
