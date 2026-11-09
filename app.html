@@ -522,6 +522,8 @@
   body[data-perfil="ADM"] .ex-linha:hover { background: var(--fundo-adm); }
   body[data-perfil="PROFESSOR"] .voltar-pag { color: var(--menu-prof-700); }
   body[data-perfil="ADM"] .voltar-pag { color: var(--menu-adm-700); }
+  .campo-busca { margin: 0 0 12px; }
+  .campo-busca input { width: 100%; }
   .cx.so-faixa { padding-bottom: 0; }
   .cx.so-faixa .cx-faixa { margin-bottom: 0; border-radius: var(--r-card); }
   @media (max-width: 520px) { .abas { max-width: none; } .abas-banco button { padding: 8px 6px; font-size: 14px; } }
@@ -1846,9 +1848,11 @@ function resultadosBusca(f, q) {
           return { ic: 'alunos', t: r.aluno, s: 'Turma ' + r.turma + ' · último relatório', ir: ['relatorio', { id: r.id }] };
         });
     grupos.push([S.user.perfil === 'ADM' ? 'Pessoas' : 'Alunos', pessoas.slice(0, 6)]);
-    grupos.push(['Questões', f.qs.filter(function (x) { return tem(x.id, x.disciplina, x.conteudo, semFiguras(x.enunciado)); }).slice(0, 6).map(function (x) {
+    var qsAchadas = f.qs.filter(function (x) { return tem(x.id, x.disciplina, x.conteudo, semFiguras(x.enunciado)); });
+    grupos.push(['Questões', qsAchadas.slice(0, 6).map(function (x) {
       return { ic: 'biblioteca', t: semFiguras(perguntaDe(x.enunciado)).slice(0, 80) || x.id, s: x.disciplina + (x.conteudo ? ' · ' + x.conteudo : '') + ' · ' + ((STATUS_Q[x.status] || [x.status])[0]), q: x };
-    })]);
+    }).concat(qsAchadas.length ? [{ ic: 'busca', t: 'Procurar "' + q + '" no ' + (S.user.perfil === 'ADM' ? 'Banco de questões' : 'Minhas questões'),
+      s: qsAchadas.length + (qsAchadas.length === 1 ? ' questão encontrada' : ' questões encontradas') + ', com o comando e as alternativas', ir: ['questoes', { busca: q }] }] : [])]);
     grupos.push(['Simulados', f.sims.filter(function (x) { return tem(x.titulo, x.codigo); }).slice(0, 6).map(function (x) {
       return { ic: 'avaliacao', t: x.titulo, s: x.codigo + ' · ' + x.total + ' questões', ir: ['resultados', { simuladoId: x.id }] };
     })]);
@@ -2464,6 +2468,14 @@ function abasBanco(aba) {
     return '<button role="tab" data-banco-aba="' + a[0] + '"' + (on ? ' class="ativa" aria-selected="true"' : ' aria-selected="false"') + '>' + a[1] + '</button>';
   }).join('') + '</div>';
 }
+/** Procurar pelo texto: todas as palavras digitadas precisam aparecer (sem acento, sem maiúsculas) em algum dos campos */
+function combinaBusca(termo, campos) {
+  var alvo = semAcento(campos.join(' ')), ps = semAcento(termo).split(/\s+/).filter(Boolean);
+  return ps.length > 0 && ps.every(function (w) { return alvo.indexOf(w) >= 0; });
+}
+function campoBusca(id, valor, dica) {
+  return '<label class="campo campo-busca"><span>Procurar</span><input id="' + id + '" type="search" autocomplete="off" value="' + esc(valor || '') + '" placeholder="' + esc(dica) + '"></label>';
+}
 /** Onde a questão já entrou: "Simulado 1 (q. 05)" ou "Nunca usada" */
 function usoDaQuestao(sims) {
   if (!sims || !sims.length) return '<span class="tag">Nunca usada</span>';
@@ -2558,7 +2570,7 @@ VIEWS.questoes = function (m, p) {
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
     '<button class="btn" id="kit">Kit de correção</button>' +
     '<button class="btn pri" id="nova">+ Nova questão</button>') + abasBanco(aba) +
-    '<div class="card nao-imprimir"><div class="linha">' +
+    '<div class="card nao-imprimir">' + campoBusca('f-busca', p.busca, 'Palavras do comando ou das alternativas, ou o código da questão') + '<div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
     Object.keys(STATUS_Q).map(function (k) { return '<option value="' + k + '">' + STATUS_Q[k][0] + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="f-disc"><option value="">Todas</option>' +
@@ -2569,7 +2581,7 @@ VIEWS.questoes = function (m, p) {
   if (p.status) $('#f-status').value = p.status;
   // nas abas Por simulado e Por matéria, a matéria e o tema são escolhidos nos passos: fica só o filtro de situação
   if (aba) ['#f-disc', '#f-tema', '#f-sub'].forEach(function (id) { $(id).closest('label').hidden = true; });
-  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('questoes', { aba: b.getAttribute('data-banco-aba'), status: $('#f-status').value }); }; });
+  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('questoes', { aba: b.getAttribute('data-banco-aba'), status: $('#f-status').value, busca: $('#f-busca').value }); }; });
   if (!aba) call('temasUltimoSimulado', {}).then(function (dados) {
     var minhasD = !adm && S.user.disciplinas ? csv(S.user.disciplinas) : discs;
     var alvo = $('#temas-ult'); if (!alvo) return;
@@ -2668,10 +2680,35 @@ VIEWS.questoes = function (m, p) {
     });
     barraLote(qs);
   };
+  var todas = [];
+  var buscando = function () { var t = $('#f-busca').value.trim(); return t.length >= 2 ? t : ''; };
   var carregar = function () {
     var l = $('#lista'); carregando(l);
     marcadas = {};
     call('listarQuestoes', { status: $('#f-status').value, disciplina: $('#f-disc').value }).then(function (qs) {
+      todas = qs; desenhar();
+    }).catch(function (e) { l.innerHTML = caixaErro(e); });
+  };
+  var desenhar = function () {
+    var l = $('#lista'), qs = todas;
+    marcadas = {};
+    {
+      var termo = buscando();
+      // procurando: os cartões de apoio (temas do último simulado, arquivos) saem do caminho
+      ['#temas-ult', '#envios'].forEach(function (id) { var el = $(id); if (el) el.hidden = !!termo; });
+      if (termo) {
+        // procurar vale em qualquer aba: mostra todas as questões que têm as palavras, com onde já foram usadas
+        var achou = qs.filter(function (q) {
+          return combinaBusca(termo, [q.id, semFiguras(q.enunciado), q.disciplina, q.conteudo, q.temaEdital, q.subtemaEdital, q.autorNome]
+            .concat(Object.keys(q.alternativas || {}).map(function (k) { return q.alternativas[k]; })));
+        });
+        ultimas = achou;
+        l.innerHTML = '<div class="card cx so-faixa">' + faixaCx('Procurar · "' + termo + '"', 'Encontradas', achou.length + (achou.length === 1 ? ' questão' : ' questões')) + '</div>' +
+          (achou.length ? '<div class="q-lista">' + achou.map(function (q, i) { return cartao(q, i); }).join('') + '</div>'
+            : '<div class="card vazio">Nenhuma questão com essas palavras' + ($('#f-status').value ? ' nesta situação' : '') + '.</div>');
+        ligarCartoes(l, achou);
+        return;
+      }
       if (aba) {
         ultimas = qs; barraLote([]);
         navegarBanco(l, qs, p, { rota: 'questoes', base: { status: $('#f-status').value }, nome: ['questão', 'questões'],
@@ -2717,8 +2754,10 @@ VIEWS.questoes = function (m, p) {
             }).join('') + '</details>';
         }).join('');
       ligarCartoes(l, qs);
-    }).catch(function (e) { l.innerHTML = caixaErro(e); });
+    }
   };
+  var espera;
+  $('#f-busca').oninput = function () { var v = this.value; clearTimeout(espera); espera = setTimeout(function () { S.params.busca = v; desenhar(); }, 200); };
   /** Atualiza só o item da lista (sem recarregar tudo); sem informação, recarrega. */
   var atualizarItem = function (card, mud) {
     if (!mud || !mud.status || !card) { carregar(); return; }
@@ -3709,7 +3748,7 @@ VIEWS.kit = function (m, p) {
     'Para cada questão aprovada: uma questão para cada alternativa errada, que treina aquele erro, e uma <b>gêmea</b>, com a mesma ideia em outro contexto, para o teste final. ' +
       (adm ? 'O MIRA escreve, o professor confere e você aprova.' : 'O MIRA escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
     (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o MIRA</button>' : '')) + abasBanco(aba) +
-    '<div class="card nao-imprimir"><div class="linha">' +
+    '<div class="card nao-imprimir">' + campoBusca('kt-busca', p.busca, 'Palavras do comando da questão, o erro ou o código') + '<div class="linha">' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="kt-disc"><option value="">Todas</option>' +
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
     '<label class="campo" style="margin:0"><span>Mostrar</span><select id="kt-most">' +
@@ -3719,7 +3758,7 @@ VIEWS.kit = function (m, p) {
     '<div id="kt-aviso"></div><div id="kt-lista"></div>';
   $('#kt-most').value = p.mostrar !== undefined ? p.mostrar : '';
   if (aba) $('#kt-disc').closest('label').hidden = true;
-  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('kit', { aba: b.getAttribute('data-banco-aba'), mostrar: $('#kt-most').value }); }; });
+  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('kit', { aba: b.getAttribute('data-banco-aba'), mostrar: $('#kt-most').value, busca: $('#kt-busca').value }); }; });
   if (adm) { $('#kt-exp').onclick = exportarKit; $('#kt-imp').onclick = function () { importarKit(carregar); }; }
   var dados = null, mostrando = KIT_POR_PAGINA;
   // o que "precisa de você": professor confere o que o Claude escreveu; coordenação aprova o que foi conferido
@@ -3783,6 +3822,16 @@ VIEWS.kit = function (m, p) {
         });
       });
     };
+    var termo = $('#kt-busca').value.trim();
+    if (termo.length >= 2) {
+      var achou = ms.filter(function (x) {
+        return combinaBusca(termo, [x.id, x.trecho, x.disciplina, x.conteudo, x.temaEdital, x.subtemaEdital, x.autorNome]
+          .concat(Object.keys(x.conceitos || {}).map(function (k) { return x.conceitos[k]; })));
+      });
+      l.innerHTML = '<div class="card cx so-faixa">' + faixaCx('Procurar · "' + termo + '"', 'Encontradas', achou.length + (achou.length === 1 ? ' questão' : ' questões')) + '</div>' +
+        (achou.length ? achou.map(function (x, i) { return cartao(x, i); }).join('') : '<div class="card vazio">Nenhuma questão com essas palavras neste filtro.</div>');
+      return ligarVagas(l, achou);
+    }
     if (aba) {
       return navegarBanco(l, ms, p, { rota: 'kit', base: { mostrar: $('#kt-most').value }, nome: ['questão', 'questões'],
         vazio: aba === 'simulado' ? 'Nenhuma questão com kit entrou em simulado ainda (com este filtro).' : 'Nada para mostrar com este filtro.',
@@ -3808,6 +3857,8 @@ VIEWS.kit = function (m, p) {
     }).catch(function (e) { l.innerHTML = caixaErro(e); });
   };
   $('#kt-disc').onchange = carregar;
+  var esperaK;
+  $('#kt-busca').oninput = function () { var v = this.value; clearTimeout(esperaK); esperaK = setTimeout(function () { S.params.busca = v; if (dados) desenhar(); }, 200); };
   $('#kt-most').onchange = function () { S.params.mostrar = this.value; mostrando = KIT_POR_PAGINA; if (dados) desenhar(); };
   carregar();
 };
