@@ -492,23 +492,37 @@
   .parecer { margin-top: 16px; border-color: var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
   /* atividades do aluno (questões de correção e teste final) no jeito dos documentos designtop:
      olho com o traço da mira, título "frase: número." e itens numerados 01, 02 em roxo */
-  /* Painel do aluno: abas Missões | Exercícios (pílulas) e, dentro de cada simulado, abas sublinhadas */
+  /* Painel do aluno: abas Missões | Exercícios (pílulas) */
   .abas { display: flex; gap: 4px; padding: 4px; margin: 0 0 16px; background: #fff; border: 1px solid var(--n-200); border-radius: 99px; box-shadow: var(--sombra-card); max-width: 420px; }
   .abas button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 99px;
     background: transparent; color: var(--n-700); font: 700 15px var(--fonte); cursor: pointer; }
   .abas button:hover { background: var(--marca-50); color: var(--marca-700); }
   .abas button.ativa { background: var(--marca-700); color: #fff; }
-  .abas button:focus-visible, .abas-sub button:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; }
+  .abas button:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; }
   .abas-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
     background: var(--marca-100); color: var(--marca-700); font-size: 12px; font-weight: 700; line-height: 1; }
   .abas button.ativa .abas-n { background: #fff; }
-  .abas-sub { display: flex; gap: 2px; margin: 8px 0 16px; border-bottom: 1px solid var(--n-200); overflow-x: auto; scrollbar-width: none; }
-  .abas-sub::-webkit-scrollbar { display: none; }
-  .abas-sub button { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent;
-    background: transparent; color: var(--n-500); font: 700 14px var(--fonte); white-space: nowrap; cursor: pointer; }
-  .abas-sub button:hover { color: var(--marca-700); }
-  .abas-sub button.ativa { color: var(--marca-700); border-bottom-color: var(--marca-700); }
-  @media (max-width: 520px) { .abas { max-width: none; } .abas-sub button { flex: 1 1 auto; justify-content: center; padding: 10px 6px; font-size: 14px; } .abas-longo { display: none; } }
+  @media (max-width: 520px) { .abas { max-width: none; } }
+  /* Faixa roxa no topo dos cartões de Exercícios (encosta nas bordas do cartão) */
+  .cx-faixa { margin: -22px -22px 18px; padding: 20px 22px 18px; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--grad-destaque); color: #fff; }
+  .cx-faixa .cx-olho { color: var(--verde-marca); }
+  .cx-faixa .cx-tit { margin: 0; color: #fff; }
+  .cx-faixa .cx-tit .n { color: var(--verde-marca); }
+  .cx-faixa + .ex-lista { margin-top: -8px; border-top: 0; }
+  /* Painel › Exercícios: listas de escolha (simulados, partes) e o "voltar" */
+  .ex-lista { margin-top: 10px; border-top: 1px solid var(--n-200); }
+  .ex-linha { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 4px; border: 0; border-bottom: 1px solid var(--n-200);
+    background: transparent; font: inherit; color: var(--n-900); text-align: left; cursor: pointer; }
+  .ex-linha:hover { background: var(--marca-50); }
+  .ex-linha:focus-visible, .ex-voltar:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; border-radius: var(--r-ctl); }
+  .ex-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ex-txt b { font-size: 16px; }
+  .ex-txt small { font-size: 13px; color: var(--n-500); }
+  .ex-linha .tag { flex: none; }
+  .ex-seta { flex: none; width: 9px; height: 9px; border-right: 2px solid var(--marca-700); border-top: 2px solid var(--marca-700); transform: rotate(45deg); margin-right: 6px; }
+  .ex-voltar { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 8px 4px; border: 0; background: transparent;
+    font: 700 15px var(--fonte); color: var(--marca-700); cursor: pointer; }
+  .ex-voltar::before { content: ""; width: 8px; height: 8px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
   .cx-olho { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em;
     text-transform: uppercase; color: var(--marca-600); }
   .cx-olho::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--grad-mira); flex: none; }
@@ -6126,21 +6140,24 @@ VIEWS.missoes = function (m, p) {
     marcarEstrategiasVistas(es);
     var pend = exerciciosPendentes(gs);
     m.innerHTML = cabPag('Painel', 'Suas missões de estudo e os exercícios de cada simulado. Cumpra, toque e ganhe pontos.') +
-      lembretePesquisa(rs) +
+      (p && p.cx ? '' : lembretePesquisa(rs)) +
       '<div class="abas" role="tablist" aria-label="Painel">' +
       '<button role="tab" data-painel="missoes">Missões</button>' +
       '<button role="tab" data-painel="exercicios">Exercícios' + (pend ? ' <span class="abas-n" aria-label="' + pend + ' para fazer">' + pend + '</span>' : '') + '</button></div>' +
       '<div data-painel-p="missoes"><div class="card missoes"><div id="mis-placar"></div></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div></div>' +
       '<div data-painel-p="exercicios"><div id="mis-corr"></div></div>';
     var trocar = function (a) {
-      S.params = S.params || {}; S.params.aba = a;
+      S.params.aba = a;
       $$('[data-painel]', m).forEach(function (b) { var on = b.getAttribute('data-painel') === a; b.classList.toggle('ativa', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
       $$('[data-painel-p]', m).forEach(function (d) { d.hidden = d.getAttribute('data-painel-p') !== a; });
     };
-    $$('[data-painel]', m).forEach(function (b) { b.onclick = function () { trocar(b.getAttribute('data-painel')); }; });
+    // tocar em Exercícios de dentro de um simulado volta para a lista de simulados
+    $$('[data-painel]', m).forEach(function (b) {
+      b.onclick = function () { var a = b.getAttribute('data-painel'); if (a === 'exercicios' && S.params.cx) ir('missoes', { aba: a }); else trocar(a); };
+    });
     trocar(aba);
     ligarTelaMissoes(m, es, rs);
-    telaExercicios($('#mis-corr', m), gs);
+    telaExercicios($('#mis-corr', m), gs, p);
     $$('[data-pesq]', m).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: b.getAttribute('data-pesq'), pesquisa: 1 }); }; });
   });
 };
@@ -6173,68 +6190,103 @@ function caixasDeSimulado(gs) {
   return caixas;
 }
 
-/** Painel › Exercícios: uma caixa por simulado, com Correção · 1º dia, Correção · 2º dia e Teste final */
-var EX_ABA = {}; // aba aberta em cada caixa (fica enquanto o aluno usa o app)
-var TEXTO_LIBERACAO = 'O teste final abre 2 dias depois que você terminar as questões de correção, ou 7 dias antes do próximo simulado, o que vier primeiro.';
-function telaExercicios(alvo, gs) {
+/** Painel › Exercícios em três passos, uma coisa por tela (pedido da Carol, 09/11):
+ *  1) lista de simulados; 2) o simulado: 1º dia, 2º dia e Teste final; 3) só a parte escolhida.
+ *  O caminho fica nos parâmetros da tela: { aba: 'exercicios', cx: caixa, parte: '1' | '2' | 'T' } */
+var TEXTO_LIBERACAO = 'O teste final de cada dia abre 2 dias depois que você termina as questões de correção daquele dia, ou 7 dias antes do próximo simulado, o que vier primeiro.';
+var ROTULO_PARTE = { '1': '1º dia', '2': '2º dia', T: 'Teste final', U: 'Questões de correção' };
+/** Situação de uma parte do simulado: [texto, cor da etiqueta, quantas faltam] */
+function situacaoParte(c, parte) {
+  if (parte === 'T') {
+    var ts = [c['1'], c['2']].filter(function (g) { return g && g.teste; });
+    if (!ts.length) return ['Depois das correções', '', 0];
+    var falta = 0, fechado = null;
+    ts.forEach(function (g) {
+      if (g.teste.liberado) falta += g.teste.itens.filter(function (x) { return !x.resposta; }).length;
+      else if (!fechado || (g.teste.em && g.teste.em < fechado)) fechado = g.teste.em || fechado || 'breve';
+    });
+    if (falta) return [falta + ' para fazer', 'azul', falta];
+    if (fechado) return [fechado === 'breve' ? 'Abre depois das correções' : 'Abre em ' + dataBr(fechado), '', 0];
+    return ['Feito', 'verde', 0];
+  }
+  var g = c[parte];
+  if (!g) return ['Sem resultado ainda', '', 0];
+  if (!g.itens.length) return ['Nada para corrigir', '', 0];
+  var f = g.itens.filter(function (x) { return !x.feita; }).length;
+  return f ? [f + ' para fazer', 'azul', f] : ['Feito', 'verde', 0];
+}
+function linhaEx(atrib, titulo, sub, sit) {
+  return '<button class="ex-linha" ' + atrib + '><span class="ex-txt"><b>' + esc(titulo) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
+    (sit[0] ? tag({ X: [sit[0], sit[1]] }, 'X') : '') + '<span class="ex-seta" aria-hidden="true"></span></button>';
+}
+function telaExercicios(alvo, gs, p) {
   if (!alvo) return;
+  p = p || {};
+  var ir3 = function (cx, parte) { ir('missoes', { aba: 'exercicios', cx: cx || '', parte: parte || '' }); };
   if (!gs.length) {
-    alvo.innerHTML = '<div class="card cx">' + olhoCx('Exercícios') + tituloCx('Nada para fazer agora', '0', 'h2') +
+    alvo.innerHTML = '<div class="card cx">' + faixaCx('Exercícios', 'Nada para fazer agora', '0') +
       '<p class="mut" style="margin:0">Depois de cada simulado, aparecem aqui as questões de correção (uma para cada erro seu) e, depois delas, o teste final. ' + TEXTO_LIBERACAO + '</p></div>';
     return;
   }
   var caixas = caixasDeSimulado(gs);
-  alvo.innerHTML = caixas.map(function (c, ci) {
-    var dias = c.unico ? [['1', 'Questões de correção']] : [['1', '<span class="abas-longo">Correção · </span>1º dia'], ['2', '<span class="abas-longo">Correção · </span>2º dia']];
-    var todos = [c['1'], c['2']].filter(Boolean);
-    var itens = todos.reduce(function (a, g) { return a.concat(g.itens); }, []);
-    var feitas = itens.filter(function (x) { return x.feita; }).length;
-    var testes = todos.filter(function (g) { return g.teste; });
-    var nTeste = testes.reduce(function (n, g) { return n + g.teste.itens.length; }, 0);
-    var respTeste = testes.reduce(function (n, g) { return n + g.teste.itens.filter(function (x) { return x.resposta; }).length; }, 0);
-    var testeAberto = testes.some(function (g) { return g.teste.liberado && g.teste.itens.some(function (x) { return !x.resposta; }); });
-    // aba que abre: a escolhida antes; senão o primeiro dia com correção por fazer; senão o teste aberto; senão o 1º dia
-    var aba = EX_ABA[c.chave];
-    if (!aba) {
-      var comPend = dias.filter(function (d) { var g = c[d[0]]; return g && g.itens.some(function (x) { return !x.feita; }); })[0];
-      aba = comPend ? comPend[0] : (testeAberto ? 'T' : '1');
-    }
-    var rotulos = dias.map(function (d) {
-      var g = c[d[0]], falta = g ? g.itens.filter(function (x) { return !x.feita; }).length : 0;
-      return [d[0], d[1], falta];
-    }).concat([['T', 'Teste final', testeAberto ? nTeste - respTeste : 0]]);
-    var html = '<div class="card cx" data-caixa="' + esc(c.chave) + '">' + olhoCx('Exercícios · ' + (c.data ? 'simulado de ' + dataBr(c.data) : 'simulado')) +
-      tituloCx(c.titulo, itens.length ? feitas + ' de ' + itens.length : (nTeste ? respTeste + ' de ' + nTeste : '0'), 'h2') +
-      '<div class="abas-sub" role="tablist" aria-label="Exercícios de ' + esc(c.titulo) + '">' + rotulos.map(function (x) {
-        return '<button role="tab" data-ex-aba="' + x[0] + '"' + (x[0] === aba ? ' class="ativa" aria-selected="true"' : ' aria-selected="false"') + '>' + x[1] +
-          (x[2] ? ' <span class="abas-n">' + x[2] + '</span>' : '') + '</button>';
-      }).join('') + '</div>';
-    dias.forEach(function (d) {
-      var g = c[d[0]];
-      html += '<div data-ex-p="' + d[0] + '"' + (d[0] === aba ? '' : ' hidden') + '>' + (g ? blocoCorrecao(g, ci) : '<p class="mut" style="margin:0">O resultado do ' + d[0] + 'º dia deste simulado ainda não chegou. Quando chegar, as questões de correção aparecem aqui.</p>') + '</div>';
-    });
-    html += '<div data-ex-p="T"' + (aba === 'T' ? '' : ' hidden') + '>' + (testes.length ? testes.map(function (g, i) {
-      return blocoTesteFinal(g, ci, i === 0, testes.length > 1 || !c.unico ? (g.dia === '2' ? '2º dia' : '1º dia') : '');
-    }).join('') : '<p class="mut" style="margin:0">O teste final traz uma questão gêmea de cada erro: a mesma ideia, em outro contexto. ' + TEXTO_LIBERACAO + '</p>') + '</div>';
-    return html + '</div>';
-  }).join('');
-  $$('[data-caixa]', alvo).forEach(function (cx) {
-    $$('[data-ex-aba]', cx).forEach(function (b) {
-      b.onclick = function () {
-        var a = b.getAttribute('data-ex-aba');
-        EX_ABA[cx.getAttribute('data-caixa')] = a;
-        $$('[data-ex-aba]', cx).forEach(function (x) { var on = x === b; x.classList.toggle('ativa', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
-        $$('[data-ex-p]', cx).forEach(function (p) { p.hidden = p.getAttribute('data-ex-p') !== a; });
-      };
-    });
-  });
+  var c = p.cx ? caixas.filter(function (x) { return x.chave === p.cx; })[0] : null;
+  var partes = function (cx) { return cx.unico ? ['1', 'T'] : ['1', '2', 'T']; };
+  var rotulo = function (cx, k) { return cx.unico && k === '1' ? ROTULO_PARTE.U : ROTULO_PARTE[k]; };
+  // 1) lista de simulados
+  if (!c) {
+    alvo.innerHTML = '<div class="card cx">' + faixaCx('Exercícios', 'Escolha o simulado', String(caixas.length)) +
+      '<div class="ex-lista">' + caixas.map(function (cx) {
+        var falta = partes(cx).reduce(function (n, k) { return n + situacaoParte(cx, k)[2]; }, 0);
+        var feito = partes(cx).every(function (k) { var s = situacaoParte(cx, k); return s[1] === 'verde' || /^(Nada|Sem)/.test(s[0]); });
+        return linhaEx('data-ex-cx="' + esc(cx.chave) + '"', cx.titulo, cx.data ? 'Aplicado em ' + dataBr(cx.data) : '',
+          falta ? [falta + ' para fazer', 'azul'] : feito ? ['Feito', 'verde'] : ['Em andamento', '']);
+      }).join('') + '</div></div>';
+    $$('[data-ex-cx]', alvo).forEach(function (b) { b.onclick = function () { ir3(b.getAttribute('data-ex-cx')); }; });
+    return;
+  }
+  var voltar = function (texto) { return '<button class="ex-voltar" data-ex-voltar>' + esc(texto) + '</button>'; };
+  var parte = partes(c).indexOf(p.parte) >= 0 ? p.parte : '';
+  // 2) o simulado: as partes
+  if (!parte) {
+    alvo.innerHTML = voltar('Todos os simulados') + '<div class="card cx">' + faixaCx('Exercícios' + (c.data ? ' · aplicado em ' + dataBr(c.data) : ''), c.titulo, 'escolha a parte') +
+      '<div class="ex-lista">' + partes(c).map(function (k) {
+        var sub = k === 'T' ? 'A mesma ideia dos seus erros, em outro contexto' : 'Uma questão para cada erro seu';
+        return linhaEx('data-ex-parte="' + k + '"', rotulo(c, k), sub, situacaoParte(c, k));
+      }).join('') + '</div>' +
+      '<p class="mut peq" style="margin:12px 0 0">' + TEXTO_LIBERACAO + '</p></div>';
+    $('[data-ex-voltar]', alvo).onclick = function () { ir3(); };
+    $$('[data-ex-parte]', alvo).forEach(function (b) { b.onclick = function () { ir3(c.chave, b.getAttribute('data-ex-parte')); }; });
+    return;
+  }
+  // 3) só a parte escolhida
+  var corpo;
+  if (parte === 'T') {
+    var testes = [c['1'], c['2']].filter(function (g) { return g && g.teste; });
+    corpo = testes.length ? testes.map(function (g, i) {
+      return blocoTesteFinal(g, 0, i === 0, c.unico ? '' : (g.dia === '2' ? '2º dia' : '1º dia'));
+    }).join('') : '<p class="mut" style="margin:0">O teste final traz uma questão gêmea de cada erro: a mesma ideia, em outro contexto. ' + TEXTO_LIBERACAO + '</p>';
+  } else {
+    var g = c[parte];
+    corpo = (g ? blocoCorrecao(g, 0) : '<p class="mut" style="margin:0">O resultado deste dia ainda não chegou. Quando chegar, as questões de correção aparecem aqui.</p>');
+  }
+  var numParte;
+  if (parte === 'T') {
+    var tt = [c['1'], c['2']].filter(function (g) { return g && g.teste; }), nT = 0, rT = 0;
+    tt.forEach(function (g) { nT += g.teste.itens.length; rT += g.teste.itens.filter(function (x) { return x.resposta; }).length; });
+    numParte = nT ? rT + ' de ' + nT : 'em breve';
+  } else {
+    var gp = c[parte];
+    numParte = gp && gp.itens.length ? gp.itens.filter(function (x) { return x.feita; }).length + ' de ' + gp.itens.length : '0';
+  }
+  alvo.innerHTML = voltar(c.titulo) + '<div class="card cx">' + faixaCx('Exercícios · ' + c.titulo, rotulo(c, parte), numParte) + corpo + '</div>';
+  $('[data-ex-voltar]', alvo).onclick = function () { ir3(c.chave); };
   ligarExercicios(alvo);
 }
 
-/** Depois de marcar algo: recarrega o Painel na aba Exercícios, no mesmo ponto da página */
+/** Depois de marcar algo: recarrega a mesma parte, no mesmo ponto da página */
 function voltarExercicios() {
-  var y = window.scrollY || 0;
-  ir('missoes', { aba: 'exercicios' }).then(function () { window.scrollTo(0, y); });
+  var y = window.scrollY || 0, p = S.params || {};
+  ir('missoes', { aba: 'exercicios', cx: p.cx || '', parte: p.parte || '' }).then(function () { window.scrollTo(0, y); });
 }
 
 /** Questões de correção de um resultado (um dia): uma questão para cada erro, com a lista, a autoavaliação e o gabarito comentado */
@@ -6303,6 +6355,10 @@ function ligarExercicios(alvo) {
 }
 
 /** Estilo das atividades (designtop na tela): olho com o traço da mira, título "frase: número." e itens numerados 01, 02 */
+/** Faixa roxa no topo do cartão (designtop): olho em verde, título "frase: número." em branco */
+function faixaCx(olho, frase, num) {
+  return '<div class="cx-faixa"><div class="cx-olho">' + esc(olho) + '</div><h2 class="cx-tit">' + esc(frase) + ': <span class="n">' + esc(num) + '</span><span class="pt">.</span></h2></div>';
+}
 function olhoCx(t) { return '<div class="cx-olho">' + esc(t) + '</div>'; }
 function tituloCx(frase, num, tagH) {
   return '<' + tagH + ' class="cx-tit">' + esc(frase) + ': <span class="n">' + esc(num) + '</span><span class="pt">.</span></' + tagH + '>';
