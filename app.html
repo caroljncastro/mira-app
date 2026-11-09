@@ -503,6 +503,14 @@
     background: var(--marca-100); color: var(--marca-700); font-size: 12px; font-weight: 700; line-height: 1; }
   .abas button.ativa .abas-n { background: #fff; }
   @media (max-width: 520px) { .abas { max-width: none; } }
+  /* Relatório do aluno: missões recolhidas por matéria (só para ver) */
+  .ex-seta.baixo { transform: rotate(135deg); margin-top: -4px; }
+  .ex-seta.baixo.cima { transform: rotate(-45deg); margin-top: 4px; }
+  .rel-mis-corpo { padding: 4px 4px 14px; border-bottom: 1px solid var(--n-200); }
+  .rel-mis-lista { margin: 0 0 10px; padding-left: 20px; }
+  .rel-mis-lista li { margin: 6px 0; color: var(--n-900); }
+  .rel-mis-lista li small { display: block; color: var(--n-500); font-size: 12px; }
+  .rel-mis-lista li.feita { color: var(--n-500); }
   /* Faixa roxa no topo dos cartões de Exercícios (encosta nas bordas do cartão) */
   .cx-faixa { margin: -22px -22px 18px; padding: 20px 22px 18px; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--grad-destaque); color: #fff; }
   .cx-faixa .cx-olho { color: var(--verde-marca); }
@@ -4741,6 +4749,27 @@ function notaDestaque(nota, rotulo, numeros, extra, titulo) {
     }).join('') + '</div>' + (extra ? '<div class="q-meta">' + extra + '</div>' : '') + '</div></div></section>';
 }
 
+/** Relatório do aluno: abre/fecha cada matéria; as missões ainda valendo levam ao Painel (as de simulados antigos já foram trocadas pelas mais novas) */
+function ligarMissoesDoRelatorio(raiz) {
+  if (!raiz) return;
+  $$('[data-mis-abre]', raiz).forEach(function (b) {
+    b.onclick = function () {
+      var corpo = b.nextElementSibling, abrir = corpo.hidden;
+      corpo.hidden = !abrir; b.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+      $('.ex-seta', b).classList.toggle('cima', abrir);
+    };
+  });
+  call('listarEstrategias', { status: 'APROVADA' }).then(function (es) {
+    var valendo = {};
+    estrategiasAtuais(es).forEach(function (e) { valendo[e.id] = true; });
+    $$('[data-mis-pe]', raiz).forEach(function (pe) {
+      if (valendo[pe.getAttribute('data-mis-pe')]) {
+        pe.innerHTML = '<button class="btn pri peq">Cumprir no Painel</button>';
+        $('button', pe).onclick = function () { MIS_ABERTA = pe.getAttribute('data-disc'); ir('missoes', { aba: 'missoes' }); };
+      } else pe.innerHTML = '<p class="mut peq" style="margin:0">As missões desta matéria agora são as do seu simulado mais recente, no Painel.</p>';
+    });
+  }).catch(function () {});
+}
 /** "Seu próximo passo": a disciplina com mais espaço para crescer, e onde agir */
 function proximoPasso(porDisciplina, estrategias, aluno) {
   var alvo = (porDisciplina || []).filter(function (x) { return x.pct < 100; })
@@ -4805,9 +4834,20 @@ VIEWS.relatorio = function (m, p) {
     if (d.corte && d.corte.participantes) h += blocoCorte(d.corte, aluno);
 
     // estratégias de estudo (o aluno só vê as aprovadas pelo professor)
+    // aluno: recolhido por matéria (toque abre só para ver); cumprir e marcar é no Painel, na fila do tempo de estudo
     h += aluno && d.estrategias.length ? '<div class="card" id="rel-est"><h2>Suas missões deste simulado</h2>' +
-        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam no Painel.</p>' +
-        '<div class="mis-grupos">' + d.estrategias.map(grupoMissoes).join('') + '</div></div>'
+        '<p class="mut peq" style="margin-top:0">Toque numa matéria para ver as missões. Você cumpre e marca no Painel: lá o MIRA mostra as que cabem no seu tempo de estudo da semana.</p>' +
+        '<div class="ex-lista">' + d.estrategias.map(function (e) {
+          var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; }).length;
+          return '<div class="rel-mis"><button class="ex-linha" data-mis-abre="' + esc(e.id) + '" aria-expanded="false"><span class="ex-txt"><b>' + esc(e.disciplina) + '</b>' +
+            '<small>' + ms.length + (ms.length === 1 ? ' missão' : ' missões') + '</small></span>' +
+            (ms.length ? tag({ S: ['Feito', 'verde'], N: [f + ' de ' + ms.length, 'azul'] }, f === ms.length ? 'S' : 'N') : '') +
+            '<span class="ex-seta baixo" aria-hidden="true"></span></button>' +
+            '<div class="rel-mis-corpo" hidden><ul class="rel-mis-lista">' + ms.map(function (x) {
+              return '<li class="' + (x.feitaEm ? 'feita' : '') + '">' + (x.rotulo ? '<small>' + esc(x.rotulo) + '</small>' : '') + esc(x.texto) +
+                (x.feitaEm ? ' <span class="mut peq">· cumprida em ' + dataBr(x.feitaEm) + '</span>' : '') + '</li>';
+            }).join('') + '</ul><div class="rel-mis-pe" data-mis-pe="' + esc(e.id) + '" data-disc="' + esc(e.disciplina) + '"></div></div></div>';
+        }).join('') + '</div></div>'
       : '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
       ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Montadas com as missões da curadoria dos erros deste relatório. O aluno já vê; o professor da disciplina pode ajustar.</p>') +
         '<div class="est-lista">' + d.estrategias.map(function (e) { return blocoEstrategia(e, !aluno); }).join('') + '</div>'
@@ -4871,7 +4911,7 @@ VIEWS.relatorio = function (m, p) {
     $('#voltar').onclick = function () { ir(aluno ? 'meus' : 'resultados'); };
     if ($('#pesq-abrir', m)) $('#pesq-abrir', m).onclick = function () { formComoFoi(d, function () { ir('relatorio', { id: p.id }); }); };
     if (aluno && p.pesquisa && d.pesquisaAberta && !d.pesquisa) formComoFoi(d, function () { ir('relatorio', { id: p.id }); });
-    if (aluno) ligarMissoes($('#rel-est'), d.estrategias);
+    if (aluno) ligarMissoesDoRelatorio($('#rel-est'));
     else ligarEstrategias($('#rel-est'), function () { ir('relatorio', p); }, d.estrategias);
     $('#imprimir').onclick = aluno ? function () { verRelatorioImpresso('Meu relatório · ' + s.titulo, { resultadoId: r.id }, 'meuRelatorio'); }
       : function () { verRelatorioImpresso('Relatório de ' + a.nome + ' · ' + s.codigo, { tipo: 'aluno', resultadoId: r.id }); };
@@ -5487,23 +5527,6 @@ function placarMissoes(todas, rs) {
     ]
   };
 }
-function itemMissao(x) {
-  return '<li><label class="mis' + (x.feitaEm ? ' feita' : '') + '"><input type="checkbox" data-chave="' + esc(x.chave) + '"' + (x.feitaEm ? ' checked' : '') + '>' +
-    '<span class="mis-caixa" aria-hidden="true"></span><span class="mis-txt">' + (x.rotulo ? '<small class="mis-rot">' + esc(x.rotulo) + '</small>' : '') + esc(x.texto) + '</span>' +
-    (x.feitaEm ? '<time class="mis-quando">' + dataBr(x.feitaEm) + '</time>' : '<span class="mis-pts">+' + PONTOS_MISSAO + '</span>') + '</label></li>';
-}
-/** Missões de uma estratégia: as pendentes primeiro; as cumpridas ficam marcadas no fim (dá para desmarcar) */
-function grupoMissoes(e) {
-  var ms = e.missoes || [], f = ms.filter(function (x) { return x.feitaEm; }).length, pct = ms.length ? Math.round(100 * f / ms.length) : 0;
-  var completa = ms.length && f === ms.length;
-  return '<div class="mis-grupo' + (completa ? ' completa' : '') + '" data-id="' + esc(e.id) + '">' +
-    '<div class="mis-cab"><h3>' + esc(e.disciplina) + '</h3><span class="mis-cont">' + (completa ? icone('conquista') + 'Completa' : f + ' de ' + ms.length + ' cumpridas') + '</span></div>' +
-    '<div class="mis-mini" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Missões de ' + esc(e.disciplina) + '"><i style="width:' + pct + '%"></i></div>' +
-    (e.contexto && e.contexto.length && !completa ? '<p class="mis-ctx">' + esc(e.contexto.join(' ')) + '</p>' : '') +
-    '<ul class="mis-lista">' + ms.filter(function (x) { return !x.feitaEm; }).concat(ms.filter(function (x) { return x.feitaEm; })).map(itemMissao).join('') + '</ul>' +
-    (e.fecho && !completa ? '<p class="mis-fecho">' + esc(e.fecho) + '</p>' : '') +
-    '<div class="mis-pe">' + (e.professorNome ? 'Preparada por ' + esc(e.professorNome) : '') + (e.simulado ? (e.professorNome ? ' · ' : '') + esc(e.simulado) : '') + '</div></div>';
-}
 /** Placar da tela Missões: nível, meta da semana, estrelas e conquistas */
 function placarHtml(p) {
   var bolinhas = '';
@@ -5772,21 +5795,6 @@ function acharMissao(todas, id, chave) {
   var e = todas.filter(function (x) { return x.id === id; })[0];
   return { e: e, mi: e && (e.missoes || []).filter(function (x) { return x.chave === chave; })[0] };
 }
-/** Caixinhas das missões no relatório */
-function ligarMissoes(raiz, todas) {
-  if (!raiz) return;
-  $$('.mis input[type=checkbox]', raiz).forEach(function (cx) {
-    cx.onchange = function () {
-      var grupo = cx.closest('.mis-grupo'), a = acharMissao(todas, grupo.getAttribute('data-id'), cx.getAttribute('data-chave'));
-      if (!a.mi) return;
-      var desenhar = function () { grupo.outerHTML = grupoMissoes(a.e); ligarMissoes(raiz, todas); };
-      marcarMissaoAluno(a.e, a.mi, cx.checked, desenhar);
-      desenhar();
-      if (cx.checked) toast('Missão cumprida! +' + PONTOS_MISSAO + ' pontos');
-    };
-  });
-}
-
 var COMO_FOI = { FACIL: 'Fácil', OK: 'Ok', DIFICIL: 'Difícil' };
 /** "Como foi?" depois de cumprir: o aluno responde com um toque; o professor vê. Responder é opcional. */
 function perguntaComoFoi(a, depois) {
