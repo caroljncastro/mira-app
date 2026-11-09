@@ -492,6 +492,23 @@
   .parecer { margin-top: 16px; border-color: var(--marca-600); box-shadow: 0 0 0 3px var(--marca-100); }
   /* atividades do aluno (questões de correção e teste final) no jeito dos documentos designtop:
      olho com o traço da mira, título "frase: número." e itens numerados 01, 02 em roxo */
+  /* Painel do aluno: abas Missões | Exercícios (pílulas) e, dentro de cada simulado, abas sublinhadas */
+  .abas { display: flex; gap: 4px; padding: 4px; margin: 0 0 16px; background: #fff; border: 1px solid var(--n-200); border-radius: 99px; box-shadow: var(--sombra-card); max-width: 420px; }
+  .abas button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 99px;
+    background: transparent; color: var(--n-700); font: 700 15px var(--fonte); cursor: pointer; }
+  .abas button:hover { background: var(--marca-50); color: var(--marca-700); }
+  .abas button.ativa { background: var(--marca-700); color: #fff; }
+  .abas button:focus-visible, .abas-sub button:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; }
+  .abas-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
+    background: var(--marca-100); color: var(--marca-700); font-size: 12px; font-weight: 700; line-height: 1; }
+  .abas button.ativa .abas-n { background: #fff; }
+  .abas-sub { display: flex; gap: 2px; margin: 8px 0 16px; border-bottom: 1px solid var(--n-200); overflow-x: auto; scrollbar-width: none; }
+  .abas-sub::-webkit-scrollbar { display: none; }
+  .abas-sub button { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent;
+    background: transparent; color: var(--n-500); font: 700 14px var(--fonte); white-space: nowrap; cursor: pointer; }
+  .abas-sub button:hover { color: var(--marca-700); }
+  .abas-sub button.ativa { color: var(--marca-700); border-bottom-color: var(--marca-700); }
+  @media (max-width: 520px) { .abas { max-width: none; } .abas-sub button { flex: 1 1 auto; justify-content: center; padding: 10px 6px; font-size: 14px; } .abas-longo { display: none; } }
   .cx-olho { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em;
     text-transform: uppercase; color: var(--marca-600); }
   .cx-olho::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--grad-mira); flex: none; }
@@ -1687,7 +1704,7 @@ var MENUS = {
     ['estrategias', 'Estratégias de estudo'], ['turmas', 'Mapa da turma'], ['usuarios', 'Usuários'], ['config', 'Configurações'], ['conta', 'Minha conta']],
   PROFESSOR: [['painel', 'Início'], ['questoes', 'Minhas questões'], ['simulados', 'Simulados'], ['turmas', 'Mapa da turma'],
     ['resultados', 'Resultados'], ['estrategias', 'Estratégias de estudo'], ['conta', 'Minha conta']],
-  ALUNO: [['painel', 'Início'], ['missoes', 'Missões'], ['edital', 'Edital'], ['meus', 'Simulados'], ['conta', 'Conta']]
+  ALUNO: [['painel', 'Início'], ['missoes', 'Painel'], ['edital', 'Edital'], ['meus', 'Simulados'], ['conta', 'Conta']]
 };
 // ícone de cada tela (Icones.html)
 var ICONE_ROTA = {
@@ -4775,7 +4792,7 @@ VIEWS.relatorio = function (m, p) {
 
     // estratégias de estudo (o aluno só vê as aprovadas pelo professor)
     h += aluno && d.estrategias.length ? '<div class="card" id="rel-est"><h2>Suas missões deste simulado</h2>' +
-        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam em Missões.</p>' +
+        '<p class="mut peq" style="margin-top:0">Marque cada missão quando cumprir. Seus pontos e conquistas ficam no Painel.</p>' +
         '<div class="mis-grupos">' + d.estrategias.map(grupoMissoes).join('') + '</div></div>'
       : '<div class="card" id="rel-est"><h2>Estratégias de estudo</h2>' + (d.estrategias.length
       ? (aluno ? '' : '<p class="mut peq" style="margin-top:0">Montadas com as missões da curadoria dos erros deste relatório. O aluno já vê; o professor da disciplina pode ajustar.</p>') +
@@ -5582,7 +5599,7 @@ function listaMissoes(atuais, f) {
   var naFila = function (e, x) { return !x.feitaEm && f.fila[e.id + '|' + x.chave]; };
   var pend = atuais.filter(function (e) { return (e.missoes || []).some(function (x) { return naFila(e, x); }); });
   if (!atuais.length) return '<p class="mut" style="margin:0">Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões aqui.</p>';
-  if (MIS_ABERTA === null || !pend.some(function (e) { return e.disciplina === MIS_ABERTA; })) MIS_ABERTA = pend.length ? pend[0].disciplina : '';
+  if (MIS_ABERTA === null || (MIS_ABERTA && !pend.some(function (e) { return e.disciplina === MIS_ABERTA; }))) MIS_ABERTA = pend.length ? pend[0].disciplina : '';
   var temPend = atuais.some(function (e) { return (e.missoes || []).some(function (x) { return !x.feitaEm; }); });
   var cor = 0;
   return (pend.length ? '<p class="mut peq mis-dica">Toque numa disciplina para ver as missões. Cumpriu? Toque na missão.</p>'
@@ -6056,7 +6073,7 @@ VIEWS.painelAluno = function (m) {
       cardMis += '<p class="mut peq ini-txt">Escolha uma missão para hoje. Ela fica aqui em destaque até você cumprir.</p><div class="dia-opcoes">' +
         pend.slice(0, 4).map(function (it, i) {
           return '<button type="button" class="dia-op" data-i="' + i + '"><small>' + esc(it.e.disciplina) + (it.x.rotulo ? ' · ' + esc(it.x.rotulo) : '') + '</small>' + esc(it.x.texto) + '</button>';
-        }).join('') + '</div>' + (pend.length > 4 ? '<p class="mut peq ini-mais">Outras ' + (pend.length - 4) + ' na tela Missões.</p>' : '');
+        }).join('') + '</div>' + (pend.length > 4 ? '<p class="mut peq ini-mais">Outras ' + (pend.length - 4) + ' no Painel.</p>' : '');
     } else {
       cardMis += '<p class="mut peq ini-txt">' + (atuais.length ? 'Todas as missões cumpridas! As próximas chegam com o próximo simulado.'
         : 'Quando seus professores aprovarem as estratégias dos seus simulados, elas viram missões.') + '</p>';
@@ -6101,90 +6118,188 @@ VIEWS.painelAluno = function (m) {
 };
 
 /** Missões: placar (nível, meta da semana, estrelas, conquistas), disciplinas recolhidas e histórico */
-VIEWS.missoes = function (m) {
+VIEWS.missoes = function (m, p) {
   carregando(m);
-  return Promise.all([call('listarEstrategias', { status: 'APROVADA' }), call('resultados')]).then(function (r) {
-    var es = r[0], rs = r[1];
+  var aba = p && p.aba === 'exercicios' ? 'exercicios' : 'missoes';
+  return Promise.all([call('listarEstrategias', { status: 'APROVADA' }), call('resultados'), call('minhaCorrecao', {}).catch(function () { return []; })]).then(function (r) {
+    var es = r[0], rs = r[1], gs = r[2] || [];
     marcarEstrategiasVistas(es);
-    m.innerHTML = cabPag('Missões', 'Depois de cada simulado, seus professores preparam missões de estudo. Cumpra, toque e ganhe pontos.') +
+    var pend = exerciciosPendentes(gs);
+    m.innerHTML = cabPag('Painel', 'Suas missões de estudo e os exercícios de cada simulado. Cumpra, toque e ganhe pontos.') +
       lembretePesquisa(rs) +
-      '<div class="card missoes"><div id="mis-placar"></div></div><div id="mis-corr"></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div>';
+      '<div class="abas" role="tablist" aria-label="Painel">' +
+      '<button role="tab" data-painel="missoes">Missões</button>' +
+      '<button role="tab" data-painel="exercicios">Exercícios' + (pend ? ' <span class="abas-n" aria-label="' + pend + ' para fazer">' + pend + '</span>' : '') + '</button></div>' +
+      '<div data-painel-p="missoes"><div class="card missoes"><div id="mis-placar"></div></div><div class="card missoes"><div id="mis-lista"></div></div><div id="mis-hist"></div></div>' +
+      '<div data-painel-p="exercicios"><div id="mis-corr"></div></div>';
+    var trocar = function (a) {
+      S.params = S.params || {}; S.params.aba = a;
+      $$('[data-painel]', m).forEach(function (b) { var on = b.getAttribute('data-painel') === a; b.classList.toggle('ativa', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      $$('[data-painel-p]', m).forEach(function (d) { d.hidden = d.getAttribute('data-painel-p') !== a; });
+    };
+    $$('[data-painel]', m).forEach(function (b) { b.onclick = function () { trocar(b.getAttribute('data-painel')); }; });
+    trocar(aba);
     ligarTelaMissoes(m, es, rs);
-    cardCorrecao($('#mis-corr', m));
+    telaExercicios($('#mis-corr', m), gs);
     $$('[data-pesq]', m).forEach(function (b) { b.onclick = function (e) { e.preventDefault(); ir('relatorio', { id: b.getAttribute('data-pesq'), pesquisa: 1 }); }; });
   });
 };
-/** Questões de correção: uma questão para cada erro do simulado, com a lista, a autoavaliação e o gabarito comentado */
-var AUTOAVALIACAO = { SOZINHO: ['Acertei sozinho', 'verde'], AJUDA: ['Acertei com ajuda', 'azul'], ERREI: ['Errei', 'ambar'] };
-function cardCorrecao(alvo) {
+
+/** Quantos exercícios esperam o aluno: questões de correção sem autoavaliação e questões do teste final já aberto sem resposta */
+function exerciciosPendentes(gs) {
+  return (gs || []).reduce(function (n, g) {
+    n += g.itens.filter(function (x) { return !x.feita; }).length;
+    if (g.teste && g.teste.liberado) n += g.teste.itens.filter(function (x) { return !x.resposta; }).length;
+    return n;
+  }, 0);
+}
+
+/** Junta o 1º e o 2º dia da mesma aplicação (mesmo concurso, datas até 10 dias de distância) numa caixa só, do mais novo ao mais antigo */
+function caixasDeSimulado(gs) {
+  var dias = function (a, b) { return Math.abs((new Date(a + 'T12:00:00') - new Date(b + 'T12:00:00')) / 864e5); };
+  var caixas = [];
+  gs.slice().sort(function (a, b) { return a.data < b.data ? 1 : a.data > b.data ? -1 : 0; }).forEach(function (g) {
+    var lado = g.dia === '2' ? '2' : '1';
+    var cx = g.dia ? caixas.filter(function (c) { return !c.unico && !c[lado] && c.concurso === g.concurso && dias(c.data, g.data) <= 10; })[0] : null;
+    if (!cx) { cx = { concurso: g.concurso, data: g.data, unico: !g.dia }; caixas.push(cx); }
+    cx[g.dia ? lado : '1'] = g;
+    if (lado === '1') cx.data = g.data;
+  });
+  caixas.forEach(function (c, i) {
+    var base = (c['1'] || c['2']).simulado;
+    c.titulo = String(base).replace(/\s*[·\-–—|,:]?\s*\(?\s*(\d\s*[ºo°]\s*dia|dia\s*\d)\s*\)?\s*$/i, '') || base;
+    c.chave = (c['1'] || c['2']).resultadoId;
+  });
+  return caixas;
+}
+
+/** Painel › Exercícios: uma caixa por simulado, com Correção · 1º dia, Correção · 2º dia e Teste final */
+var EX_ABA = {}; // aba aberta em cada caixa (fica enquanto o aluno usa o app)
+var TEXTO_LIBERACAO = 'O teste final abre 2 dias depois que você terminar as questões de correção, ou 7 dias antes do próximo simulado, o que vier primeiro.';
+function telaExercicios(alvo, gs) {
   if (!alvo) return;
-  call('minhaCorrecao', {}).then(function (gs) {
-    if (!gs.length) { alvo.innerHTML = ''; return; }
-    alvo.innerHTML = gs.slice(0, 3).map(function (g, gi) {
-      var feitas = g.itens.filter(function (x) { return x.feita; }).length, voltaram = g.itens.filter(function (x) { return x.volta; }).length;
-      var html = '<div class="card cx">' + olhoCx('Questões de correção · ' + g.simulado);
-      if (g.itens.length) {
-        var todas = feitas === g.itens.length;
-        html += tituloCx(todas ? 'Correções feitas' : 'Corrija o que errou', feitas + ' de ' + g.itens.length, 'h2') +
-          '<p class="mut peq" style="margin-top:0">' + (voltaram ? (voltaram === 1 ? 'Uma questão voltou' : voltaram + ' questões voltaram') + ' porque você errou a gêmea no teste final. ' : 'Uma questão para cada erro seu neste simulado. ') +
-          'Resolva sozinho, marque como foi e só depois veja o gabarito comentado. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
-          (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
-          '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas || g.itens.some(function (x) { return x.volta; }) ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
-          '<div class="cx-lista">' + g.itens.map(function (x, i) {
-            return itemCx(i, x, x.feita, (x.volta ? tag({ V: ['Voltou', 'ambar'] }, 'V') : ''),
-              x.feita ? tag(AUTOAVALIACAO, x.feita)
-                : '<span class="mut peq" style="flex-basis:100%">Depois de resolver no papel:</span>' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
-                  return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
-                }).join(''), '');
-          }).join('') + '</div>';
-      }
-      if (g.teste) html += blocoTesteFinal(g, gi);
-      return html + '</div>';
-    }).join('');
-    $$('[data-corr-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Questões de correção', { resultadoId: b.getAttribute('data-corr-lista'), parte: 'lista' }, 'listaCorrecao'); }; });
-    $$('[data-corr-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito comentado das questões de correção', { resultadoId: b.getAttribute('data-corr-gab'), parte: 'gabarito' }, 'listaCorrecao'); }; });
-    $$('[data-teste-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Teste final', { resultadoId: b.getAttribute('data-teste-lista'), parte: 'lista', teste: true }, 'listaCorrecao'); }; });
-    $$('[data-teste-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito do teste final', { resultadoId: b.getAttribute('data-teste-gab'), parte: 'gabarito', teste: true }, 'listaCorrecao'); }; });
-    $$('[data-corr-a]', alvo).forEach(function (b) {
+  if (!gs.length) {
+    alvo.innerHTML = '<div class="card cx">' + olhoCx('Exercícios') + tituloCx('Nada para fazer agora', '0', 'h2') +
+      '<p class="mut" style="margin:0">Depois de cada simulado, aparecem aqui as questões de correção (uma para cada erro seu) e, depois delas, o teste final. ' + TEXTO_LIBERACAO + '</p></div>';
+    return;
+  }
+  var caixas = caixasDeSimulado(gs);
+  alvo.innerHTML = caixas.map(function (c, ci) {
+    var dias = c.unico ? [['1', 'Questões de correção']] : [['1', '<span class="abas-longo">Correção · </span>1º dia'], ['2', '<span class="abas-longo">Correção · </span>2º dia']];
+    var todos = [c['1'], c['2']].filter(Boolean);
+    var itens = todos.reduce(function (a, g) { return a.concat(g.itens); }, []);
+    var feitas = itens.filter(function (x) { return x.feita; }).length;
+    var testes = todos.filter(function (g) { return g.teste; });
+    var nTeste = testes.reduce(function (n, g) { return n + g.teste.itens.length; }, 0);
+    var respTeste = testes.reduce(function (n, g) { return n + g.teste.itens.filter(function (x) { return x.resposta; }).length; }, 0);
+    var testeAberto = testes.some(function (g) { return g.teste.liberado && g.teste.itens.some(function (x) { return !x.resposta; }); });
+    // aba que abre: a escolhida antes; senão o primeiro dia com correção por fazer; senão o teste aberto; senão o 1º dia
+    var aba = EX_ABA[c.chave];
+    if (!aba) {
+      var comPend = dias.filter(function (d) { var g = c[d[0]]; return g && g.itens.some(function (x) { return !x.feita; }); })[0];
+      aba = comPend ? comPend[0] : (testeAberto ? 'T' : '1');
+    }
+    var rotulos = dias.map(function (d) {
+      var g = c[d[0]], falta = g ? g.itens.filter(function (x) { return !x.feita; }).length : 0;
+      return [d[0], d[1], falta];
+    }).concat([['T', 'Teste final', testeAberto ? nTeste - respTeste : 0]]);
+    var html = '<div class="card cx" data-caixa="' + esc(c.chave) + '">' + olhoCx('Exercícios · ' + (c.data ? 'simulado de ' + dataBr(c.data) : 'simulado')) +
+      tituloCx(c.titulo, itens.length ? feitas + ' de ' + itens.length : (nTeste ? respTeste + ' de ' + nTeste : '0'), 'h2') +
+      '<div class="abas-sub" role="tablist" aria-label="Exercícios de ' + esc(c.titulo) + '">' + rotulos.map(function (x) {
+        return '<button role="tab" data-ex-aba="' + x[0] + '"' + (x[0] === aba ? ' class="ativa" aria-selected="true"' : ' aria-selected="false"') + '>' + x[1] +
+          (x[2] ? ' <span class="abas-n">' + x[2] + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+    dias.forEach(function (d) {
+      var g = c[d[0]];
+      html += '<div data-ex-p="' + d[0] + '"' + (d[0] === aba ? '' : ' hidden') + '>' + (g ? blocoCorrecao(g, ci) : '<p class="mut" style="margin:0">O resultado do ' + d[0] + 'º dia deste simulado ainda não chegou. Quando chegar, as questões de correção aparecem aqui.</p>') + '</div>';
+    });
+    html += '<div data-ex-p="T"' + (aba === 'T' ? '' : ' hidden') + '>' + (testes.length ? testes.map(function (g, i) {
+      return blocoTesteFinal(g, ci, i === 0, testes.length > 1 || !c.unico ? (g.dia === '2' ? '2º dia' : '1º dia') : '');
+    }).join('') : '<p class="mut" style="margin:0">O teste final traz uma questão gêmea de cada erro: a mesma ideia, em outro contexto. ' + TEXTO_LIBERACAO + '</p>') + '</div>';
+    return html + '</div>';
+  }).join('');
+  $$('[data-caixa]', alvo).forEach(function (cx) {
+    $$('[data-ex-aba]', cx).forEach(function (b) {
       b.onclick = function () {
-        b.disabled = true;
-        call('autoavaliarCorrecao', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), a: b.getAttribute('data-corr-a') })
-          .then(function () { toast('+' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos! O gabarito comentado desta questão já está liberado.'); ir('missoes'); })
-          .catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
+        var a = b.getAttribute('data-ex-aba');
+        EX_ABA[cx.getAttribute('data-caixa')] = a;
+        $$('[data-ex-aba]', cx).forEach(function (x) { var on = x === b; x.classList.toggle('ativa', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
+        $$('[data-ex-p]', cx).forEach(function (p) { p.hidden = p.getAttribute('data-ex-p') !== a; });
       };
     });
-    $$('[data-teste-enun]', alvo).forEach(function (el) {
-      var f = TESTE_FIGURAS[el.getAttribute('data-teste-enun')];
-      if (!f) return;
-      call('figurasTeste', { resultadoId: f.r, kitId: el.getAttribute('data-teste-enun') }).then(function (l) {
-        el.innerHTML = enunciadoHtml(f.enunciado, l.map(function (x) { return x.url; }), f.n);
-      }).catch(function () {});
-    });
-    $$('[data-teste-c]', alvo).forEach(function (b) {
-      b.onclick = function () {
-        var ja = b.classList.contains('pri');
-        $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c]', alvo).forEach(function (x) { x.classList.remove('pri'); x.setAttribute('aria-pressed', 'false'); });
-        if (!ja) { b.classList.add('pri'); b.setAttribute('aria-pressed', 'true'); }
-      };
-    });
-    $$('[data-teste-r]', alvo).forEach(function (b) {
-      b.onclick = function () {
-        var letra = b.getAttribute('data-teste-r');
-        confirmar('Marcar a letra ' + letra + '? Depois de marcar, não dá para trocar.', 'Marcar ' + letra).then(function () {
-          $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = true; });
-          var cz = $('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c].pri', alvo), c = cz ? cz.getAttribute('data-teste-c') : '', extra = c ? PONTOS_CERTEZA : 0;
-          call('responderTeste', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), r: letra, c: c })
-            .then(function (res) {
-              toast(res.ok ? 'Acertou! +' + (PONTOS_TESTE + PONTOS_ACERTO_TESTE + extra) + ' pontos.'
-                : 'Não foi desta vez (gabarito ' + res.gabarito + '). +' + (PONTOS_TESTE + extra) + ' pontos por responder.' + (res.volta ? ' A questão de correção deste erro voltou.' : ''));
-              ir('missoes');
-            })
-            .catch(function (e) { $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = false; }); toast(e.message || String(e), true); });
-        });
-      };
-    });
-  }).catch(function () { alvo.innerHTML = ''; });
+  });
+  ligarExercicios(alvo);
+}
+
+/** Depois de marcar algo: recarrega o Painel na aba Exercícios, no mesmo ponto da página */
+function voltarExercicios() {
+  var y = window.scrollY || 0;
+  ir('missoes', { aba: 'exercicios' }).then(function () { window.scrollTo(0, y); });
+}
+
+/** Questões de correção de um resultado (um dia): uma questão para cada erro, com a lista, a autoavaliação e o gabarito comentado */
+var AUTOAVALIACAO = { SOZINHO: ['Acertei sozinho', 'verde'], AJUDA: ['Acertei com ajuda', 'azul'], ERREI: ['Errei', 'ambar'] };
+function blocoCorrecao(g, gi) {
+  if (!g.itens.length) return '<p class="mut" style="margin:0">Nenhuma questão de correção neste dia. Elas aparecem aqui quando seus professores prepararem as questões dos seus erros.</p>';
+  var feitas = g.itens.filter(function (x) { return x.feita; }).length, refazer = g.itens.filter(function (x) { return x.volta; }).length;
+  return '<p class="mut peq" style="margin-top:0">' + (refazer ? (refazer === 1 ? 'Uma questão está marcada para refazer' : refazer + ' questões estão marcadas para refazer') + ': você errou a gêmea dela no teste final. ' : 'Uma questão para cada erro seu neste dia. ') +
+    'Resolva sozinho, marque como foi e só depois veja o gabarito comentado. Cada uma vale +' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos.</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
+    (feitas < g.itens.length ? '<button class="btn' + (gi ? '' : ' pri') + '" style="flex:none" data-corr-lista="' + esc(g.resultadoId) + '">Ver as questões para resolver</button>' : '') +
+    '<button class="btn" style="flex:none" data-corr-gab="' + esc(g.resultadoId) + '"' + (feitas || refazer ? '' : ' disabled title="Marque como foi em uma questão primeiro"') + '>Ver o gabarito comentado</button></div>' +
+    '<div class="cx-lista">' + g.itens.map(function (x, i) {
+      return itemCx(i, x, x.feita, (x.volta ? tag({ V: ['Refazer', 'ambar'] }, 'V') : ''),
+        x.feita ? tag(AUTOAVALIACAO, x.feita)
+          : '<span class="mut peq" style="flex-basis:100%">Depois de resolver no papel:</span>' + ['SOZINHO', 'AJUDA', 'ERREI'].map(function (a) {
+            return '<button class="btn peq" style="flex:none" data-corr-a="' + a + '" data-r="' + esc(g.resultadoId) + '" data-k="' + esc(x.kitId) + '">' + AUTOAVALIACAO[a][0] + '</button>';
+          }).join(''), '');
+    }).join('') + '</div>';
+}
+
+/** Botões dos exercícios (questões de correção e teste final) */
+function ligarExercicios(alvo) {
+  $$('[data-corr-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Questões de correção', { resultadoId: b.getAttribute('data-corr-lista'), parte: 'lista' }, 'listaCorrecao'); }; });
+  $$('[data-corr-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito comentado das questões de correção', { resultadoId: b.getAttribute('data-corr-gab'), parte: 'gabarito' }, 'listaCorrecao'); }; });
+  $$('[data-teste-lista]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Teste final', { resultadoId: b.getAttribute('data-teste-lista'), parte: 'lista', teste: true }, 'listaCorrecao'); }; });
+  $$('[data-teste-gab]', alvo).forEach(function (b) { b.onclick = function () { verRelatorioImpresso('Gabarito do teste final', { resultadoId: b.getAttribute('data-teste-gab'), parte: 'gabarito', teste: true }, 'listaCorrecao'); }; });
+  $$('[data-corr-a]', alvo).forEach(function (b) {
+    b.onclick = function () {
+      b.disabled = true;
+      call('autoavaliarCorrecao', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), a: b.getAttribute('data-corr-a') })
+        .then(function () { toast('+' + (PONTOS_CORRECAO + PONTOS_COMO_FOI_CORRECAO) + ' pontos! O gabarito comentado desta questão já está liberado.'); voltarExercicios(); })
+        .catch(function (e) { b.disabled = false; toast(e.message || String(e), true); });
+    };
+  });
+  $$('[data-teste-enun]', alvo).forEach(function (el) {
+    var f = TESTE_FIGURAS[el.getAttribute('data-teste-enun')];
+    if (!f) return;
+    call('figurasTeste', { resultadoId: f.r, kitId: el.getAttribute('data-teste-enun') }).then(function (l) {
+      el.innerHTML = enunciadoHtml(f.enunciado, l.map(function (x) { return x.url; }), f.n);
+    }).catch(function () {});
+  });
+  $$('[data-teste-c]', alvo).forEach(function (b) {
+    b.onclick = function () {
+      var ja = b.classList.contains('pri');
+      $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c]', alvo).forEach(function (x) { x.classList.remove('pri'); x.setAttribute('aria-pressed', 'false'); });
+      if (!ja) { b.classList.add('pri'); b.setAttribute('aria-pressed', 'true'); }
+    };
+  });
+  $$('[data-teste-r]', alvo).forEach(function (b) {
+    b.onclick = function () {
+      var letra = b.getAttribute('data-teste-r');
+      confirmar('Marcar a letra ' + letra + '? Depois de marcar, não dá para trocar.', 'Marcar ' + letra).then(function () {
+        $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = true; });
+        var cz = $('[data-k="' + b.getAttribute('data-k') + '"][data-teste-c].pri', alvo), c = cz ? cz.getAttribute('data-teste-c') : '', extra = c ? PONTOS_CERTEZA : 0;
+        call('responderTeste', { resultadoId: b.getAttribute('data-r'), kitId: b.getAttribute('data-k'), r: letra, c: c })
+          .then(function (res) {
+            toast(res.ok ? 'Acertou! +' + (PONTOS_TESTE + PONTOS_ACERTO_TESTE + extra) + ' pontos.'
+              : 'Não foi desta vez (gabarito ' + res.gabarito + '). +' + (PONTOS_TESTE + extra) + ' pontos por responder.' + (res.volta ? ' A questão de correção deste erro está marcada para refazer.' : ''));
+            voltarExercicios();
+          })
+          .catch(function (e) { $$('[data-k="' + b.getAttribute('data-k') + '"][data-teste-r]', alvo).forEach(function (x) { x.disabled = false; }); toast(e.message || String(e), true); });
+      });
+    };
+  });
 }
 
 /** Estilo das atividades (designtop na tela): olho com o traço da mira, título "frase: número." e itens numerados 01, 02 */
@@ -6218,9 +6333,9 @@ function questaoDoTeste(x, letras, resultadoId) {
 }
 
 /** Teste final (gêmeas): fechado com a data em que abre, ou aberto com as questões para marcar */
-function blocoTesteFinal(g, gi) {
+function blocoTesteFinal(g, gi, primeiro, rotulo) {
   var t = g.teste, resp = t.itens.filter(function (x) { return x.resposta; }).length, certas = t.itens.filter(function (x) { return x.ok; }).length;
-  var html = '<div class="cx-sep">' + olhoCx('Teste final');
+  var html = '<div' + (primeiro ? '' : ' class="cx-sep"') + '>' + (rotulo ? olhoCx('Teste final · ' + rotulo) : '');
   var nq = t.itens.length + (t.itens.length === 1 ? ' questão' : ' questões');
   if (!t.liberado) {
     return html + tituloCx('Teste final', t.em ? 'abre em ' + dataBr(t.em) : 'em breve', 'h3') +
