@@ -182,6 +182,9 @@
 
   main { width: 100%; min-width: 0; padding: 28px 32px 56px; max-width: 1160px; }
   #aviso-senha { max-width: 1160px; padding: 0 32px; }
+  #voltar-pag { max-width: 1160px; padding: 0 32px; }
+  #voltar-pag:empty { display: none; }
+  #voltar-pag:not(:empty) + main { padding-top: 0; }
   #aviso-senha .aviso { margin: 20px 0 -8px; }
   .cab-pag { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
   .cab-pag p { margin: 6px 0 0; color: var(--n-500); font-size: 14.5px; max-width: 72ch; }
@@ -218,6 +221,7 @@
     /* 16px nos campos: o iPhone não dá zoom ao tocar num campo */
     input, select, textarea, .diag .d-exp textarea, .diag .d-exp input { font-size: 16px; }
     #aviso-senha { padding: 0 16px; }
+    #voltar-pag { padding: 0 16px; }
     #aviso-senha .aviso { margin: 16px 0 -4px; }
     h1 { font-size: 26px; }
     .grade { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
@@ -522,15 +526,12 @@
   .ex-linha { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 4px; border: 0; border-bottom: 1px solid var(--n-200);
     background: transparent; font: inherit; color: var(--n-900); text-align: left; cursor: pointer; }
   .ex-linha:hover { background: var(--marca-50); }
-  .ex-linha:focus-visible, .ex-voltar:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; border-radius: var(--r-ctl); }
+  .ex-linha:focus-visible { outline: 2px solid var(--marca-600); outline-offset: 2px; border-radius: var(--r-ctl); }
   .ex-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .ex-txt b { font-size: 16px; }
   .ex-txt small { font-size: 13px; color: var(--n-500); }
   .ex-linha .tag { flex: none; }
   .ex-seta { flex: none; width: 9px; height: 9px; border-right: 2px solid var(--marca-700); border-top: 2px solid var(--marca-700); transform: rotate(45deg); margin-right: 6px; }
-  .ex-voltar { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 8px 4px; border: 0; background: transparent;
-    font: 700 15px var(--fonte); color: var(--marca-700); cursor: pointer; }
-  .ex-voltar::before { content: ""; width: 8px; height: 8px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
   .cx-olho { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em;
     text-transform: uppercase; color: var(--marca-600); }
   .cx-olho::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--grad-mira); flex: none; }
@@ -958,6 +959,7 @@
   .voltar { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0; margin: 0 0 20px;
     color: var(--marca-600); font-weight: 600; font-size: 14px; cursor: pointer; }
   .voltar::before { content: ""; width: 7px; height: 7px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
+  .voltar-pag { margin: 18px 0 12px; font-size: 15px; font-weight: 700; color: var(--marca-700); padding: 6px 0; }
   label.campo > span i { font-style: normal; font-weight: 400; color: var(--n-500); }
   details.resp { margin: 0 0 18px; }
   details.resp summary { cursor: pointer; color: var(--marca-600); font-weight: 600; font-size: 14px; margin-bottom: 12px; }
@@ -1766,7 +1768,7 @@ function iniciar() {
       '<div class="usuario-menu" role="menu">' + (S.verComo ? '<button data-u="voltar">Voltar à coordenação</button>'
         : '<button data-u="conta">Minha conta</button>' + (S.user.perfil === 'ADM' ? '<button data-u="vercomo">Ver como professor ou aluno</button>' : '')) +
       '<hr><button data-u="sair" class="perigo">Sair</button></div></div></div></header>' +
-      '<div id="aviso-senha"></div><main id="main"></main></div></div>';
+      '<div id="aviso-senha"></div><div id="voltar-pag"></div><main id="main"></main></div></div>';
     ligarBusca();
     atualizarSino();
     var um = $('#usuario');
@@ -1989,8 +1991,33 @@ function avisoSenha() {
 
 /** Selo abaixo da marca no menu lateral (o aluno não precisa: o roxo é o padrão) */
 var MENU_PERFIL = { ADM: 'Coordenação', PROFESSOR: 'Professor(a)' };
-function ir(rota, params) {
-  S.rota = rota; S.params = params || {};
+/** Voltar: cada tela aberta guarda a anterior (o menu começa de novo). O botão "Voltar" e o voltar do celular/navegador levam à tela anterior. */
+var PILHA = [];
+var HIST_OK = (function () { try { history.replaceState({ mira: 0 }, ''); return true; } catch (e) { return false; } })();
+function voltar() {
+  if (!PILHA.length) return;
+  if (HIST_OK) { try { history.back(); return; } catch (e) { } }
+  voltarAgora();
+}
+function voltarAgora() {
+  var ant = PILHA.pop();
+  if (ant) ir(ant.rota, ant.params, 'voltar');
+}
+if (HIST_OK) window.addEventListener('popstate', function () { if (S.user && PILHA.length) voltarAgora(); });
+function ir(rota, params, modo) {
+  var novo = JSON.stringify(params || {});
+  if (modo === 'menu' || !S.rota) PILHA = [];
+  else if (modo !== 'voltar' && (S.rota !== rota || JSON.stringify(S.params || {}) !== novo)) {
+    PILHA.push({ rota: S.rota, params: JSON.parse(JSON.stringify(S.params || {})) });
+    if (PILHA.length > 30) PILHA.shift();
+    if (HIST_OK) { try { history.pushState({ mira: PILHA.length }, ''); } catch (e) { } }
+  }
+  S.rota = rota; S.params = JSON.parse(novo);
+  var bv = $('#voltar-pag');
+  if (bv) {
+    bv.innerHTML = PILHA.length ? '<button class="voltar voltar-pag nao-imprimir">Voltar</button>' : '';
+    if (PILHA.length) $('button', bv).onclick = voltar;
+  }
   var menu = MENUS[S.user.perfil];
   $('#menu').innerHTML = '<img class="menu-logo" src="' + LOGO_EMBLEMA_BRANCO + '" alt="MIRA">' +
     (MENU_PERFIL[S.user.perfil] ? '<span class="menu-perfil">' + MENU_PERFIL[S.user.perfil] + '</span>' : '') + menu.map(function (m) {
@@ -1999,7 +2026,7 @@ function ir(rota, params) {
     var ic = m[0] === 'painel' ? 'inicio' : ICONE_ROTA[m[0]];
     return '<button data-r="' + m[0] + '" class="' + (ativo ? 'ativo' : '') + '">' + icone(ic) + '<span>' + esc(m[1]) + '</span></button>';
   }).join('');
-  $$('#menu button').forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-r')); }; });
+  $$('#menu button').forEach(function (b) { b.onclick = function () { ir(b.getAttribute('data-r'), null, 'menu'); }; });
   avisoSenha();
   atualizarSino();
   var main = $('#main');
@@ -3261,8 +3288,7 @@ VIEWS.temas = function (m) {
   var adm = S.user.perfil === 'ADM';
   m.innerHTML = cabPag('Temas de redação', adm ? 'Os temas que entram nos simulados com redação. Só os aprovados podem ser usados.'
       : 'Cadastre temas de redação. A coordenação aprova e eles passam a entrar nos simulados.',
-    '<button class="btn" id="tm-voltar">Voltar ao banco de questões</button><button class="btn pri" id="tm-novo">+ Novo tema</button>') + '<div id="tm-lista"></div>';
-  $('#tm-voltar').onclick = function () { ir('questoes'); };
+    '<button class="btn pri" id="tm-novo">+ Novo tema</button>') + '<div id="tm-lista"></div>';
   $('#tm-novo').onclick = function () { formTema(null, carregar); };
   var carregar = function () {
     var l = $('#tm-lista'); carregando(l);
@@ -3551,7 +3577,6 @@ VIEWS.kit = function (m, p) {
   m.innerHTML = cabPag('Kit de correção',
     'Para cada questão aprovada: uma questão para cada alternativa errada, que treina aquele erro, e uma <b>gêmea</b>, com a mesma ideia em outro contexto, para o teste final. ' +
       (adm ? 'O MIRA escreve, o professor confere e você aprova.' : 'O MIRA escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
-    '<button class="btn" id="kt-voltar">Voltar ao banco de questões</button>' +
     (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o MIRA</button>' : '')) +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="kt-disc"><option value="">Todas</option>' +
@@ -3562,7 +3587,6 @@ VIEWS.kit = function (m, p) {
     '<option value="completos">Kit completo</option><option value="">Todas as questões</option></select></label></div></div>' +
     '<div id="kt-aviso"></div><div id="kt-lista"></div>';
   $('#kt-most').value = p.mostrar !== undefined ? p.mostrar : '';
-  $('#kt-voltar').onclick = function () { ir('questoes'); };
   if (adm) { $('#kt-exp').onclick = exportarKit; $('#kt-imp').onclick = function () { importarKit(carregar); }; }
   var dados = null, mostrando = KIT_POR_PAGINA;
   // o que "precisa de você": professor confere o que o Claude escreveu; coordenação aprova o que foi conferido
@@ -4595,7 +4619,7 @@ VIEWS.enviar = function (m, p) {
     var desenhar = function () {
       var h = cabPag('Enviar cartão-resposta', esc(s.titulo) + ' · <span style="font-family:monospace">' + esc(s.codigo) + '</span>' +
         (p.alunoId ? ' · <b>lançamento pela coordenação</b>' : ''),
-        '<button class="btn" id="voltar">Voltar</button>') +
+        '') +
         '<div class="passos"><span class="' + (st.etapa === 1 ? 'on' : '') + '">1. Foto do cartão</span>' +
         '<span class="' + (st.etapa === 2 ? 'on' : '') + '">2. Conferir respostas</span><span>3. Relatório</span></div>';
 
@@ -4653,7 +4677,6 @@ VIEWS.enviar = function (m, p) {
           '<button class="btn" id="refazer">Refazer foto</button><button class="btn pri" id="enviar">Enviar e corrigir</button></div>';
       }
       m.innerHTML = h;
-      $('#voltar').onclick = function () { ir(S.user.perfil === 'ALUNO' ? 'meus' : 'simulados'); };
 
       var aposLeitura = function (res) {
         st.respostas = res.respostas; st.lido = JSON.parse(JSON.stringify(res.respostas)); st.todas = false; st.duvidas = res.duvidas || []; st.conferencia = res.conferencia || ''; st.avisos = [];
@@ -4807,7 +4830,7 @@ VIEWS.relatorio = function (m, p) {
     var aluno = S.user.perfil === 'ALUNO';
     var h = cabPag(aluno ? 'Meu relatório' : a.nome,
       esc(s.titulo) + ' · ' + esc(s.concursoNome) + ' ' + esc(s.provaTitulo) + (aluno ? '' : ' · Turma ' + esc(a.turma)) + ' · ' + dataBr(r.criadoEm),
-      '<button class="btn" id="voltar">Voltar</button><button class="btn" id="ver-cartao">' + (aluno ? 'Ver meu cartão' : 'Ver cartão') + '</button><button class="btn" id="imprimir">Imprimir</button>' +
+      '<button class="btn" id="ver-cartao">' + (aluno ? 'Ver meu cartão' : 'Ver cartão') + '</button><button class="btn" id="imprimir">Imprimir</button>' +
         (aluno ? '' : '<button class="btn" id="imp-ano">Relatório anual</button>') +
         (S.user.perfil === 'ADM' ? '<button class="btn" id="env-ano">Enviar anual à família</button>' : ''));
 
@@ -4908,7 +4931,6 @@ VIEWS.relatorio = function (m, p) {
           ' <span class="mut">(números do caderno do aluno; confira na foto)</span></div>' : '') + '</div>';
     }
     m.innerHTML = h;
-    $('#voltar').onclick = function () { ir(aluno ? 'meus' : 'resultados'); };
     if ($('#pesq-abrir', m)) $('#pesq-abrir', m).onclick = function () { formComoFoi(d, function () { ir('relatorio', { id: p.id }); }); };
     if (aluno && p.pesquisa && d.pesquisaAberta && !d.pesquisa) formComoFoi(d, function () { ir('relatorio', { id: p.id }); });
     if (aluno) ligarMissoesDoRelatorio($('#rel-est'));
@@ -6252,17 +6274,15 @@ function telaExercicios(alvo, gs, p) {
     $$('[data-ex-cx]', alvo).forEach(function (b) { b.onclick = function () { ir3(b.getAttribute('data-ex-cx')); }; });
     return;
   }
-  var voltar = function (texto) { return '<button class="ex-voltar" data-ex-voltar>' + esc(texto) + '</button>'; };
   var parte = partes(c).indexOf(p.parte) >= 0 ? p.parte : '';
   // 2) o simulado: as partes
   if (!parte) {
-    alvo.innerHTML = voltar('Todos os simulados') + '<div class="card cx">' + faixaCx('Exercícios' + (c.data ? ' · aplicado em ' + dataBr(c.data) : ''), c.titulo, 'escolha a parte') +
+    alvo.innerHTML = '<div class="card cx">' + faixaCx('Exercícios' + (c.data ? ' · aplicado em ' + dataBr(c.data) : ''), c.titulo, 'escolha a parte') +
       '<div class="ex-lista">' + partes(c).map(function (k) {
         var sub = k === 'T' ? 'A mesma ideia dos seus erros, em outro contexto' : 'Uma questão para cada erro seu';
         return linhaEx('data-ex-parte="' + k + '"', rotulo(c, k), sub, situacaoParte(c, k));
       }).join('') + '</div>' +
       '<p class="mut peq" style="margin:12px 0 0">' + TEXTO_LIBERACAO + '</p></div>';
-    $('[data-ex-voltar]', alvo).onclick = function () { ir3(); };
     $$('[data-ex-parte]', alvo).forEach(function (b) { b.onclick = function () { ir3(c.chave, b.getAttribute('data-ex-parte')); }; });
     return;
   }
@@ -6286,8 +6306,7 @@ function telaExercicios(alvo, gs, p) {
     var gp = c[parte];
     numParte = gp && gp.itens.length ? gp.itens.filter(function (x) { return x.feita; }).length + ' de ' + gp.itens.length : '0';
   }
-  alvo.innerHTML = voltar(c.titulo) + '<div class="card cx">' + faixaCx('Exercícios · ' + c.titulo, rotulo(c, parte), numParte) + corpo + '</div>';
-  $('[data-ex-voltar]', alvo).onclick = function () { ir3(c.chave); };
+  alvo.innerHTML = '<div class="card cx">' + faixaCx('Exercícios · ' + c.titulo, rotulo(c, parte), numParte) + corpo + '</div>';
   ligarExercicios(alvo);
 }
 
