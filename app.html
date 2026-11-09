@@ -506,7 +506,25 @@
   .abas-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
     background: var(--marca-100); color: var(--marca-700); font-size: 12px; font-weight: 700; line-height: 1; }
   .abas button.ativa .abas-n { background: #fff; }
-  @media (max-width: 520px) { .abas { max-width: none; } }
+  .abas-banco { max-width: 560px; }
+  .q-num { font-size: 18px; font-weight: 700; letter-spacing: -.02em; color: var(--marca-700); margin-right: 2px; }
+  /* cor de cada tipo de conta nas faixas, abas e números (professor turquesa, coordenação verde) */
+  body[data-perfil="PROFESSOR"] .cx-faixa { background: radial-gradient(130% 120% at 0% 0%, #2B7A73 0%, var(--menu-prof-700) 42%, var(--menu-prof-900) 100%); }
+  body[data-perfil="ADM"] .cx-faixa { background: radial-gradient(130% 120% at 0% 0%, #557A2B 0%, var(--menu-adm-700) 42%, var(--menu-adm-900) 100%); }
+  body[data-perfil="ADM"] .cx-faixa .cx-olho, body[data-perfil="ADM"] .cx-faixa .cx-tit .n { color: #fff; }
+  body[data-perfil="PROFESSOR"] .abas button.ativa { background: var(--menu-prof-700); }
+  body[data-perfil="ADM"] .abas button.ativa { background: var(--menu-adm-700); }
+  body[data-perfil="PROFESSOR"] .abas button:hover:not(.ativa) { background: var(--fundo-prof); color: var(--menu-prof-700); }
+  body[data-perfil="ADM"] .abas button:hover:not(.ativa) { background: var(--fundo-adm); color: var(--menu-adm-700); }
+  body[data-perfil="PROFESSOR"] .q-num, body[data-perfil="PROFESSOR"] .ex-seta { color: var(--menu-prof-700); border-color: var(--menu-prof-700); }
+  body[data-perfil="ADM"] .q-num, body[data-perfil="ADM"] .ex-seta { color: var(--menu-adm-700); border-color: var(--menu-adm-700); }
+  body[data-perfil="PROFESSOR"] .ex-linha:hover { background: var(--fundo-prof); }
+  body[data-perfil="ADM"] .ex-linha:hover { background: var(--fundo-adm); }
+  body[data-perfil="PROFESSOR"] .voltar-pag { color: var(--menu-prof-700); }
+  body[data-perfil="ADM"] .voltar-pag { color: var(--menu-adm-700); }
+  .cx.so-faixa { padding-bottom: 0; }
+  .cx.so-faixa .cx-faixa { margin-bottom: 0; border-radius: var(--r-card); }
+  @media (max-width: 520px) { .abas { max-width: none; } .abas-banco button { padding: 8px 6px; font-size: 14px; } }
   /* Relatório do aluno: missões recolhidas por matéria (só para ver) */
   .ex-seta.baixo { transform: rotate(135deg); margin-top: -4px; }
   .ex-seta.baixo.cima { transform: rotate(-45deg); margin-top: 4px; }
@@ -2437,8 +2455,101 @@ function importarAlunos(aoFim) {
    ===================================================================== */
 // ---------------------------------------------------------------- questões
 var SEM_TEMA = 'Sem tema do edital', SEM_SUB = 'Sem subtema';
+// ---------------------------------------------------------------- organização: Por situação | Por simulado | Por matéria (Banco de questões e Kit de correção)
+/** Abas no topo do Banco de questões e do Kit de correção (pedido da Carol, 09/11) */
+var ABAS_BANCO = [['', 'Por situação'], ['simulado', 'Por simulado'], ['materia', 'Por matéria']];
+function abasBanco(aba) {
+  return '<div class="abas abas-banco" role="tablist" aria-label="Organizar">' + ABAS_BANCO.map(function (a) {
+    var on = a[0] === (aba || '');
+    return '<button role="tab" data-banco-aba="' + a[0] + '"' + (on ? ' class="ativa" aria-selected="true"' : ' aria-selected="false"') + '>' + a[1] + '</button>';
+  }).join('') + '</div>';
+}
+/** Onde a questão já entrou: "Simulado 1 (q. 05)" ou "Nunca usada" */
+function usoDaQuestao(sims) {
+  if (!sims || !sims.length) return '<span class="tag">Nunca usada</span>';
+  return '<span class="tag azul" title="Simulados em que entrou">' + sims.slice(0, 2).map(function (s) {
+    return esc(s.titulo) + ' (q. ' + (s.n < 10 ? '0' : '') + s.n + ')';
+  }).join(' · ') + (sims.length > 2 ? ' · +' + (sims.length - 2) : '') + '</span>';
+}
+/** Navegação em passos, uma escolha por tela (com o Voltar geral):
+ *  Por simulado: simulados (1º e 2º dia juntos) › dia (se houver dois) › questões na ordem do caderno;
+ *  Por matéria: matéria › tema do edital › subtema › questões.
+ *  itens: [{ disciplina, temaEdital, subtemaEdital, simulados: [...] }] já filtrados pela situação.
+ *  op: { rota, base: params a manter, nome: ['questão', 'questões'], vazio, lista: function (alvo, itens, simuladoId) } */
+function navegarBanco(alvo, itens, p, op) {
+  var irA = function (extra) {
+    var q = {}, k;
+    for (k in op.base) q[k] = op.base[k];
+    q.aba = p.aba;
+    for (k in extra) q[k] = extra[k];
+    ir(op.rota, q);
+  };
+  var qtd = function (n) { return n + ' ' + (n === 1 ? op.nome[0] : op.nome[1]); };
+  var escolhas = function (olho, frase, linhas) {
+    alvo.innerHTML = '<div class="card cx">' + faixaCx(olho, frase, String(linhas.length)) + (linhas.length ? '<div class="ex-lista">' + linhas.map(function (l) {
+      return linhaEx('data-b-ir="' + esc(JSON.stringify(l.ir)) + '"', l.titulo, l.sub || '', [qtd(l.n), '']);
+    }).join('') + '</div>' : '<p class="mut" style="margin:0">' + op.vazio + '</p>') + '</div>';
+    $$('[data-b-ir]', alvo).forEach(function (b) { b.onclick = function () { irA(JSON.parse(b.getAttribute('data-b-ir'))); }; });
+  };
+  var listaFinal = function (olho, frase, sel, sid) {
+    alvo.innerHTML = '<div class="card cx so-faixa">' + faixaCx(olho, frase, qtd(sel.length)) + '</div><div class="b-lista"></div>';
+    if (!sel.length) { $('.b-lista', alvo).innerHTML = '<div class="card vazio">Nada para mostrar com esta situação.</div>'; return; }
+    op.lista($('.b-lista', alvo), sel, sid);
+  };
+  if (p.aba === 'simulado') {
+    var sims = {}, porSim = {};
+    itens.forEach(function (x) {
+      (x.simulados || []).forEach(function (s) { sims[s.id] = s; (porSim[s.id] = porSim[s.id] || []).push(x); });
+    });
+    var caixas = caixasDeSimulado(Object.keys(sims).map(function (id) {
+      var s = sims[id];
+      return { resultadoId: id, simulado: s.titulo, concurso: s.concurso, dia: s.dia, data: s.data, itens: [] };
+    }));
+    var nDe = function (cx) { var vistos = {}; ['1', '2'].forEach(function (k) { if (cx[k]) (porSim[cx[k].resultadoId] || []).forEach(function (x) { vistos[x.id] = true; }); }); return Object.keys(vistos).length; };
+    var c = p.cx ? caixas.filter(function (x) { return x.chave === p.cx; })[0] : null;
+    if (!c) {
+      return escolhas('Por simulado', 'Escolha o simulado', caixas.map(function (cx) {
+        return { ir: { cx: cx.chave }, titulo: cx.titulo, sub: (cx.data ? 'Aplicado em ' + dataBr(cx.data) : '') + (cx['1'] && cx['2'] ? ' · 1º e 2º dia' : ''), n: nDe(cx) };
+      }));
+    }
+    var dias = ['1', '2'].filter(function (k) { return c[k]; });
+    var dia = dias.length === 1 ? dias[0] : p.dia;
+    if (!dia) {
+      return escolhas('Por simulado' + (c.data ? ' · aplicado em ' + dataBr(c.data) : ''), c.titulo, dias.map(function (k) {
+        return { ir: { cx: c.chave, dia: k }, titulo: k + 'º dia', sub: c[k].simulado, n: (porSim[c[k].resultadoId] || []).length };
+      }));
+    }
+    var sid = c[dia].resultadoId, nNo = function (x) { return ((x.simulados || []).filter(function (s) { return s.id === sid; })[0] || {}).n || 0; };
+    return listaFinal('Por simulado · ' + c.titulo, dias.length > 1 ? dia + 'º dia' : c.titulo, (porSim[sid] || []).slice().sort(function (a, b) { return nNo(a) - nNo(b); }), sid);
+  }
+  // por matéria
+  var discs = disciplinasDe('ESPCEX'), edital = conc('ESPCEX').edital || {}, subs = conc('ESPCEX').subtemas || {};
+  var conta = function (f) { return itens.filter(f).length; };
+  if (!p.disc) {
+    var ds = discs.concat(itens.map(function (x) { return x.disciplina; }).filter(function (d, i, a) { return discs.indexOf(d) < 0 && a.indexOf(d) === i; }));
+    return escolhas('Por matéria', 'Escolha a matéria', ds.map(function (d) {
+      return { ir: { disc: d }, titulo: d, n: conta(function (x) { return x.disciplina === d; }) };
+    }).filter(function (l) { return l.n; }));
+  }
+  var naDisc = itens.filter(function (x) { return x.disciplina === p.disc; });
+  if (!p.tema) {
+    return escolhas('Por matéria · ' + p.disc, 'Escolha o tema', (edital[p.disc] || []).concat([SEM_TEMA]).map(function (t) {
+      return { ir: { disc: p.disc, tema: t }, titulo: t, n: naDisc.filter(function (x) { return (x.temaEdital || SEM_TEMA) === t; }).length };
+    }).filter(function (l) { return l.n; }));
+  }
+  var noTema = naDisc.filter(function (x) { return (x.temaEdital || SEM_TEMA) === p.tema; });
+  var listaSub = p.tema === SEM_TEMA ? [] : ((subs[p.disc] || {})[p.tema] || []);
+  if (!p.sub && listaSub.length) {
+    var linhas = listaSub.concat([SEM_SUB]).map(function (s) {
+      return { ir: { disc: p.disc, tema: p.tema, sub: s }, titulo: s, n: noTema.filter(function (x) { return (x.subtemaEdital || SEM_SUB) === s; }).length };
+    }).filter(function (l) { return l.n; });
+    if (linhas.length > 1) return escolhas('Por matéria · ' + p.disc, p.tema, linhas);
+  }
+  var sel = p.sub ? noTema.filter(function (x) { return (x.subtemaEdital || SEM_SUB) === p.sub; }) : noTema;
+  return listaFinal('Por matéria · ' + p.disc + ' › ' + p.tema, p.sub || p.tema, sel, '');
+}
 VIEWS.questoes = function (m, p) {
-  var adm = S.user.perfil === 'ADM';
+  var adm = S.user.perfil === 'ADM', aba = p.aba || '';
   var discs = disciplinasDe('ESPCEX');
   m.innerHTML = cabPag(adm ? 'Banco de questões' : 'Minhas questões',
     adm ? 'Questões enviadas pelos professores, curadoria, análise do professor e aprovação' : 'Cadastre questões no padrão da banca. A curadoria analisa cada uma, você confere o relatório e a coordenação aprova.',
@@ -2446,7 +2557,7 @@ VIEWS.questoes = function (m, p) {
       '<button class="btn" id="impq">Importar questões</button><button class="btn" id="enviar-arq">Enviar arquivo de questões</button>' : '') +
     (adm || podeTemas() ? '<button class="btn" id="temas">Temas de redação</button>' : '') +
     '<button class="btn" id="kit">Kit de correção</button>' +
-    '<button class="btn pri" id="nova">+ Nova questão</button>') +
+    '<button class="btn pri" id="nova">+ Nova questão</button>') + abasBanco(aba) +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Situação</span><select id="f-status"><option value="">Todas</option>' +
     Object.keys(STATUS_Q).map(function (k) { return '<option value="' + k + '">' + STATUS_Q[k][0] + '</option>'; }).join('') + '</select></label>' +
@@ -2456,7 +2567,10 @@ VIEWS.questoes = function (m, p) {
     '<label class="campo" style="margin:0"><span>Subtema</span><select id="f-sub" disabled><option value="">Escolha o tema</option></select></label></div></div>' +
     '<div id="aviso-an"></div><div id="aviso-kit"></div><div id="envios"></div><div id="temas-ult"></div><div id="lote"></div><div id="lista"></div>';
   if (p.status) $('#f-status').value = p.status;
-  call('temasUltimoSimulado', {}).then(function (dados) {
+  // nas abas Por simulado e Por matéria, a matéria e o tema são escolhidos nos passos: fica só o filtro de situação
+  if (aba) ['#f-disc', '#f-tema', '#f-sub'].forEach(function (id) { $(id).closest('label').hidden = true; });
+  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('questoes', { aba: b.getAttribute('data-banco-aba'), status: $('#f-status').value }); }; });
+  if (!aba) call('temasUltimoSimulado', {}).then(function (dados) {
     var minhasD = !adm && S.user.disciplinas ? csv(S.user.disciplinas) : discs;
     var alvo = $('#temas-ult'); if (!alvo) return;
     var tem = minhasD.some(function (d) { return dados[d] && dados[d].temas.length; });
@@ -2490,7 +2604,7 @@ VIEWS.questoes = function (m, p) {
   }).catch(function () {});
   if ($('#enviar-arq')) $('#enviar-arq').onclick = function () { enviarArquivoQuestoes(desenharEnvios); };
   var desenharEnvios = function () { cardEnvios($('#envios'), adm, desenharEnvios); };
-  if (adm) desenharEnvios();
+  if (adm && !aba) desenharEnvios();
   if (adm) {
     $('#exp').onclick = function () { exportarLote(); };
     $('#imp').onclick = function () { importarCuradoria(); };
@@ -2524,28 +2638,58 @@ VIEWS.questoes = function (m, p) {
       }).catch(function () {});
     };
   };
+  var cartao = function (q, i, sid) {
+    var sel = adm && APROVAVEIS.indexOf(q.status) >= 0;
+    var noSim = sid ? (q.simulados || []).filter(function (x) { return x.id === sid; })[0] : null;
+    return '<div class="card q-item' + (sel ? ' com-sel' : '') + '" data-i="' + i + '" data-id="' + esc(q.id) + '">' +
+      (sel ? '<label class="q-sel-box" title="Selecionar para aprovar"><input type="checkbox" class="q-sel" data-id="' + esc(q.id) + '"></label>' : '') +
+      '<div class="q-meta">' + (noSim ? '<b class="q-num">' + (noSim.n < 10 ? '0' : '') + noSim.n + '</b>' : '') + tag(STATUS_Q, q.status) +
+      ((q.gabaritoFinal || q.gabaritoProfessor) ? '<span class="tag gab">Gabarito ' + esc(q.gabaritoFinal || q.gabaritoProfessor) + '</span>' : '') +
+      (noSim ? '' : usoDaQuestao(q.simulados)) +
+      '<span class="meta">' + esc(q.disciplina) + (q.conteudo ? ' · ' + esc(q.conteudo) : '') + (q.subtemaEdital ? ' › ' + esc(q.subtemaEdital) + (q.subtemaAuto ? ' (sugerido)' : '') : '') +
+      (q.curadoria && q.curadoria.dificuldade ? ' · ' + esc(q.curadoria.dificuldade) : '') + (q.imagemId ? ' · com figura' : '') +
+      (q.origem ? ' · ' + esc(rotuloOrigem(q.origem)) : '') + '</span>' +
+      '<span class="dir">' + (adm ? esc(q.autorNome) + ' · ' : '') + dataBr(q.atualizadoEm) + '</span></div>' +
+      '<div class="q-trecho">' + esc(semFiguras(perguntaDe(q.enunciado))) + '</div></div>';
+  };
+  var ligarCartoes = function (l, qs) {
+    $$('.q-item', l).forEach(function (c) {
+      c.onclick = function (e) {
+        if (e.target.closest('.q-sel-box')) return;
+        verQuestao(qs[+c.getAttribute('data-i')], function (mud) { atualizarItem(c, mud); });
+      };
+    });
+    $$('.q-sel', l).forEach(function (c) {
+      c.onchange = function () {
+        var id = c.getAttribute('data-id');
+        if (c.checked) marcadas[id] = true; else delete marcadas[id];
+        barraLote(qs);
+      };
+    });
+    barraLote(qs);
+  };
   var carregar = function () {
     var l = $('#lista'); carregando(l);
     marcadas = {};
     call('listarQuestoes', { status: $('#f-status').value, disciplina: $('#f-disc').value }).then(function (qs) {
+      if (aba) {
+        ultimas = qs; barraLote([]);
+        navegarBanco(l, qs, p, { rota: 'questoes', base: { status: $('#f-status').value }, nome: ['questão', 'questões'],
+          vazio: aba === 'simulado' ? (adm ? 'Nenhuma questão desta situação entrou em simulado ainda.' : 'Nenhuma questão sua desta situação entrou em simulado ainda.')
+            : 'Nenhuma questão encontrada.',
+          lista: function (alvo, sel, sid) {
+            ultimas = sel;
+            alvo.innerHTML = '<div class="q-lista">' + sel.map(function (q, i) { return cartao(q, i, sid); }).join('') + '</div>';
+            ligarCartoes(alvo, sel);
+          } });
+        return;
+      }
       var temaSel = $('#f-tema').value;
       if (temaSel) qs = qs.filter(function (q) { return (q.temaEdital || SEM_TEMA) === temaSel; });
       var subSel = $('#f-sub').value;
       if (subSel) qs = qs.filter(function (q) { return (q.subtemaEdital || SEM_SUB) === subSel; });
       ultimas = qs;
       if (!qs.length) { l.innerHTML = '<div class="card vazio">' + icone('biblioteca', 'ic-vazio') + 'Nenhuma questão encontrada.</div>'; barraLote([]); return; }
-      var cartao = function (q, i) {
-        var sel = adm && APROVAVEIS.indexOf(q.status) >= 0;
-        return '<div class="card q-item' + (sel ? ' com-sel' : '') + '" data-i="' + i + '" data-id="' + esc(q.id) + '">' +
-          (sel ? '<label class="q-sel-box" title="Selecionar para aprovar"><input type="checkbox" class="q-sel" data-id="' + esc(q.id) + '"></label>' : '') +
-          '<div class="q-meta">' + tag(STATUS_Q, q.status) +
-          ((q.gabaritoFinal || q.gabaritoProfessor) ? '<span class="tag gab">Gabarito ' + esc(q.gabaritoFinal || q.gabaritoProfessor) + '</span>' : '') +
-          '<span class="meta">' + esc(q.disciplina) + (q.conteudo ? ' · ' + esc(q.conteudo) : '') + (q.subtemaEdital ? ' › ' + esc(q.subtemaEdital) + (q.subtemaAuto ? ' (sugerido)' : '') : '') +
-          (q.curadoria && q.curadoria.dificuldade ? ' · ' + esc(q.curadoria.dificuldade) : '') + (q.imagemId ? ' · com figura' : '') +
-          (q.origem ? ' · ' + esc(rotuloOrigem(q.origem)) : '') + '</span>' +
-          '<span class="dir">' + (adm ? esc(q.autorNome) + ' · ' : '') + dataBr(q.atualizadoEm) + '</span></div>' +
-          '<div class="q-trecho">' + esc(semFiguras(perguntaDe(q.enunciado))) + '</div></div>';
-      };
       // agrupadas por disciplina › tema do edital › subtema, na ordem do edital
       var edital = conc('ESPCEX').edital || {}, subs = conc('ESPCEX').subtemas || {}, grupos = {}, chaves = [];
       qs.forEach(function (q, i) {
@@ -2572,20 +2716,7 @@ VIEWS.questoes = function (m, p) {
                 '<div class="q-lista">' + g.sub[s].join('') + '</div>';
             }).join('') + '</details>';
         }).join('');
-      $$('.q-item', l).forEach(function (c) {
-        c.onclick = function (e) {
-          if (e.target.closest('.q-sel-box')) return;
-          verQuestao(qs[+c.getAttribute('data-i')], function (mud) { atualizarItem(c, mud); });
-        };
-      });
-      $$('.q-sel', l).forEach(function (c) {
-        c.onchange = function () {
-          var id = c.getAttribute('data-id');
-          if (c.checked) marcadas[id] = true; else delete marcadas[id];
-          barraLote(qs);
-        };
-      });
-      barraLote(qs);
+      ligarCartoes(l, qs);
     }).catch(function (e) { l.innerHTML = caixaErro(e); });
   };
   /** Atualiza só o item da lista (sem recarregar tudo); sem informação, recarrega. */
@@ -2614,7 +2745,7 @@ VIEWS.questoes = function (m, p) {
     s.innerHTML = !tm || !lista.length ? '<option value="">Escolha o tema</option>' :
       '<option value="">Todos</option>' + lista.concat([SEM_SUB]).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
   };
-  $('#f-status').onchange = carregar;
+  $('#f-status').onchange = function () { S.params.status = this.value; carregar(); };
   $('#f-disc').onchange = function () { opcoesTema(); opcoesSub(); carregar(); };
   $('#f-tema').onchange = function () { opcoesSub(); carregar(); };
   $('#f-sub').onchange = carregar;
@@ -3572,12 +3703,12 @@ function verQuestao(q, aoMudar) {
 var KIT_POR_PAGINA = 30;
 function rotuloVagaKit(tipo, l) { return tipo === 'GEMEA' ? 'Gêmea' : 'Erro (' + l + ')'; }
 VIEWS.kit = function (m, p) {
-  var adm = S.user.perfil === 'ADM';
+  var adm = S.user.perfil === 'ADM', aba = p.aba || '';
   var discs = adm || !S.user.disciplinas ? disciplinasDe('ESPCEX') : csv(S.user.disciplinas);
   m.innerHTML = cabPag('Kit de correção',
     'Para cada questão aprovada: uma questão para cada alternativa errada, que treina aquele erro, e uma <b>gêmea</b>, com a mesma ideia em outro contexto, para o teste final. ' +
       (adm ? 'O MIRA escreve, o professor confere e você aprova.' : 'O MIRA escreve, você confere e a coordenação aprova. Você também pode escrever as suas.'),
-    (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o MIRA</button>' : '')) +
+    (adm ? '<button class="btn" id="kt-imp">Importar o kit</button><button class="btn pri" id="kt-exp">Copiar para o MIRA</button>' : '')) + abasBanco(aba) +
     '<div class="card nao-imprimir"><div class="linha">' +
     '<label class="campo" style="margin:0"><span>Disciplina</span><select id="kt-disc"><option value="">Todas</option>' +
     discs.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
@@ -3587,6 +3718,8 @@ VIEWS.kit = function (m, p) {
     '<option value="completos">Kit completo</option><option value="">Todas as questões</option></select></label></div></div>' +
     '<div id="kt-aviso"></div><div id="kt-lista"></div>';
   $('#kt-most').value = p.mostrar !== undefined ? p.mostrar : '';
+  if (aba) $('#kt-disc').closest('label').hidden = true;
+  $$('[data-banco-aba]', m).forEach(function (b) { b.onclick = function () { ir('kit', { aba: b.getAttribute('data-banco-aba'), mostrar: $('#kt-most').value }); }; });
   if (adm) { $('#kt-exp').onclick = exportarKit; $('#kt-imp').onclick = function () { importarKit(carregar); }; }
   var dados = null, mostrando = KIT_POR_PAGINA;
   // o que "precisa de você": professor confere o que o Claude escreveu; coordenação aprova o que foi conferido
@@ -3622,10 +3755,12 @@ VIEWS.kit = function (m, p) {
       return;
     }
     if (!ms.length) { l.innerHTML = '<div class="card vazio">Nada para mostrar com este filtro.</div>'; return; }
-    var cartao = function (x, i) {
+    var cartao = function (x, i, sid) {
+      var noSim = sid ? (x.simulados || []).filter(function (y) { return y.id === sid; })[0] : null;
       var vagas = x.erros.map(function (lt) { return { tipo: 'ERRO', l: lt }; }).concat([{ tipo: 'GEMEA', l: '' }]);
-      return '<div class="card kit-mae" data-i="' + i + '"><div class="q-meta"><span class="meta">' + esc(x.disciplina) + (x.conteudo ? ' · ' + esc(x.conteudo) : '') +
-        (x.subtema ? ' › ' + esc(x.subtema) : '') + ' · ' + esc(x.id) + (x.emSimulado ? ' · já usada em simulado' : '') + (adm ? ' · ' + esc(x.autorNome) : '') + '</span>' +
+      return '<div class="card kit-mae" data-i="' + i + '"><div class="q-meta">' + (noSim ? '<b class="q-num">' + (noSim.n < 10 ? '0' : '') + noSim.n + '</b>' : usoDaQuestao(x.simulados)) +
+        '<span class="meta">' + esc(x.disciplina) + (x.conteudo ? ' · ' + esc(x.conteudo) : '') +
+        (x.subtemaEdital ? ' › ' + esc(x.subtemaEdital) : '') + ' · ' + esc(x.id) + (adm ? ' · ' + esc(x.autorNome) : '') + '</span>' +
         '<span class="dir">' + x.aprovadas + ' de ' + x.vagas + ' aprovadas</span></div>' +
         '<div class="q-trecho">' + esc(semFiguras(x.trecho)) + '</div><div class="kit-vagas">' +
         vagas.map(function (v) {
@@ -3636,19 +3771,30 @@ VIEWS.kit = function (m, p) {
             (k ? tag(STATUS_Q, k.status) : '<span class="kit-falta">+ Escrever</span>') + '</button>';
         }).join('') + '</div></div>';
     };
-    l.innerHTML = '<p class="mut peq">' + ms.length + (ms.length === 1 ? ' questão' : ' questões') + '</p>' + ms.slice(0, mostrando).map(cartao).join('') +
+    var ligarVagas = function (alvo, lista) {
+      $$('.kit-mae', alvo).forEach(function (c) {
+        var x = lista[+c.getAttribute('data-i')];
+        $$('.kit-vaga', c).forEach(function (b) {
+          b.onclick = function () {
+            var id = b.getAttribute('data-id');
+            if (id) verItemKit(id, carregar);
+            else formKit({ maeId: x.id, tipo: b.getAttribute('data-t'), alternativa: b.getAttribute('data-l') }, null, carregar);
+          };
+        });
+      });
+    };
+    if (aba) {
+      return navegarBanco(l, ms, p, { rota: 'kit', base: { mostrar: $('#kt-most').value }, nome: ['questão', 'questões'],
+        vazio: aba === 'simulado' ? 'Nenhuma questão com kit entrou em simulado ainda (com este filtro).' : 'Nada para mostrar com este filtro.',
+        lista: function (alvo, sel, sid) {
+          alvo.innerHTML = sel.map(function (x, i) { return cartao(x, i, sid); }).join('');
+          ligarVagas(alvo, sel);
+        } });
+    }
+    l.innerHTML = '<p class="mut peq">' + ms.length + (ms.length === 1 ? ' questão' : ' questões') + '</p>' + ms.slice(0, mostrando).map(function (x, i) { return cartao(x, i); }).join('') +
       (ms.length > mostrando ? '<div style="text-align:center"><button class="btn" id="kt-mais">Mostrar mais ' + Math.min(KIT_POR_PAGINA, ms.length - mostrando) + '</button></div>' : '');
     if ($('#kt-mais')) $('#kt-mais').onclick = function () { mostrando += KIT_POR_PAGINA; desenhar(); };
-    $$('.kit-mae', l).forEach(function (c) {
-      var x = ms[+c.getAttribute('data-i')];
-      $$('.kit-vaga', c).forEach(function (b) {
-        b.onclick = function () {
-          var id = b.getAttribute('data-id');
-          if (id) verItemKit(id, carregar);
-          else formKit({ maeId: x.id, tipo: b.getAttribute('data-t'), alternativa: b.getAttribute('data-l') }, null, carregar);
-        };
-      });
-    });
+    ligarVagas(l, ms);
   };
   var carregar = function () {
     var l = $('#kt-lista'); if (!l) return;
@@ -3657,11 +3803,12 @@ VIEWS.kit = function (m, p) {
       dados = r; mostrando = KIT_POR_PAGINA;
       // sem nada esperando, abre direto em "Todas"
       if ($('#kt-most').value === 'acao' && !filtrar(r.maes).length && p.mostrar === undefined) $('#kt-most').value = '';
+      if (aba && p.mostrar === undefined) $('#kt-most').value = '';
       desenhar();
     }).catch(function (e) { l.innerHTML = caixaErro(e); });
   };
   $('#kt-disc').onchange = carregar;
-  $('#kt-most').onchange = function () { mostrando = KIT_POR_PAGINA; if (dados) desenhar(); };
+  $('#kt-most').onchange = function () { S.params.mostrar = this.value; mostrando = KIT_POR_PAGINA; if (dados) desenhar(); };
   carregar();
 };
 
